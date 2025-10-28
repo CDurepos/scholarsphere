@@ -1,13 +1,17 @@
 # Overview
 
 An application built to foster collaboration between Maine researchers. 
+
 Built by students, for the COS457 Database Systems course at the University of Southern Maine.
 
 ## GitHub Username to Student Map
 
 aidan703:      Aidan Bell
+
 CDurepos:      Clayton Durepos
+
 abbyPitcairn:  Abby Pitcairn
+
 OwenLeitzell:  Owen Leitzell
 
 ## Task Distribution
@@ -28,4 +32,5 @@ Web Scrapers
 - Clayton: UMF
 
 Query Optimization Analysis & Sample Data, Data Cleaning Documentation
+
 1 optimization, sample, discussion per team member
