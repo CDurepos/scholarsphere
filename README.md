@@ -13,17 +13,13 @@ OwenLeitzell:  Owen Leitzell
 ## Task Distribution
 
 MySQL Database Schema Scripts & Stored Procedures, Functions
-1. ___:  Users & Auth
-   1. `users`, `credentials`, `follows`, `recommendations`
+1. ___:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]
    
-2. ___:  Instutions & Equipment
-   2. `institutions`, `works_at`, `equipment`
+2. ___:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
    
-3. ___:  Publications & Authorship
-   3. `publications`, `publication_authors`, `keywords`, `publication_keywords`
+3. ___:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]
    
-4. ___:  Topics & Funding
-   4. `user_keywords`, `grants`, `grant_providers`, `grant_recipients`
+4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]
 
 Web Scrapers
 - Aidan:   UMO
