@@ -16,7 +16,7 @@ OwenLeitzell:  Owen Leitzell
 
 ## Task Distribution
 
-MySQL Database Schema Scripts & Stored Procedures, Functions
+### MySQL Database Schema Scripts & Stored Procedures, Functions
 1. ___:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]
    
 2. ___:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
@@ -25,12 +25,12 @@ MySQL Database Schema Scripts & Stored Procedures, Functions
    
 4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]
 
-Web Scrapers
+### Web Scrapers
 - Aidan:   UMO
 - Owen:    UMA
 - Abby:    USM
 - Clayton: UMF
 
-Query Optimization Analysis & Sample Data, Data Cleaning Documentation
+### Query Optimization Analysis & Sample Data, Data Cleaning Documentation
 
 1 optimization, sample, discussion per team member
