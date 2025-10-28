@@ -21,7 +21,7 @@ OwenLeitzell:  Owen Leitzell
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
    
-3. ___:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]
    
 4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]
 
