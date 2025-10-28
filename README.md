@@ -19,7 +19,7 @@ OwenLeitzell:  Owen Leitzell
 ### MySQL Database Schema Scripts & Stored Procedures, Functions
 1. ___:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]
    
-2. ___:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
+2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
    
 3. ___:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]
    
