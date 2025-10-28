@@ -17,7 +17,7 @@ OwenLeitzell:  Owen Leitzell
 ## Task Distribution
 
 ### MySQL Database Schema Scripts & Stored Procedures, Functions
-1. ___:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
    
