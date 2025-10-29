@@ -9,6 +9,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(
     script_dir, "../../scrape_storage/biography_pages/maine_business_school.csv"
 )
+if os.path.exists(OUTPUT_FILE):
+    raise FileExistsError(f"The output file {OUTPUT_FILE} already exists.")
 os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 headers = {
