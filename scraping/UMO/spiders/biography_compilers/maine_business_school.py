@@ -9,6 +9,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(
     script_dir, "../../scrape_storage/biography_pages/maine_business_school.csv"
 )
+os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 headers = {
     "User-Agent": (
@@ -46,7 +47,7 @@ if faculty_header and faculty_header.find("strong", string="Faculty"):
                     bio_links.append(a_tag["href"])
 
 # WRITE
-with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+with open(OUTPUT_FILE, "x", newline="", encoding="utf-8") as f:
     writer = csv.writer(f)
     for link in bio_links:
         writer.writerow([link])
