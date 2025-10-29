@@ -6,7 +6,7 @@ Built by students, for the COS457 Database Systems course at the University of S
 
 ## GitHub Username to Student Map
 
-aidan703:      Aidan Bell
+aidan073:      Aidan Bell
 
 CDurepos:      Clayton Durepos
 
