@@ -7,6 +7,12 @@ DEPARTMENTS = (
     ("https://mcec.umaine.edu/eleceng/#fac", "electrical_and_computer_engineering.csv"),
     ("https://mcec.umaine.edu/civil/#fac", "civil_and_environmental_engineering.csv"),
     ("https://mcec.umaine.edu/depts/scis/", "computing_and_information_science.csv"),
+    ("https://mcec.umaine.edu/depts/mee/", "mechanical_engineering.csv"),
+    ("https://mcec.umaine.edu/depts/set/", "engineering_technology.csv"),
+    (
+        "https://mcec.umaine.edu/depts/chembio/",
+        "chemical_and_biomedical_engineering.csv",
+    ),
 )
 
 # CONFIG
@@ -35,7 +41,7 @@ for url, output_file in DEPARTMENTS:
     bio_links = []
     fac = soup.find("div", id="fac")
     if not fac:
-        fac = soup  # cis doesn't have fac id, so just start from top
+        fac = soup  # some depts don't have fac id, so just start from soup
     for div in fac.find_all("div", class_="entry-content"):
         if "professor" in div.get_text(strip=True).lower():
             header = div.find_previous_sibling("header")
