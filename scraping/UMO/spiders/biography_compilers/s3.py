@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 DEPARTMENTS = (
-    ("https://umaine.edu/business/faculty-and-staff/", "maine_business_school.csv"),
+    ("https://umaine.edu/business/faculty-and-staff/", "business.csv"),
 )
 
 # CONFIG
@@ -54,7 +54,7 @@ for url, output_file in DEPARTMENTS:
                         bio_links.append(a_tag["href"])
 
     # WRITE
-    with open(output_file, "x", newline="", encoding="utf-8") as f:
+    with open(os.path.join(OUTPUT_DIR, output_file), "x", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         for link in bio_links:
             writer.writerow([link])

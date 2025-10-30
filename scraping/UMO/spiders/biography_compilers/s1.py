@@ -4,8 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 
 DEPARTMENTS = (
-    ("https://umaine.edu/marine/people/department/faculty/", "marine_science.csv"),
-    ("https://gsbse.umaine.edu/people/department/faculty/", "gsbse.csv"),
+    ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),
+    ("https://gsbse.umaine.edu/people/department/faculty/", "biomedical_science_and_engineering.csv"),
 )
 
 # CONFIG

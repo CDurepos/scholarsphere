@@ -3,7 +3,8 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 
-DEPARTMENTS = (("https://mcec.umaine.edu/eleceng/#fac", "mcec.csv"),)
+DEPARTMENTS = (("https://mcec.umaine.edu/eleceng/#fac", "electrical_and_computer_engineering.csv"),
+               ("https://mcec.umaine.edu/civil/#fac", "civil_and_environmental_engineering.csv"))
 
 # CONFIG
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +30,8 @@ for url, output_file in DEPARTMENTS:
     soup = BeautifulSoup(response.text, "html.parser")
 
     bio_links = []
-    for div in soup.find_all("div", class_="entry-content"):
+    fac = soup.find("div", id="fac")
+    for div in fac.find_all("div", class_="entry-content"):
         if "professor" in div.get_text(strip=True).lower():
             header = div.find_previous_sibling("header")
             if header:
@@ -38,7 +40,7 @@ for url, output_file in DEPARTMENTS:
                     bio_links.append(a_tag["href"])
 
     # WRITE
-    with open(output_file, "x", newline="", encoding="utf-8") as f:
+    with open(os.path.join(OUTPUT_DIR, output_file), "x", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         for link in bio_links:
             writer.writerow([link])
