@@ -3,8 +3,11 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 
-DEPARTMENTS = (("https://mcec.umaine.edu/eleceng/#fac", "electrical_and_computer_engineering.csv"),
-               ("https://mcec.umaine.edu/civil/#fac", "civil_and_environmental_engineering.csv"))
+DEPARTMENTS = (
+    ("https://mcec.umaine.edu/eleceng/#fac", "electrical_and_computer_engineering.csv"),
+    ("https://mcec.umaine.edu/civil/#fac", "civil_and_environmental_engineering.csv"),
+    ("https://mcec.umaine.edu/depts/scis/", "computing_and_information_science.csv"),
+)
 
 # CONFIG
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -31,6 +34,8 @@ for url, output_file in DEPARTMENTS:
 
     bio_links = []
     fac = soup.find("div", id="fac")
+    if not fac:
+        fac = soup  # cis doesn't have fac id, so just start from top
     for div in fac.find_all("div", class_="entry-content"):
         if "professor" in div.get_text(strip=True).lower():
             header = div.find_previous_sibling("header")
@@ -40,7 +45,9 @@ for url, output_file in DEPARTMENTS:
                     bio_links.append(a_tag["href"])
 
     # WRITE
-    with open(os.path.join(OUTPUT_DIR, output_file), "x", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(OUTPUT_DIR, output_file), "x", newline="", encoding="utf-8"
+    ) as f:
         writer = csv.writer(f)
         for link in bio_links:
             writer.writerow([link])

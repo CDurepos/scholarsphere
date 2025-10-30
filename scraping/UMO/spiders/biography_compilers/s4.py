@@ -3,7 +3,10 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 
-DEPARTMENTS = (("https://sbe.umaine.edu/personnel/faculty/", "biology_and_ecology.csv"),)
+DEPARTMENTS = (
+    ("https://sbe.umaine.edu/personnel/faculty/", "biology_and_ecology.csv"),
+    ("https://physics.umaine.edu/people-2/", "physics_and_astronomy.csv"),
+)
 
 # CONFIG
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -30,13 +33,20 @@ for url, output_file in DEPARTMENTS:
 
     bio_links = []
     for p_tag in soup.find_all("p", class_="kt-blocks-info-box-text"):
-        if "professor" in p_tag.get_text(strip=True).lower():
+        p_text = p_tag.get_text(strip=True).lower()
+        if (
+            "professor" in p_text
+            and "emeritus" not in p_text
+            and "emerita" not in p_text
+        ):
             a_tags = p_tag.find_all("a", href=True)
             if a_tags:
                 bio_links.append(a_tags[-1]["href"])
 
     # WRITE
-    with open(os.path.join(OUTPUT_DIR, output_file), "x", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(OUTPUT_DIR, output_file), "x", newline="", encoding="utf-8"
+    ) as f:
         writer = csv.writer(f)
         for link in bio_links:
             writer.writerow([link])

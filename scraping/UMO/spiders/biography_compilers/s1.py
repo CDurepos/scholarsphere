@@ -5,7 +5,14 @@ from bs4 import BeautifulSoup
 
 DEPARTMENTS = (
     ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),
-    ("https://gsbse.umaine.edu/people/department/faculty/", "biomedical_science_and_engineering.csv"),
+    (
+        "https://gsbse.umaine.edu/people/department/faculty/",
+        "biomedical_science_and_engineering.csv",
+    ),
+    (
+        "https://forest.umaine.edu/people/department/faculty-staff/",
+        "forest_resources.csv",
+    ),
 )
 
 # CONFIG
@@ -44,13 +51,14 @@ for url, output_file in DEPARTMENTS:
                 and "professor" in fac_position.text.lower()
                 and "retired" not in fac_position.text.lower()
             ):
-                # Find <a> tags that mention "Bio" or "Biography"
+                # Find <a> tags that mention "bio" or "biography" or "staff page"
                 for p_tag in tag.find_all("p", class_=lambda c: c is None):
                     a_tag = p_tag.next_element
                     if (
                         a_tag
                         and " bio" in a_tag.text.lower()
                         or " biography" in a_tag.text.lower()
+                        or " staff page" in a_tag.text.lower()
                     ):
                         bio_links.append(a_tag["href"])
 
