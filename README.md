@@ -18,12 +18,12 @@ OwenLeitzell:  Owen Leitzell
 
 ### D1 - Recorded Video Demonstration
 1. ___: Show the database running from scratch (creation, data loading, constraints in action). **deadline**: TBD
-2. ___, ___: Discuss stored procedures, functions, queries, triggers, and indexing. **deadline**: TBD
+2. Aidan, ___: Discuss stored procedures, functions, queries, triggers, and indexing. **deadline**: 11/15 
 3. ___: Show at least one example of data scraping and cleaning results. **deadline**: TBD
 
 ### D2 - MySQL Database Schema Scripts
 Each member will create tables and indexes with comments for their designated tables:
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/8
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
    
@@ -33,7 +33,7 @@ Each member will create tables and indexes with comments for their designated ta
 
 ### D3 - Stored Procedures and Functions
 Each member will document and implement the key system operations for their designated tables:
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/12
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
    
@@ -50,14 +50,14 @@ Each member will do the following for their designated Maine University:
 3. Save scraping results in a .csv or .json file with MySQL import compatible formatting.
 
 Designated Universities:
-- Aidan:   UMO,  **deadline**: TBD
+- Aidan:   UMO,  **deadline**: 11/5
 - Owen:    UMA,  **deadline**: TBD
 - Abby:    USM,  **deadline**: TBD
 - Clayton: UMF,  **deadline**: TBD
 
 ### D5 - Sample Data and Data Cleaning Documentation
 Each member will provide scripts or CSV files showcasing a sample data insert into their designated tables with comments on how the data was validated and cleaned.
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/6
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
    
@@ -67,7 +67,7 @@ Each member will provide scripts or CSV files showcasing a sample data insert in
 
 ### D6 - Query Optimization Analysis
 Each member will provide before/after query performance results for a query on their designated tables and give justification on indexing strategies.
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/14
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
    
@@ -79,7 +79,7 @@ Each member will provide before/after query performance results for a query on t
 For the **Individual Tasks**, each member will document how to run their individual scraping scripts, sample processing scripts, and SQL files. For the **Joint Tasks**, all members will document the full database recreation steps, and document any joint effort procedures such as the primary search procedure.
 
 **Individual Tasks**:
-1. Aidan - **deadline**: TBD
+1. Aidan - **deadline**: 11/15
 2. Abby - **deadline**: TBD
 3. Owen - **deadline**: TBD
 4. Clayton - **deadline**: TBD
