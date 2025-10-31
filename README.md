@@ -16,21 +16,74 @@ OwenLeitzell:  Owen Leitzell
 
 ## Task Distribution
 
-### MySQL Database Schema Scripts & Stored Procedures, Functions
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]
-   
-2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]
-   
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]
-   
-4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]
+### D1 - Recorded Video Demonstration
+1. ___: Show the database running from scratch (creation, data loading, constraints in action). **deadline**: TBD
+2. ___, ___: Discuss stored procedures, functions, queries, triggers, and indexing. **deadline**: TBD
+3. ___: Show at least one example of data scraping and cleaning results. **deadline**: TBD
 
-### Web Scrapers
-- Aidan:   UMO
-- Owen:    UMA
-- Abby:    USM
-- Clayton: UMF
+### D2 - MySQL Database Schema Scripts
+Each member will create tables and indexes with comments for their designated tables:
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+   
+2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
+   
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+   
+4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
-### Query Optimization Analysis & Sample Data, Data Cleaning Documentation
+### D3 - Stored Procedures and Functions
+Each member will document and implement the key system operations for their designated tables:
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+   
+2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
+   
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+   
+4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
-1 optimization, sample, discussion per team member
+The primary search procedure will be a joint effort. **deadline**: TBD
+
+### D4 - Data Scraping Scripts and Documentation
+Each member will do the following for their designated Maine University: 
+1. Provide scraping source code in python.
+2. Document source websites, sample outputs, and cleaning steps.
+3. Save scraping results in a .csv or .json file with MySQL import compatible formatting.
+
+Designated Universities:
+- Aidan:   UMO,  **deadline**: TBD
+- Owen:    UMA,  **deadline**: TBD
+- Abby:    USM,  **deadline**: TBD
+- Clayton: UMF,  **deadline**: TBD
+
+### D5 - Sample Data and Data Cleaning Documentation
+Each member will provide scripts or CSV files showcasing a sample data insert into their designated tables with comments on how the data was validated and cleaned.
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+   
+2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
+   
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+   
+4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
+
+### D6 - Query Optimization Analysis
+Each member will provide before/after query performance results for a query on their designated tables and give justification on indexing strategies.
+1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: TBD
+   
+2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: TBD
+   
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+   
+4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
+
+### D7 - Comprehensive README file (.md)
+For the **Individual Tasks**, each member will document how to run their individual scraping scripts, sample processing scripts, and SQL files. For the **Joint Tasks**, all members will document the full database recreation steps, and document any joint effort procedures such as the primary search procedure.
+
+**Individual Tasks**:
+1. Aidan - **deadline**: TBD
+2. Abby - **deadline**: TBD
+3. Owen - **deadline**: TBD
+4. Clayton - **deadline**: TBD
+
+**Joint Tasks**:
+1. Database Recreation Steps - **deadline**: TBD
+2. Key Procedure Usage - **deadline**: TBD
