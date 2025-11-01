@@ -37,13 +37,13 @@ class B1Parser:
             if not os.path.exists(os.path.join(self.input_dir, input_file)):
                 raise FileNotFoundError(f"The input file '{os.path.join(self.input_dir, input_file)}' could not be found. Make sure you've ran the biography compiler first.")
             else:
-                self.input_file_paths.append(input_file)
+                self.input_file_paths.append(os.path.join(self.input_dir, input_file))
 
         # Check that output files don't exist and create dirs if needed
         for url, output_file in self.departments:
-            if os.path.exists(os.path.join(self.input_dir, output_file)):
-                raise FileExistsError(f"The output file '{os.path.join(self.input_dir, input_file)}' already exists.")
-        os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
+            if os.path.exists(os.path.join(self.output_dir, output_file)):
+                raise FileExistsError(f"The output file '{os.path.join(self.output_dir, output_file)}' already exists.")
+        os.makedirs(self.output_dir, exist_ok=True)
 
         self.headers = get_header("h1")
 
