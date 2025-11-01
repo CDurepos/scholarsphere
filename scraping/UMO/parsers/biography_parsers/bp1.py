@@ -1,6 +1,7 @@
 import os
 import requests
 from scraping.UMO.utils import get_header
+from scraping.UMO.utils.orono import umaine
 
 DEPARTMENTS = (
     ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),
