@@ -18,7 +18,8 @@ DEPARTMENTS = (
 
 
 class B1Compiler:
-    """Collect biography page links for a set of departments.
+    """
+    Collect biography page links for a set of departments.
 
     Usage:
         compiler = B1Compiler()
@@ -32,7 +33,6 @@ class B1Compiler:
         )
         self.departments = DEPARTMENTS
 
-        # Ensure we don't accidentally overwrite existing outputs
         for url, output_file in self.departments:
             if os.path.exists(os.path.join(self.output_dir, output_file)):
                 raise FileExistsError(f"The output file {output_file} already exists.")
@@ -85,3 +85,6 @@ class B1Compiler:
                 writer = csv.writer(f)
                 for link in bio_links:
                     writer.writerow([link])
+
+if __name__ == "__main__":
+    B1Compiler().collect()

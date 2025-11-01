@@ -8,6 +8,14 @@ DEPARTMENTS = (("https://umaine.edu/business/faculty-and-staff/", "business.csv"
 
 
 class B3Compiler:
+    """
+    Collect biography page links for a set of departments.
+
+    Usage:
+        compiler = B3Compiler()
+        compiler.collect()
+    """
+    
     def __init__(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.output_dir = os.path.join(
@@ -63,3 +71,6 @@ class B3Compiler:
                 writer = csv.writer(f)
                 for link in bio_links:
                     writer.writerow([link])
+
+if __name__ == "__main__":
+    B3Compiler().collect()

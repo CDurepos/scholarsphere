@@ -1,13 +1,9 @@
-from scraping.UMO.parsers.biography_compilers import B1Compiler, B2Compiler, B3Compiler, B4Compiler, B5Compiler
+import importlib
+from tqdm import tqdm
 
-bc1 = B1Compiler()
-bc2 = B2Compiler()
-bc3 = B3Compiler()
-bc4 = B4Compiler()
-bc5 = B5Compiler()
+compiler_names = ["bc1", "bc2", "bc3", "bc4", "bc5"]
 
-bc1.collect()
-bc2.collect()
-bc3.collect()
-bc4.collect()
-bc5.collect()
+for name in tqdm(compiler_names, "Gathering biography links.", total = len(compiler_names)):
+    module = importlib.import_module(f"scraping.UMO.parsers.biography_compilers.{name}")
+    compiler_class = getattr(module, f"B{name[1:].capitalize()}Compiler")
+    compiler_class().collect()
