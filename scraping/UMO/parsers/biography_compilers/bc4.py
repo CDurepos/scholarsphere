@@ -2,7 +2,7 @@ import os
 import csv
 import requests
 from bs4 import BeautifulSoup
-from scraping.UMO.utils import get_header
+from scraping.utils import get_headers
 
 DEPARTMENTS = (
     ("https://sbe.umaine.edu/personnel/faculty/", "biology_and_ecology.csv"),
@@ -32,7 +32,7 @@ class B4Compiler:
 
         os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
 
-        self.headers = get_header("h1")
+        self.headers = get_headers("h1")
 
     def collect(self):
         for url, output_file in self.departments:

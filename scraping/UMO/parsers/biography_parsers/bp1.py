@@ -1,7 +1,7 @@
 import os
 import requests
-from scraping.UMO.utils import get_header
-from scraping.UMO.utils.orono import umaine
+from scraping.utils import get_headers
+from scraping.UMO.dataclass_instances.orono import umaine
 
 DEPARTMENTS = (
     ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),
@@ -45,7 +45,7 @@ class B1Parser:
                 raise FileExistsError(f"The output file '{os.path.join(self.output_dir, output_file)}' already exists.")
         os.makedirs(self.output_dir, exist_ok=True)
 
-        self.headers = get_header("h1")
+        self.headers = get_headers("h1")
 
     def parse(self):
         for path in self.input_file_paths:
