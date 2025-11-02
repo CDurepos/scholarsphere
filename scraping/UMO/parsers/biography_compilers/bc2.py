@@ -1,8 +1,9 @@
+from scraping.utils import get_headers
+
 import os
 import csv
 import requests
 from bs4 import BeautifulSoup
-from scraping.utils import get_headers
 
 DEPARTMENTS = (
     ("https://mcec.umaine.edu/eleceng/#fac", "electrical_and_computer_engineering.csv"),
@@ -69,6 +70,7 @@ class B2Compiler:
                 writer = csv.writer(f)
                 for link in bio_links:
                     writer.writerow([link])
+
 
 if __name__ == "__main__":
     B2Compiler().collect()

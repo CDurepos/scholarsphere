@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class Faculty:
+    faculty_id: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     title: Optional[str] = None

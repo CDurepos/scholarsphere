@@ -1,8 +1,9 @@
+from scraping.utils import get_headers
+
 import os
 import csv
 import requests
 from bs4 import BeautifulSoup
-from scraping.utils import get_headers
 
 DEPARTMENTS = (
     ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),

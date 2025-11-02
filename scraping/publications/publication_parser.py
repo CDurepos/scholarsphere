@@ -1,7 +1,8 @@
+from scraping.utils import get_headers
+from scraping.dataclasses import Publication
+
 import re
 import requests
-from scraping.utils import get_headers
-from scraping.dataclasses.publication import Publication
 
 
 def citation_to_publication_instance(citation: str) -> Publication:
@@ -19,17 +20,18 @@ def citation_to_publication_instance(citation: str) -> Publication:
     doi = extract_doi(citation=citation)
     if not doi:
         return
-    
+
     pub_data = fetch_crossref_metadata(doi=doi)
     publication = Publication(
-        DOI=doi,
+        doi=doi,
         title=pub_data.get("title", [None])[0],
         abstract=pub_data.get("abstract"),
-        year = pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
+        year=pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
         citation_count=pub_data.get("is-referenced-by-count"),
-        publisher=pub_data.get("publisher")
+        publisher=pub_data.get("publisher"),
     )
     return publication
+
 
 def extract_doi(citation: str) -> str | None:
     """

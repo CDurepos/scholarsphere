@@ -8,5 +8,5 @@ umaine = Institution(
     city="Orono",
     state="ME",
     country="USA",
-    zip_code="04469"
+    zip_code="04469",
 )

@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class Publication:
-    DOI: Optional[str] = None
+    publication_id: Optional[str] = None
+    doi: Optional[str] = None
     title: Optional[str] = None
     abstract: Optional[str] = None
     year: Optional[str] = None

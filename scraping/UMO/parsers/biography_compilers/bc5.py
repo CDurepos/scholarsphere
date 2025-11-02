@@ -1,8 +1,9 @@
+from scraping.utils import get_headers
+
 import os
 import csv
 import requests
 from bs4 import BeautifulSoup
-from scraping.utils import get_headers
 
 DEPARTMENTS = (("https://umaine.edu/history/faculty/", "history.csv"),)
 
@@ -62,6 +63,7 @@ class B5Compiler:
                 writer = csv.writer(f)
                 for link in bio_links:
                     writer.writerow([link])
+
 
 if __name__ == "__main__":
     B5Compiler().collect()

@@ -1,8 +1,9 @@
+from scraping.utils import get_headers
+
 import os
 import csv
 import requests
 from bs4 import BeautifulSoup
-from scraping.utils import get_headers
 
 DEPARTMENTS = (
     ("https://sbe.umaine.edu/personnel/faculty/", "biology_and_ecology.csv"),
@@ -18,7 +19,7 @@ class B4Compiler:
         compiler = B4Compiler()
         compiler.collect()
     """
-    
+
     def __init__(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.output_dir = os.path.join(
@@ -62,6 +63,7 @@ class B4Compiler:
                 writer = csv.writer(f)
                 for link in bio_links:
                     writer.writerow([link])
+
 
 if __name__ == "__main__":
     B4Compiler().collect()
