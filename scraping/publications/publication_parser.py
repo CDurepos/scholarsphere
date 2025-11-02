@@ -1,7 +1,35 @@
 import re
 import requests
 from scraping.utils import get_headers
+from scraping.dataclasses.publication import Publication
 
+
+def citation_to_publication_instance(citation: str) -> Publication:
+    """
+    Pipelines functions from this module to convert a citation into an instance
+    of the "Publication" dataclass. NOTE: The citation currently needs
+    to contain a DOI for this to function properly.
+
+    Args:
+        citation (str): A citation that might contain a DOI.
+
+    Returns:
+        an instance of the "Publication" dataclass with fields filled in by crossref info
+    """
+    doi = extract_doi(citation=citation)
+    if not doi:
+        return
+    
+    pub_data = fetch_crossref_metadata(doi=doi)
+    publication = Publication(
+        DOI=doi,
+        title=pub_data.get("title", [None])[0],
+        abstract=pub_data.get("abstract"),
+        year = pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
+        citation_count=pub_data.get("is-referenced-by-count"),
+        publisher=pub_data.get("publisher")
+    )
+    return publication
 
 def extract_doi(citation: str) -> str | None:
     """
@@ -43,17 +71,7 @@ def fetch_crossref_metadata(doi: str) -> dict | None:
         return None
 
 
-def process_citation(citation: str):
-    doi = extract_doi(citation)
-    if not doi:
-        return
-
-    metadata = fetch_crossref_metadata(doi)
-    if metadata:
-        print("Sucess")
-
-
 if __name__ == "__main__":
     # Sample citation
     citation = """Perry, E.S., W.R. Miller & S. Lindsay. 2015. Looking at tardigrades in a new light: using epifluorescence to interpret structure. Journal of Microscopy. 257 (2), 117-122 doi:10.1111/jmi.12190"""
-    process_citation(citation)
+    citation_to_publication_instance(citation)
