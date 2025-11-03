@@ -18,7 +18,7 @@ OwenLeitzell:  Owen Leitzell
 
 ### D1 - Recorded Video Demonstration
 1. ___: Show the database running from scratch (creation, data loading, constraints in action). **deadline**: TBD
-2. Aidan, ___: Discuss stored procedures, functions, queries, triggers, and indexing. **deadline**: 11/15 
+2. Aidan, Owen: Discuss stored procedures, functions, queries, triggers, and indexing. **deadline**: 11/15 
 3. Abby: Show at least one example of data scraping and cleaning results. **deadline**: 11/15
 
 ### D2 - MySQL Database Schema Scripts
@@ -27,7 +27,7 @@ Each member will create tables and indexes with comments for their designated ta
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/8
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/8
    
 4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
@@ -37,7 +37,7 @@ Each member will document and implement the key system operations for their desi
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/12
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/12
    
 4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
@@ -51,7 +51,7 @@ Each member will do the following for their designated Maine University:
 
 Designated Universities:
 - Aidan:   UMO,  **deadline**: 11/5
-- Owen:    UMA,  **deadline**: TBD
+- Owen:    UMA,  **deadline**: 11/5
 - Abby:    USM,  **deadline**: 11/5
 - Clayton: UMF,  **deadline**: TBD
 
@@ -61,7 +61,7 @@ Each member will provide scripts or CSV files showcasing a sample data insert in
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/6
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/6
    
 4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
@@ -71,7 +71,7 @@ Each member will provide before/after query performance results for a query on t
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/14
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
+3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/14
    
 4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
@@ -81,7 +81,7 @@ For the **Individual Tasks**, each member will document how to run their individ
 **Individual Tasks**:
 1. Aidan - **deadline**: 11/15
 2. Abby - **deadline**: 11/15
-3. Owen - **deadline**: TBD
+3. Owen - **deadline**: 11/15
 4. Clayton - **deadline**: TBD
 
 **Joint Tasks**:
