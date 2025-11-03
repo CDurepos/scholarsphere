@@ -29,7 +29,7 @@ Each member will create tables and indexes with comments for their designated ta
    
 3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
    
-4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
+4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
 ### D3 - Stored Procedures and Functions
 Each member will document and implement the key system operations for their designated tables:
@@ -39,7 +39,7 @@ Each member will document and implement the key system operations for their desi
    
 3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
    
-4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
+4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
 The primary search procedure will be a joint effort. **deadline**: TBD
 
@@ -63,7 +63,7 @@ Each member will provide scripts or CSV files showcasing a sample data insert in
    
 3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
    
-4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
+4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
 ### D6 - Query Optimization Analysis
 Each member will provide before/after query performance results for a query on their designated tables and give justification on indexing strategies.
@@ -73,7 +73,7 @@ Each member will provide before/after query performance results for a query on t
    
 3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: TBD
    
-4. ___:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
+4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
 ### D7 - Comprehensive README file (.md)
 For the **Individual Tasks**, each member will document how to run their individual scraping scripts, sample processing scripts, and SQL files. For the **Joint Tasks**, all members will document the full database recreation steps, and document any joint effort procedures such as the primary search procedure.
