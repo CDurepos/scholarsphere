@@ -41,7 +41,7 @@ Each member will document and implement the key system operations for their desi
    
 4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: TBD
 
-The primary search procedure will be a joint effort. **deadline**: TBD
+The primary search procedure will be a joint effort. **deadline**: 11/12
 
 ### D4 - Data Scraping Scripts and Documentation
 Each member will do the following for their designated Maine University: 
@@ -85,5 +85,5 @@ For the **Individual Tasks**, each member will document how to run their individ
 4. Clayton - **deadline**: TBD
 
 **Joint Tasks**:
-1. Database Recreation Steps - **deadline**: TBD
-2. Key Procedure Usage - **deadline**: TBD
+1. Database Recreation Steps - **deadline**: 11/15
+2. Key Procedure Usage - **deadline**: 11/15
