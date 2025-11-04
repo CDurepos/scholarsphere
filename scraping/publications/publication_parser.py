@@ -14,22 +14,34 @@ def citation_to_publication_instance(citation: str) -> Publication:
         citation (str): A citation that might contain a DOI.
 
     Returns:
-        an instance of the "Publication" dataclass with fields filled in by crossref info
+        an instance of the "Publication" dataclass with fields filled in by crossref info,
+        or None if crossref could not find the Publication or an error occured.
     """
     doi = extract_doi(citation=citation)
     if doi:
         pub_data = crossref_from_doi(doi=doi)
     else:
         pub_data = crossref_from_citation_text(citation=citation)
-    publication = Publication(
-        doi=doi,
-        title=pub_data.get("title", [None])[0],
-        abstract=pub_data.get("abstract"),
-        year=pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
-        citation_count=pub_data.get("is-referenced-by-count"),
-        publisher=pub_data.get("publisher"),
-    )
-    return publication
+        # TODO: It is important to prevent instances where the wrong paper is returned for the citation.
+        # Crossref sorts the returned papers by a relevance score if a query is used in the API call.
+        # The scoring is not consistent across queries, so I followed the advice of a crossref dev
+        # and normalize by query length for now: https://community.crossref.org/t/query-affiliation/2009/4
+        threshold = 2 #TODO Tune this
+        relevance_score = pub_data.get("score", 0) / len(citation)
+        if relevance_score < threshold:
+            return None
+
+    if pub_data:
+        publication = Publication(
+            doi=doi,
+            title=pub_data.get("title", [None])[0],
+            abstract=pub_data.get("abstract"),
+            year=pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
+            citation_count=pub_data.get("is-referenced-by-count"),
+            publisher=pub_data.get("publisher"),
+        )
+        return publication
+    return None
 
 
 def extract_doi(citation: str) -> str | None:
@@ -114,7 +126,7 @@ if __name__ == "__main__":
     import os
     from scraping.processing.csv_converter import dataclass_instances_to_csv
 
-    inst = citation_to_publication_instance(citation4)
+    inst = citation_to_publication_instance(citation3)
     dataclass_instances_to_csv(
         [inst],
         os.path.join("scraping", "UMO", "scrape_storage", "pub_test.csv"),

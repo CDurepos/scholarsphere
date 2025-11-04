@@ -47,10 +47,13 @@ class B1Compiler:
             bio_links = []
             curr_page = 1
             while True:
-                response = requests.get(
-                    url + f"/page/{curr_page}/", headers=self.headers
-                )
-                if response.status_code != 200:
+                try:
+                    response = requests.get(
+                        url + f"/page/{curr_page}/", headers=self.headers
+                    )
+                    if response.status_code != 200:
+                        break
+                except requests.RequestException as e:
                     break
                 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -86,6 +89,7 @@ class B1Compiler:
                 writer = csv.writer(f)
                 for link in bio_links:
                     writer.writerow([link])
+
 
 if __name__ == "__main__":
     B1Compiler().collect()
