@@ -75,7 +75,7 @@ class B1Compiler:
                                 or " biography" in a_tag.text.lower()
                                 or " staff page" in a_tag.text.lower()
                             ):
-                                fac_titles.append(fac_position.text)
+                                fac_titles.append(fac_position.text.strip())
                                 bio_links.append(a_tag["href"])
 
                 curr_page += 1

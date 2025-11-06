@@ -47,7 +47,7 @@ class B2Compiler:
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
-
+            fac_titles = []
             bio_links = []
             fac = soup.find("div", id="fac")
             if not fac:
@@ -58,6 +58,7 @@ class B2Compiler:
                     if header:
                         a_tag = header.find("a", href=True)
                         if a_tag:
+                            fac_titles.append(div.get_text(strip=True))
                             bio_links.append(a_tag["href"])
 
             # WRITE
@@ -68,8 +69,8 @@ class B2Compiler:
                 encoding="utf-8",
             ) as f:
                 writer = csv.writer(f)
-                for link in bio_links:
-                    writer.writerow([link])
+                for faculty in zip(fac_titles, bio_links):
+                    writer.writerow(faculty)
 
 
 if __name__ == "__main__":

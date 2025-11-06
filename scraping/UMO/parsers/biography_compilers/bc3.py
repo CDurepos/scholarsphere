@@ -38,6 +38,7 @@ class B3Compiler:
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
 
+            fac_titles = []
             bio_links = []
             faculty_header = soup.find(
                 "h2",
@@ -56,11 +57,19 @@ class B3Compiler:
                         )
                         if not child_div:
                             continue
-
-                        # Find <a> tags that mention "Bio"
-                        for a_tag in child_div.find_all("a", href=True):
-                            if "bio" in a_tag.text.lower():
-                                bio_links.append(a_tag["href"])
+                        else:
+                            title = child_div.contents[0]
+                            if (
+                                not title
+                                or not isinstance(title, str)
+                                or not "professor" in title
+                            ):
+                                continue
+                            # Find <a> tags that mention "Bio"
+                            for a_tag in child_div.find_all("a", href=True):
+                                if "bio" in a_tag.text.lower():
+                                    fac_titles.append(title)
+                                    bio_links.append(a_tag["href"])
 
             # WRITE
             with open(
