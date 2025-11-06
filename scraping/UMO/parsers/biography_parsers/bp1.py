@@ -1,10 +1,12 @@
 from scraping.utils import get_headers
+from scraping.dataclasses import Faculty
 from scraping.publications import CitationExtractor
-from scraping.UMO.dataclass_instances.orono import umaine
 from scraping.publications.publication_parser import citation_to_publication_instance
 
 import os
+import re
 import requests
+from tqdm import tqdm
 from bs4 import BeautifulSoup
 
 DEPARTMENTS = (
@@ -55,47 +57,108 @@ class B1Parser:
         self.headers = get_headers("h1")
 
     def parse(self):
+        """
+        Parse biography pages into Faculty and Publication dataclasses.
+
+        Returns:
+            fac_instances (list[Faculty]): A list of all Faculty instances obtained from this module's biography lists
+            pub_instances (list[list[Publication]]): A list of all Publication instances of each faculty from this module's biography lists
+            NOTE: fac_instances and pub_instances indices correspond to each other. pub_instances[0] is a list of all publications by fac_instances[0]
+        """
         citation_extractor = CitationExtractor()
-        faculty_instances = []
-        publication_instances = []
-        institution_instance = [umaine]
-        for path in self.input_file_paths:
+        fac_instances = []
+        pub_instances = []
+        for idx, path in enumerate(self.input_file_paths):
             with open(path, "r") as f:
-                bio_urls = [line.strip() for line in f.readlines()]
-            for bio_url in bio_urls:
+                fac_titles = []
+                bio_urls = []
+                for line in f.readlines():
+                    items = line.strip().split(",")
+                    fac_titles.append(items[0])
+                    bio_urls.append(items[1])
+            for fac_title, bio_url in tqdm(
+                zip(fac_titles, bio_urls),
+                desc=f"Parsing biography for department {idx+1}/{len(DEPARTMENTS)}",
+                total=len(fac_titles),
+            ):
                 try:
                     response = requests.get(bio_url, headers=self.headers, timeout=10)
                     if response.status_code != 200:
                         continue
                 except requests.RequestException as e:
                     continue
-                
-                # Extract paper citations
+
                 soup = BeautifulSoup(response.text, "html.parser")
-                h_tag = soup.find([f"h{i}" for i in range(1, 7)], string=lambda text: text and "publications" in text.lower())
+                fac_inst = Faculty()
+                # Set title
+                fac_inst.title = fac_title
+
+                # Set department
+                fac_inst.department = os.path.basename(path)[:-4]
+
+                # Set scraped from location
+                fac_inst.scraped_from = bio_url
+
+                # Extract name
+                name = soup.find(
+                    ["h1", "h2"], class_=["page-title", "single-title", "archive-title"]
+                ).text
+                if name:
+                    name_split = name.split()
+                    if len(name_split) > 1:
+                        fac_inst.first_name = name_split[0]
+                        fac_inst.last_name = name_split[-1]
+                    else:
+                        fac_inst.first_name = name
+
+                # Extract email
+                email_pattern = re.compile(
+                    r"(?:mailto:)?([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                    re.IGNORECASE,
+                )
+                page_content = soup.find("div", class_="page-content")
+                if page_content:
+                    email_match = email_pattern.search(
+                        page_content.get_text(" ", strip=True)
+                    )
+                else:
+                    email_match = email_pattern.search(soup.get_text(" ", strip=True))
+                if email_match:
+                    fac_inst.email = email_match.group()
+
+                # Extract publications
+                h_tag = soup.find(
+                    [f"h{i}" for i in range(1, 7)],
+                    string=lambda text: text and "publications" in text.lower(),
+                )
                 citations = None
                 if not h_tag:
-                    # assume in this case that there must be an href to publications like in forest pages
-                    a_tag = soup.find("a", href=True, string=lambda text: text and "publications" in text.lower())
+                    # Assume in this case that there must be an href to publications like in forest pages
+                    a_tag = soup.find(
+                        "a",
+                        href=True,
+                        string=lambda text: text and "publications" in text.lower(),
+                    )
                     if a_tag:
-                        # go through href
                         try:
-                            response = requests.get(a_tag["href"], headers=self.headers, timeout=10)
+                            response = requests.get(
+                                a_tag["href"], headers=self.headers, timeout=10
+                            )
                             if response.status_code != 200:
                                 continue
                         except requests.RequestException as e:
                             continue
-                        # can't guarantee any consistent format, so just try from body
+                        # Can't guarantee any consistent format, so just try from body
                         publication_soup = BeautifulSoup(response.text, "html.parser")
                         body = publication_soup.find("body")
                         if body:
                             citations = citation_extractor.tag_to_citation(tag=body)
                 else:
-                    # go through list
-                    #TODO: Probably allow more than just list tags. Some pages store citations in <p>
+                    # Go through list
+                    # TODO: Probably allow more than just list tags. Some pages store citations in <p>
                     list_tag = None
                     for sibling in h_tag.next_siblings:
-                        if isinstance(sibling, str):  # skip text nodes like "\n"
+                        if isinstance(sibling, str):  # Skip text nodes like "\n"
                             continue
                         if sibling.name in ("ul", "ol"):
                             list_tag = sibling
@@ -105,12 +168,39 @@ class B1Parser:
                             break
                     if list_tag:
                         citations = citation_extractor.tag_to_citation(tag=list_tag)
-                
+                pub_insts = []
                 if citations:
-                    # convert all citations to Publication dataclass instances
-                    for citation in citations:
-                        pub_inst = citation_to_publication_instance(citation=citation)
+                    # Convert all citations to Publication dataclass instances
+                    citation_lim = (
+                        10  # Maximum number of potential citations to process
+                    )
+                    for citation in citations[:citation_lim]:
+                        pub_insts.append(
+                            citation_to_publication_instance(citation=citation)
+                        )
+
+                # Extract google scholar, research gate, and orcid urls
+                for a in soup.find_all("a", href=True):
+                    href = a["href"]
+                    if "scholar.google." in href:
+                        fac_inst.google_scholar_url = href
+                    elif "researchgate.net" in href:
+                        fac_inst.research_gate_url = href
+                    elif "orcid.org" in href:
+                        orcid_match = re.search(
+                            r"(\d{4}-\d{4}-\d{4}-\d{3}[0-9X])", href
+                        )
+                        if orcid_match:
+                            fac_inst.orcid = orcid_match.group(1)
+
+                fac_instances.append(fac_inst)
+                pub_instances.append(pub_insts)
+
+        assert len(fac_instances) == len(pub_instances)
+        return fac_instances, pub_instances
+
 
 if __name__ == "__main__":
     parser = B1Parser()
-    parser.parse()
+    f, p = parser.parse()
+    print("done")

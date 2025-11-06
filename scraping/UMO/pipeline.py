@@ -1,3 +1,5 @@
+from scraping.UMO.dataclass_instances.orono import umaine
+
 import importlib
 from tqdm import tqdm
 
@@ -9,5 +11,6 @@ for name in tqdm(compiler_names, "Gathering biography links.", total = len(compi
     compiler_class().collect()
 
 # Scrape faculty biography pages and build "Faculty" and "Publication" dataclass instances
+# add uuids here
 
 # Clean data and write results to .csv

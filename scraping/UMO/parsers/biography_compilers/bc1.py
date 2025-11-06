@@ -44,6 +44,7 @@ class B1Compiler:
 
     def collect(self):
         for url, output_file in self.departments:
+            fac_titles = []
             bio_links = []
             curr_page = 1
             while True:
@@ -55,10 +56,9 @@ class B1Compiler:
                         break
                 except requests.RequestException as e:
                     break
+
                 soup = BeautifulSoup(response.text, "html.parser")
-
                 faculty = soup.find_all("div", class_="people-wrapper")
-
                 for tag in faculty:
                     fac_position = tag.find("p", class_="people-wrapper__position")
                     if (
@@ -75,6 +75,7 @@ class B1Compiler:
                                 or " biography" in a_tag.text.lower()
                                 or " staff page" in a_tag.text.lower()
                             ):
+                                fac_titles.append(fac_position.text)
                                 bio_links.append(a_tag["href"])
 
                 curr_page += 1
@@ -87,8 +88,8 @@ class B1Compiler:
                 encoding="utf-8",
             ) as f:
                 writer = csv.writer(f)
-                for link in bio_links:
-                    writer.writerow([link])
+                for faculty in zip(fac_titles, bio_links):
+                    writer.writerow(faculty)
 
 
 if __name__ == "__main__":
