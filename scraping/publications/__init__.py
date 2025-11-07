@@ -1,1 +1,1 @@
-from .tag_to_citation import CitationExtractor
+from .citations_from_tags import CitationExtractor

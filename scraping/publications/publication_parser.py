@@ -3,15 +3,26 @@ from scraping.dataclasses import Publication
 
 import re
 import requests
+from bs4 import BeautifulSoup
+from difflib import SequenceMatcher
 
 
-def citation_to_publication_instance(citation: str) -> Publication:
+def citation_to_publication_instance(
+    citation: str,
+    author_name: str = None,
+    relevance_threshold: float = 3.0,
+    author_sim_threshold: float = 0.75,
+) -> Publication:
     """
     Pipelines functions from this module to convert a citation into an instance
     of the "Publication" dataclass.
 
     Args:
         citation (str): A citation that might contain a DOI.
+        author_name (str): The name of the author to aid in filtering incorrect matches ("first_name ?middle_name(s) last_name").
+        NOTE: author_name arg is only useful when citation does not contain a DOI.
+        relevance_threshold (float): The minimum score to consider a publication match, where score is roughly: (elastic_search_bm25 / citation_word_count).
+        author_sim_threshold (float): The minimum similarity score between the provided author_name arg, and an author found in the publication match (0.0 - 1.0).
 
     Returns:
         an instance of the "Publication" dataclass with fields filled in by crossref info,
@@ -22,20 +33,46 @@ def citation_to_publication_instance(citation: str) -> Publication:
         pub_data = crossref_from_doi(doi=doi)
     else:
         pub_data = crossref_from_citation_text(citation=citation)
+
+    if pub_data:
         # TODO: It is important to prevent instances where the wrong paper is returned for the citation.
         # Crossref sorts the returned papers by a relevance score if a query is used in the API call.
         # The scoring is not consistent across queries, so I followed the advice of a crossref dev
         # and normalize by query length for now: https://community.crossref.org/t/query-affiliation/2009/4
-        threshold = 2 #TODO Tune this
-        relevance_score = pub_data.get("score", 0) / len(citation)
-        if relevance_score < threshold:
+        relevance_score = pub_data.get("score", 0) / len(citation.split())
+        if relevance_score < relevance_threshold:
             return None
+        if author_name:
+            author_match_flag = False
+            authors = pub_data.get("author")
+            # check to see if author_name arg is in author list, with some lenience on non-exact matches
+            if authors:
+                for author in authors[
+                    :200
+                ]:  # Only check first 200 authors in case of very long author list
+                    given_name = author.get("given", "")
+                    family_name = author.get("family", "")
+                    author_match_score = SequenceMatcher(
+                        None, given_name + " " + family_name, author_name
+                    ).ratio()
+                    if author_match_score > author_sim_threshold:
+                        author_match_flag = True
+            if not author_match_flag:
+                return None
 
-    if pub_data:
+        # Strip title and abstract of possible html tags
+        title = pub_data.get("title", [None])[0]
+        if title:
+            title = BeautifulSoup(title, "html.parser").get_text()
+        abstract = pub_data.get("abstract")
+        if abstract:
+            abstract = BeautifulSoup(abstract, "html.parser").get_text()
+
+        # Create publication instance
         publication = Publication(
             doi=doi,
-            title=pub_data.get("title", [None])[0],
-            abstract=pub_data.get("abstract"),
+            title=title,
+            abstract=abstract,
             year=pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
             citation_count=pub_data.get("is-referenced-by-count"),
             publisher=pub_data.get("publisher"),
@@ -71,7 +108,7 @@ def crossref_from_doi(doi: str) -> dict:
         doi (str): The DOI to query crossref with.
 
     Returns:
-        a dict with JSON metadata or None if request fails.
+        a dict with JSON metadata or empty dict if request fails.
     """
     url = f"https://api.crossref.org/works/{doi}"
     headers = get_headers("h1")
@@ -87,6 +124,7 @@ def crossref_from_doi(doi: str) -> dict:
 def crossref_from_citation_text(citation: str) -> dict:
     """
     Query Crossref's REST API for JSON metadata given a citation.
+    Returns only the top match for the given query.
     NOTE: If the citation has a DOI, crossref_from_doi will be
     more reliable.
 
@@ -94,14 +132,17 @@ def crossref_from_citation_text(citation: str) -> dict:
         citation (str): The citation to query crossref with.
 
     Returns:
-        a dict with JSON metadata or None if request fails.
+        a dict with JSON metadata or empty dict if request fails.
     """
     query = citation[:2000]  # Safety against query length limits
     url = f"https://api.crossref.org/works"
     headers = get_headers("h1")
     try:
         response = requests.get(
-            url, headers=headers, params={"query.bibliographic": query}, timeout=10
+            url,
+            headers=headers,
+            params={"query.bibliographic": query, "rows": 1},
+            timeout=10,
         )
         response.raise_for_status()
         items = response.json().get("message", {}).get("items", [])

@@ -1,7 +1,5 @@
 from scraping.utils import get_headers
 from scraping.dataclasses import Faculty
-from scraping.publications import CitationExtractor
-from scraping.publications.publication_parser import citation_to_publication_instance
 
 import os
 import re
@@ -65,7 +63,6 @@ class B2Parser:
             pub_instances (list[list[Publication]]): A list of all Publication instances of each faculty from this module's biography lists
             NOTE: fac_instances and pub_instances indices correspond to each other. pub_instances[0] is a list of all publications by fac_instances[0]
         """
-        citation_extractor = CitationExtractor()
         fac_instances = []
         pub_instances = []
         for idx, path in enumerate(self.input_file_paths):

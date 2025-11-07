@@ -22,7 +22,7 @@ class CitationExtractor:
             re.VERBOSE | re.DOTALL
         )
         
-    def tag_to_citation(self, tag: Tag, min_length: int = 35):
+    def tag_to_citations(self, tag: Tag, min_length: int = 75):
         """
         Pull all citations nested in a bs4.Tag object.
 
@@ -32,5 +32,5 @@ class CitationExtractor:
         """
         text = tag.get_text(separator=" ", strip=True)
         matches = self.citation_pattern.findall(text)
-        filtered_matches = [m for m in matches if len(m) >= min_length]
+        filtered_matches = [re.sub(r'\s+', ' ', m) for m in matches if len(m) >= min_length] # Normalize whitespace characters and 'citations' that are too short
         return filtered_matches

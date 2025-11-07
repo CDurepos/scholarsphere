@@ -152,7 +152,7 @@ class B1Parser:
                         publication_soup = BeautifulSoup(response.text, "html.parser")
                         body = publication_soup.find("body")
                         if body:
-                            citations = citation_extractor.tag_to_citation(tag=body)
+                            citations = citation_extractor.tag_to_citations(tag=body)
                 else:
                     # Go through list
                     # TODO: Probably allow more than just list tags. Some pages store citations in <p>
@@ -167,17 +167,19 @@ class B1Parser:
                         if list_tag:
                             break
                     if list_tag:
-                        citations = citation_extractor.tag_to_citation(tag=list_tag)
+                        citations = citation_extractor.tag_to_citations(tag=list_tag)
                 pub_insts = []
                 if citations:
                     # Convert all citations to Publication dataclass instances
                     citation_lim = (
                         10  # Maximum number of potential citations to process
                     )
+                    fac_first_name = fac_inst.first_name if fac_inst.first_name else ""
+                    fac_last_name = fac_inst.last_name if fac_inst.last_name else ""
                     for citation in citations[:citation_lim]:
-                        pub_insts.append(
-                            citation_to_publication_instance(citation=citation)
-                        )
+                        pub_inst = citation_to_publication_instance(citation=citation, author_name=fac_first_name + " " + fac_last_name)
+                        if pub_inst:
+                            pub_insts.append(pub_inst)
 
                 # Extract google scholar, research gate, and orcid urls
                 for a in soup.find_all("a", href=True):
