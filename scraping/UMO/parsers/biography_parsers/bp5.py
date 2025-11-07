@@ -9,24 +9,14 @@ import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 
-DEPARTMENTS = (
-    ("https://mcec.umaine.edu/eleceng/#fac", "electrical_and_computer_engineering.csv"),
-    ("https://mcec.umaine.edu/civil/#fac", "civil_and_environmental_engineering.csv"),
-    ("https://mcec.umaine.edu/depts/scis/", "computing_and_information_science.csv"),
-    ("https://mcec.umaine.edu/depts/mee/", "mechanical_engineering.csv"),
-    ("https://mcec.umaine.edu/depts/set/", "engineering_technology.csv"),
-    (
-        "https://mcec.umaine.edu/depts/chembio/",
-        "chemical_and_biomedical_engineering.csv",
-    ),
-)
+DEPARTMENTS = (("https://umaine.edu/history/faculty/", "history.csv"),)
 
 
-class B2Parser:
+class B5Parser:
     """Collect faculty data from biography pages.
 
     Usage:
-        parser = B2Parser()
+        parser = B5Parser()
         parser.parse()
     """
 
@@ -100,12 +90,11 @@ class B2Parser:
                 fac_inst.scraped_from = bio_url
 
                 # Extract name
-                name_container = soup.find(
-                    ["h2"], class_=["wp-block-kadence-advancedheading"]
-                )
+                name_container = soup.find(["h1"], class_=["page-title single-title"])
                 if name_container:
-                    name = name_container.find("strong")
-                    if name:
+                    name = name_container.text
+                    if name and isinstance(name, str):
+                        name = name.split(",")[0]  # Get rid of degree (e.g. ', Ph.D')
                         name_split = name.split()
                         if len(name_split) > 1:
                             fac_inst.first_name = name_split[0]
@@ -114,28 +103,27 @@ class B2Parser:
                             fac_inst.first_name = name
 
                 # Extract email
-                email_pattern = re.compile(
-                    r"(?:mailto:)?([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
-                    re.IGNORECASE,
-                )
-                possible_email_containers = soup.find_all(
-                    "div", class_="kt-inside-inner-col"
-                )
-                for div in possible_email_containers:
-                    if fac_inst.email is not None:
-                        break  # Must have found a match in anchor loop
-                    anchors = div.find_all("a", href=True)
-                    for (
-                        anchor
-                    ) in (
-                        anchors
-                    ):  # TODO: Some emails aren't links, so this won't always work
-                        possible_email_match = email_pattern.search(
-                            anchor.get_text(" ", strip=True)
+                email_container = soup.find("p", class_="people-wrapper__email")
+                if email_container:
+                    anchor = email_container.find("a", href=True)
+                    if anchor:
+                        fac_inst.email = anchor[href].removeprefix("mailto:")
+
+                # Extract publications
+                h_tag = soup.find("div", class_="page-content") # This department isn't formatted well, so have to just start from here.
+                citations = None
+                if h_tag:
+                    citations = citation_extractor.tag_to_citation(tag=h_tag)
+                pub_insts = []
+                if citations:
+                    # Convert all citations to Publication dataclass instances
+                    citation_lim = (
+                        10  # Maximum number of potential citations to process
+                    )
+                    for citation in citations[:citation_lim]:
+                        pub_insts.append(
+                            citation_to_publication_instance(citation=citation)
                         )
-                        if possible_email_match:
-                            fac_inst.email = possible_email_match.group()
-                            break
 
                 # Extract google scholar, research gate, and orcid urls
                 for a in soup.find_all("a", href=True):
@@ -152,13 +140,13 @@ class B2Parser:
                             fac_inst.orcid = orcid_match.group(1)
 
                 fac_instances.append(fac_inst)
-                pub_instances.append([]) # No publications for these pages
+                pub_instances.append(pub_insts)
 
         assert len(fac_instances) == len(pub_instances)
         return fac_instances, pub_instances
 
 
 if __name__ == "__main__":
-    parser = B2Parser()
+    parser = B5Parser()
     f, p = parser.parse()
     print("done")

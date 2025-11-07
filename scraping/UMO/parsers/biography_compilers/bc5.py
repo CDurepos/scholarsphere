@@ -38,6 +38,7 @@ class B5Compiler:
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
 
+            fac_titles = []
             bio_links = []
             for profile_anchor in soup.find_all(
                 "a", class_="wp-block-kadence-singlebtn"
@@ -51,6 +52,7 @@ class B5Compiler:
                         and "emeritus" not in text.lower()
                         and "emerita" not in text.lower()
                     ):
+                        fac_titles.append(text)
                         bio_links.append(profile_anchor["href"])
 
             # WRITE
@@ -61,8 +63,8 @@ class B5Compiler:
                 encoding="utf-8",
             ) as f:
                 writer = csv.writer(f)
-                for link in bio_links:
-                    writer.writerow([link])
+                for faculty in zip(fac_titles, bio_links):
+                    writer.writerow(faculty)
 
 
 if __name__ == "__main__":

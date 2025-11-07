@@ -110,47 +110,10 @@ class B3Parser:
                         fac_inst.email = anchor[href].removeprefix("mailto:")
 
                 # Extract publications
-                h_tag = soup.find(
-                    [f"h{i}" for i in range(1, 7)],
-                    string=lambda text: text and "publications" in text.lower(),
-                )
+                h_tag = soup.find("div", class_="page-content") # This department isn't formatted well, so have to just start from here.
                 citations = None
-                if not h_tag:
-                    # Assume in this case that there must be an href to publications like in forest pages
-                    a_tag = soup.find(
-                        "a",
-                        href=True,
-                        string=lambda text: text and "publications" in text.lower(),
-                    )
-                    if a_tag:
-                        try:
-                            response = requests.get(
-                                a_tag["href"], headers=self.headers, timeout=10
-                            )
-                            if response.status_code != 200:
-                                continue
-                        except requests.RequestException as e:
-                            continue
-                        # Can't guarantee any consistent format, so just try from body
-                        publication_soup = BeautifulSoup(response.text, "html.parser")
-                        body = publication_soup.find("body")
-                        if body:
-                            citations = citation_extractor.tag_to_citation(tag=body)
-                else:
-                    # Go through list
-                    # TODO: Probably allow more than just list tags. Some pages store citations in <p>
-                    list_tag = None
-                    for sibling in h_tag.next_siblings:
-                        if isinstance(sibling, str):  # Skip text nodes like "\n"
-                            continue
-                        if sibling.name in ("ul", "ol"):
-                            list_tag = sibling
-                            break
-                        list_tag = sibling.find(["ul", "ol"])
-                        if list_tag:
-                            break
-                    if list_tag:
-                        citations = citation_extractor.tag_to_citation(tag=list_tag)
+                if h_tag:
+                    citations = citation_extractor.tag_to_citation(tag=h_tag)
                 pub_insts = []
                 if citations:
                     # Convert all citations to Publication dataclass instances

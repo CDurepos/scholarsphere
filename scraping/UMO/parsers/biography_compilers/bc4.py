@@ -41,6 +41,7 @@ class B4Compiler:
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
 
+            fac_titles = []
             bio_links = []
             for p_tag in soup.find_all("p", class_="kt-blocks-info-box-text"):
                 p_text = p_tag.get_text(strip=True).lower()
@@ -51,8 +52,9 @@ class B4Compiler:
                 ):
                     a_tags = p_tag.find_all("a", href=True)
                     if a_tags:
+                        fac_titles.append(p_text)
                         bio_links.append(a_tags[-1]["href"])
-
+                        
             # WRITE
             with open(
                 os.path.join(self.output_dir, output_file),
@@ -61,8 +63,8 @@ class B4Compiler:
                 encoding="utf-8",
             ) as f:
                 writer = csv.writer(f)
-                for link in bio_links:
-                    writer.writerow([link])
+                for faculty in zip(fac_titles, bio_links):
+                    writer.writerow(faculty)
 
 
 if __name__ == "__main__":

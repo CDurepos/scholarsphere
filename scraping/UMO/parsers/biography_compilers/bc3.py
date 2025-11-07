@@ -79,8 +79,8 @@ class B3Compiler:
                 encoding="utf-8",
             ) as f:
                 writer = csv.writer(f)
-                for link in bio_links:
-                    writer.writerow([link])
+                for faculty in zip(fac_titles, bio_links):
+                    writer.writerow(faculty)
 
 
 if __name__ == "__main__":
