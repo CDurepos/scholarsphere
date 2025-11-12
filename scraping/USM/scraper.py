@@ -5,6 +5,9 @@ from scraping.dataclasses import faculty
 from dataclasses import asdict
 import regex as re
 
+# Use this Boolean to toggle on/off biography retrieval
+retrieve_biography = True
+
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 abbreviations = [
     "aama", "aprn", "ba", "bcba-d", "bcba", "bsn", "cas", "ccep", "cefp", "ccc-slp", "cpia", "cip",
@@ -14,7 +17,7 @@ abbreviations = [
     "mt-bc", "ncsp", "nic", "np-c", "otd", "otr/l", "pe", "phd", "pmhnp-bc", "dsw", "ctmh",
     "pt", "rpt-s", "rn", "rn-bc", "licsw", "dvm", "anp-bc", "agpcnp-bc", "mpa", "mhrt-c",
     "psyd", "mhrt/c", "cota/l", "ceeaa", "ed:k-", "chse", "msn-ed", "mba", "cpps", "dhed", "mches",
-    "esq.", "sc:l", "nic-m", "bc", "msph", "pmhnp", "atc"]
+    "esq.", "sc:l", "nic-m", "bc", "msph", "pmhnp", "atc", "aprn-bc"]
 base_url = "https://usm.maine.edu/directories/faculty-and-staff/"
 
 def get_faculty_csv_from_url(url):
@@ -40,7 +43,7 @@ def get_faculty_csv_from_url(url):
 
             # Parse name
             name_tag = person.select_one("div.people_item_info h3")
-            first_name, last_name = None, None
+            first_name, last_name, bio = None, None, None
             if name_tag:
                 # Remove commas, parentheses and digits
                 clean_name = re.sub(r"[,0-9()+]", " ", name_tag.text.strip())
@@ -66,9 +69,36 @@ def get_faculty_csv_from_url(url):
                     first_name = " ".join(name_parts[:-1])
                     last_name = name_parts[-1]
 
+                if retrieve_biography:
+                    # Inspect the faculty's personal web page based on name
+                    specific_url = "https://usm.maine.edu/directories/people/" + first_name + "-" + last_name + "/"
+                    response = requests.get(specific_url)
+                    # Check URL request validity:
+                    if response.status_code != 200:
+                        # print(f"Failed to retrieve {specific_url}. Status code: {response.status_code}")
+                        continue
+                    soup = BeautifulSoup(response.text, "lxml")
+                    bio_tag = soup.select_one("div.bio")
+                    bio = None
+                    if bio_tag:
+                        # Extract all paragraph text inside the bio section
+                        paragraphs = [p.get_text(strip=True) for p in bio_tag.find_all("p") if p.get_text(strip=True)]
+                        bio = " ".join(paragraphs)
+
             # Parse title
             title_tag = person.select_one("div.people-title li")
-            title = title_tag.get_text(strip=True) if title_tag else None
+            title, department = None, None
+            if title_tag:
+                raw_title = title_tag.get_text(strip=True)
+
+                # Match patterns like "Assistant Professor, Department of Math"
+                match = re.match(r"^(.*?),\s*(Department.*)$", raw_title, re.IGNORECASE)
+                if match:
+                    title = match.group(1).strip()
+                    department = match.group(2).strip()
+                else:
+                    title = raw_title
+                    department = None
 
             # Parse email
             email_tag = person.select_one("div.people-email a")
@@ -84,10 +114,13 @@ def get_faculty_csv_from_url(url):
                 first_name=first_name,
                 last_name=last_name,
                 title=title,
+                department=department,
                 email=email,
                 phone_num=phone,
+                biography=bio,
                 scraped_from=current_url )
-            faculty_list.append(asdict(faculty_member))
+            if faculty_member.first_name is not None:
+                faculty_list.append(asdict(faculty_member))
 
     # Convert to DataFrame and save
     df = pd.DataFrame(faculty_list)
