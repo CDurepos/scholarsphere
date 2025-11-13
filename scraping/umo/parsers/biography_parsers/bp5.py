@@ -1,5 +1,5 @@
 from scraping.utils import get_headers
-from scraping.dataclasses import Faculty
+from scraping.schemas import Faculty
 from scraping.publications import CitationExtractor
 from scraping.publications.publication_parser import citation_to_publication_instance
 
@@ -9,24 +9,14 @@ import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 
-DEPARTMENTS = (
-    ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),
-    (
-        "https://gsbse.umaine.edu/people/department/faculty/",
-        "biomedical_science_and_engineering.csv",
-    ),
-    (
-        "https://forest.umaine.edu/people/department/faculty-staff/",
-        "forest_resources.csv",
-    ),
-)
+DEPARTMENTS = (("https://umaine.edu/history/faculty/", "history.csv"),)
 
 
-class B1Parser:
+class B5Parser:
     """Collect faculty data from biography pages.
 
     Usage:
-        parser = B1Parser()
+        parser = B5Parser()
         parser.parse()
     """
 
@@ -58,7 +48,7 @@ class B1Parser:
 
     def parse(self):
         """
-        Parse biography pages into Faculty and Publication dataclasses.
+        Parse biography pages into Faculty and Publication schemas.
 
         Returns:
             fac_instances (list[Faculty]): A list of all Faculty instances obtained from this module's biography lists
@@ -100,74 +90,30 @@ class B1Parser:
                 fac_inst.scraped_from = bio_url
 
                 # Extract name
-                name = soup.find(
-                    ["h1", "h2"], class_=["page-title", "single-title", "archive-title"]
-                ).text
-                if name:
-                    name_split = name.split()
-                    if len(name_split) > 1:
-                        fac_inst.first_name = name_split[0]
-                        fac_inst.last_name = name_split[-1]
-                    else:
-                        fac_inst.first_name = name
+                name_container = soup.find(["h1"], class_=["page-title single-title"])
+                if name_container:
+                    name = name_container.text
+                    if name and isinstance(name, str):
+                        name = name.split(",")[0]  # Get rid of degree (e.g. ', Ph.D')
+                        name_split = name.split()
+                        if len(name_split) > 1:
+                            fac_inst.first_name = name_split[0]
+                            fac_inst.last_name = name_split[-1]
+                        else:
+                            fac_inst.first_name = name
 
                 # Extract email
-                email_pattern = re.compile(
-                    r"(?:mailto:)?([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
-                    re.IGNORECASE,
-                )
-                page_content = soup.find("div", class_="page-content")
-                if page_content:
-                    email_match = email_pattern.search(
-                        page_content.get_text(" ", strip=True)
-                    )
-                else:
-                    email_match = email_pattern.search(soup.get_text(" ", strip=True))
-                if email_match:
-                    fac_inst.email = email_match.group()
+                email_container = soup.find("p", class_="people-wrapper__email")
+                if email_container:
+                    anchor = email_container.find("a", href=True)
+                    if anchor:
+                        fac_inst.email = anchor["href"].removeprefix("mailto:")
 
                 # Extract publications
-                h_tag = soup.find(
-                    [f"h{i}" for i in range(1, 7)],
-                    string=lambda text: text and "publications" in text.lower(),
-                )
+                h_tag = soup.find("div", class_="page-content") # This department isn't formatted well, so have to just start from here.
                 citations = None
-                if not h_tag:
-                    # Assume in this case that there must be an href to publications like in forest pages
-                    a_tag = soup.find(
-                        "a",
-                        href=True,
-                        string=lambda text: text and "publications" in text.lower(),
-                    )
-                    if a_tag:
-                        try:
-                            response = requests.get(
-                                a_tag["href"], headers=self.headers, timeout=10
-                            )
-                            if response.status_code != 200:
-                                continue
-                        except requests.RequestException as e:
-                            continue
-                        # Can't guarantee any consistent format, so just try from body
-                        publication_soup = BeautifulSoup(response.text, "html.parser")
-                        body = publication_soup.find("body")
-                        if body:
-                            citations = citation_extractor.tag_to_citations(tag=body)
-                else:
-                    # Go through list
-                    # TODO: Probably allow more than just list tags. Some pages store citations in <p>
-                    list_tag = None
-                    for sibling in h_tag.next_siblings:
-                        if isinstance(sibling, str):  # Skip text nodes like "\n"
-                            continue
-                        if sibling.name in ("ul", "ol"):
-                            list_tag = sibling
-                            break
-                        list_tag = sibling.find(["ul", "ol"])
-                        if list_tag:
-                            break
-                    if list_tag:
-                        citations = citation_extractor.tag_to_citations(tag=list_tag)
+                if h_tag:
+                    citations = citation_extractor.tag_to_citations(tag=h_tag)
                 pub_insts = []
                 if citations:
                     # Convert all citations to Publication dataclass instances
@@ -203,6 +149,6 @@ class B1Parser:
 
 
 if __name__ == "__main__":
-    parser = B1Parser()
+    parser = B5Parser()
     f, p = parser.parse()
     print("done")

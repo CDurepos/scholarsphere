@@ -1,5 +1,5 @@
 from scraping.utils import get_headers
-from scraping.dataclasses import Faculty
+from scraping.schemas import Faculty
 from scraping.publications import CitationExtractor
 from scraping.publications.publication_parser import citation_to_publication_instance
 
@@ -9,14 +9,14 @@ import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 
-DEPARTMENTS = (("https://umaine.edu/history/faculty/", "history.csv"),)
+DEPARTMENTS = (("https://umaine.edu/business/faculty-and-staff/", "business.csv"),)
 
 
-class B5Parser:
+class B3Parser:
     """Collect faculty data from biography pages.
 
     Usage:
-        parser = B5Parser()
+        parser = B3Parser()
         parser.parse()
     """
 
@@ -48,7 +48,7 @@ class B5Parser:
 
     def parse(self):
         """
-        Parse biography pages into Faculty and Publication dataclasses.
+        Parse biography pages into Faculty and Publication schemas.
 
         Returns:
             fac_instances (list[Faculty]): A list of all Faculty instances obtained from this module's biography lists
@@ -149,6 +149,6 @@ class B5Parser:
 
 
 if __name__ == "__main__":
-    parser = B5Parser()
+    parser = B3Parser()
     f, p = parser.parse()
     print("done")

@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from scraping.dataclasses import faculty
+from scraping.schemas import faculty
 from dataclasses import asdict
 import regex as re
 
@@ -51,7 +51,7 @@ def get_faculty_csv_from_url(url):
                 name_parts = [part.strip() for part in clean_name.split()]
                 # Remove abbreviations
                 name_parts = [part for part in name_parts if part.lower() not in abbreviations]
-                # Special Cases (because USM website is weird)
+                # Special Cases (because usm website is weird)
                 if "De" in name_parts or "Van" in name_parts or "van" in name_parts:
                     first_name = name_parts[0]
                     last_name = " ".join(name_parts[1:])

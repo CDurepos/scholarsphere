@@ -1,4 +1,4 @@
-from scraping.UMO.dataclass_instances.orono import umaine
+from scraping.umo.dataclass_instances.orono import umaine
 
 import importlib
 from tqdm import tqdm

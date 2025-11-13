@@ -1,4 +1,4 @@
-from scraping.dataclasses.institution import Institution
+from scraping.schemas.institution import Institution
 
 umaine = Institution(
     name="University of Maine",
