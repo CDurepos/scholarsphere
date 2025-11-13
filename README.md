@@ -33,7 +33,7 @@ Each member will create tables and indexes with comments for their designated ta
 
 ### D3 - Stored Procedures and Functions
 Each member will document and implement the key system operations for their designated tables:
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/12
+1. Aidan:  Users [ `users`, `follows`, `recommendations` ]. **deadline**: 11/12
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/12
    
@@ -57,7 +57,7 @@ Designated Universities:
 
 ### D5 - Sample Data and Data Cleaning Documentation
 Each member will provide scripts or CSV files showcasing a sample data insert into their designated tables with comments on how the data was validated and cleaned.
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/6
+1. Aidan:  Users[ `users`, `follows`, `recommendations` ]. **deadline**: 11/6
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/6
    
@@ -67,7 +67,7 @@ Each member will provide scripts or CSV files showcasing a sample data insert in
 
 ### D6 - Query Optimization Analysis
 Each member will provide before/after query performance results for a query on their designated tables and give justification on indexing strategies.
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/14
+1. Aidan:  Users [ `users`, `follows`, `recommendations` ]. **deadline**: 11/14
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/14
    
