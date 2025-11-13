@@ -23,13 +23,13 @@ OwenLeitzell:  Owen Leitzell
 
 ### D2 - MySQL Database Schema Scripts
 Each member will create tables and indexes with comments for their designated tables:
-1. Aidan:  Users & Auth [ `users`, `credentials`, `follows`, `recommendations` ]. **deadline**: 11/8
+1. Aidan:  Users[ `users`, `follows`, `recommendations` ]. **deadline**: 11/8
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/8
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/8
+3. Owen:  Publications & Keywords [`publications`, `publication_authors`, `keywords`, `publication_keywords`, `user_keywords`]. **deadline**: 11/8
    
-4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: 11/8
+4. Clayton:  Grants & Credentials [`grants`, `grant_providers`, `grant_recipients`, `credentials`]. **deadline**: 11/8
 
 ### D3 - Stored Procedures and Functions
 Each member will document and implement the key system operations for their designated tables:
@@ -37,9 +37,9 @@ Each member will document and implement the key system operations for their desi
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/12
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/12
+3. Owen:  Publications & Keywords [`publications`, `publication_authors`, `keywords`, `publication_keywords`, `user_keywords`]. **deadline**: 11/12
    
-4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: 11/12
+4. Clayton:  Grants & Credentials [`grants`, `grant_providers`, `grant_recipients`, `credentials`]. **deadline**: 11/12
 
 The primary search procedure will be a joint effort. **deadline**: 11/12
 
@@ -61,9 +61,9 @@ Each member will provide scripts or CSV files showcasing a sample data insert in
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/6
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/6
+3. Owen: Publications & Keywords [`publications`, `publication_authors`, `keywords`, `publication_keywords`, `user_keywords`]. **deadline**: 11/6
    
-4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: 11/6
+4. Clayton:  Grants & Credentials [`grants`, `grant_providers`, `grant_recipients`, `credentials`]. **deadline**: 11/6
 
 ### D6 - Query Optimization Analysis
 Each member will provide before/after query performance results for a query on their designated tables and give justification on indexing strategies.
@@ -71,9 +71,9 @@ Each member will provide before/after query performance results for a query on t
    
 2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/14
    
-3. Owen:  Publications & Authorship [`publications`, `publication_authors`, `keywords`, `publication_keywords`]. **deadline**: 11/14
+3. Owen:  Publications & Keywords [`publications`, `publication_authors`, `keywords`, `publication_keywords`, `user_keywords`]. **deadline**: 11/14
    
-4. Clayton:  Topics & Funding [`user_keywords`, `grants`, `grant_providers`, `grant_recipients`]. **deadline**: 11/14
+4. Clayton:  Grants & Credentials [`grants`, `grant_providers`, `grant_recipients`, `credentials`]. **deadline**: 11/14
 
 ### D7 - Comprehensive README file (.md)
 For the **Individual Tasks**, each member will document how to run their individual scraping scripts, sample processing scripts, and SQL files. For the **Joint Tasks**, all members will document the full database recreation steps, and document any joint effort procedures such as the primary search procedure.
