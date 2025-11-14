@@ -5,6 +5,7 @@ from scraping.publications.publication_parser import citation_to_publication_ins
 
 import os
 import re
+import csv
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -30,12 +31,8 @@ class B1Parser:
         parser.parse()
     """
 
-    def __init__(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.input_dir = os.path.join(
-            script_dir, "../../scrape_storage/biography_pages/"
-        )
-        self.output_dir = os.path.join(script_dir, "../../scrape_storage/faculty_data/")
+    def __init__(self, input_dir:str):
+        self.input_dir = input_dir
         # Gather input files
         self.input_file_paths = []
         for url, input_file in DEPARTMENTS:
@@ -45,15 +42,6 @@ class B1Parser:
                 )
             else:
                 self.input_file_paths.append(os.path.join(self.input_dir, input_file))
-
-        # Check that output files don't exist and create dirs if needed
-        for url, output_file in DEPARTMENTS:
-            if os.path.exists(os.path.join(self.output_dir, output_file)):
-                raise FileExistsError(
-                    f"The output file '{os.path.join(self.output_dir, output_file)}' already exists."
-                )
-        os.makedirs(self.output_dir, exist_ok=True)
-
         self.headers = get_headers("h1")
 
     def parse(self):
@@ -69,13 +57,13 @@ class B1Parser:
         fac_instances = []
         pub_instances = []
         for idx, path in enumerate(self.input_file_paths):
-            with open(path, "r") as f:
+            with open(path, "r", newline="", encoding="utf-8") as f:
+                reader = csv.reader(f)
                 fac_titles = []
                 bio_urls = []
-                for line in f.readlines():
-                    items = line.strip().split(",")
-                    fac_titles.append(items[0])
-                    bio_urls.append(items[1])
+                for row in reader:
+                    fac_titles.append(row[0])
+                    bio_urls.append(row[1])
             for fac_title, bio_url in tqdm(
                 zip(fac_titles, bio_urls),
                 desc=f"Parsing biography for department {idx+1}/{len(DEPARTMENTS)}",
@@ -102,8 +90,9 @@ class B1Parser:
                 # Extract name
                 name = soup.find(
                     ["h1", "h2"], class_=["page-title", "single-title", "archive-title"]
-                ).text
+                )
                 if name:
+                    name = name.text
                     name_split = name.split()
                     if len(name_split) > 1:
                         fac_inst.first_name = name_split[0]

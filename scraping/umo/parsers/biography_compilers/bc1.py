@@ -27,11 +27,8 @@ class B1Compiler:
         compiler.collect()
     """
 
-    def __init__(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.output_dir = os.path.join(
-            script_dir, "../../scrape_storage/biography_pages/"
-        )
+    def __init__(self, output_dir:str):
+        self.output_dir = output_dir
         self.departments = DEPARTMENTS
 
         for url, output_file in self.departments:
