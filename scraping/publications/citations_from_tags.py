@@ -3,7 +3,6 @@ import re
 from bs4 import Tag
 
 class CitationExtractor:
-    # regex from https://regex101.com/library/rUZW2U?%21%5CS=&filterFlavors=python&page=86
     def __init__(self):
         # regex from ChatGPT
         self.citation_pattern = re.compile(
