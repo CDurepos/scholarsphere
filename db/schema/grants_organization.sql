@@ -1,4 +1,4 @@
-CREATE TABLE grants_provided_by_organization (
+CREATE TABLE grants_organization (
     grant_id       CHAR(36) NOT NULL,
     name           VARCHAR(256) NOT NULL,
     PRIMARY KEY (grant_id),
