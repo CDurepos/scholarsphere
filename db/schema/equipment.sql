@@ -1,5 +1,5 @@
 -- Equipment schema
-CREATE TABLE Equipment (
+CREATE TABLE equipment (
     eq_id UUID PRIMARY KEY NOT NULL UNIQUE,
     name VARCHAR(64) NOT NULL,
     description TEXT,

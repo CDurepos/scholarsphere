@@ -1,0 +1,12 @@
+\i schema/institution.sql
+\i schema/equipment.sql
+\i schema/grants.sql
+\i schema/grants_granted_to_faculty.sql
+\i schema/grants_provided_by_organization.sql
+\i schema/credentials.sql
+\i schema/publication.sql
+\i schema/publication_authors.sql
+\i schema/publication_keywords.sql
+\i schema/user_keywords.sql
+\i schema/keyword.sql
+\i schema/faculty_works_at_institution.sql

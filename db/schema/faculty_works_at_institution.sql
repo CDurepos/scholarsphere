@@ -1,5 +1,5 @@
 -- Represents the many-to-many relation between Faculty and Institution
-CREATE TABLE Works_at (
+CREATE TABLE faculty_works_at_institution (
     faculty_id UUID NOT NULL,
     institution_id UUID NOT NULL,
     start_date DATE NOT NULL,
