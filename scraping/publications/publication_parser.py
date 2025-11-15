@@ -1,10 +1,24 @@
 from scraping.utils import get_headers
 from scraping.schemas import Publication
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import re
+import html
 import requests
 from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
+
+
+def doi_to_publication_instance(doi: str) -> Publication:
+    """
+    Pipelines functions from this module to convert a doi into an instance
+    of the "Publication" dataclass.
+    """
+    pub_data = crossref_from_doi(doi=doi)
+    if pub_data:
+        return pub_data_to_publication_instance(pub_data=pub_data)
+
+    return None
 
 
 def citation_to_publication_instance(
@@ -30,7 +44,7 @@ def citation_to_publication_instance(
     """
     doi = extract_doi(citation=citation)
     if doi:
-        pub_data = crossref_from_doi(doi=doi)
+        return doi_to_publication_instance(doi=doi)
     else:
         pub_data = crossref_from_citation_text(citation=citation)
 
@@ -59,26 +73,39 @@ def citation_to_publication_instance(
                         author_match_flag = True
             if not author_match_flag:
                 return None
-
-        # Strip title and abstract of possible html tags
-        title = pub_data.get("title", [None])[0]
-        if title:
-            title = BeautifulSoup(title, "html.parser").get_text()
-        abstract = pub_data.get("abstract")
-        if abstract:
-            abstract = BeautifulSoup(abstract, "html.parser").get_text()
-
-        # Create publication instance
-        publication = Publication(
-            doi=doi,
-            title=title,
-            abstract=abstract,
-            year=pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
-            citation_count=pub_data.get("is-referenced-by-count"),
-            publisher=pub_data.get("publisher"),
-        )
-        return publication
+        return pub_data_to_publication_instance(pub_data)
     return None
+
+
+def pub_data_to_publication_instance(pub_data: dict, doi: str = None):
+    """
+    Take in pub_data dict returned from crossref, and return a publication dataclass instance.
+
+    Args:
+        pub_data (dict): Dict of publication data returned from crossref.
+        doi (str): Optional doi to add to publication instance. TODO: Check if this can be obtained from crossref.
+    """
+    # Strip title and abstract of possible html tags
+    title = pub_data.get("title", [None])[0]
+    if title:
+        title = html.unescape(title)
+        title = BeautifulSoup(norm_ws(title), "html.parser").get_text()
+
+    abstract = pub_data.get("abstract")
+    if abstract:
+        abstract = html.unescape(abstract)
+        abstract = BeautifulSoup(norm_ws(abstract), "html.parser").get_text()
+
+    # Create publication instance
+    publication = Publication(
+        doi=doi,
+        title=title,
+        abstract=abstract,
+        year=pub_data.get("created", {}).get("date-parts", [[None]])[0][0],
+        citation_count=pub_data.get("is-referenced-by-count"),
+        publisher=pub_data.get("publisher"),
+    )
+    return publication
 
 
 def extract_doi(citation: str) -> str | None:

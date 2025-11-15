@@ -2,5 +2,6 @@
 __pycache__/
 
 scrape_storage/
+scraping/out/
 
 .idea/
