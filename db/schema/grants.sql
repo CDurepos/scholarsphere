@@ -3,7 +3,5 @@ CREATE TABLE grants (
     description VARCHAR(2048)   NULL,
     amount      DECIMAL(10,2)   NOT NULL,
     start_date  DATE            NOT NULL,
-
-    -- `end_date` is nullable
-    end_date    DATE
+    end_date    DATE            NULL
 );
