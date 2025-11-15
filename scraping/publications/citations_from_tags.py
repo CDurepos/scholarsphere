@@ -1,5 +1,6 @@
-import re
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
+import re
 from bs4 import Tag
 
 class CitationExtractor:
@@ -31,5 +32,5 @@ class CitationExtractor:
         """
         text = tag.get_text(separator=" ", strip=True)
         matches = self.citation_pattern.findall(text)
-        filtered_matches = [re.sub(r'\s+', ' ', m) for m in matches if len(m) >= min_length] # Normalize whitespace characters and 'citations' that are too short
+        filtered_matches = [norm_ws(m) for m in matches if len(m) >= min_length] # Normalize whitespace characters and 'citations' that are too short
         return filtered_matches

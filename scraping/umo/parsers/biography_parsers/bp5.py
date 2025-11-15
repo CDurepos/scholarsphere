@@ -1,6 +1,7 @@
 from scraping.utils import get_headers
 from scraping.schemas import Faculty
 from scraping.publications import CitationExtractor
+from scraping.umo.utils.parse_name import split_name
 from scraping.publications.publication_parser import citation_to_publication_instance
 
 import os
@@ -61,9 +62,9 @@ class B5Parser:
             ):
                 try:
                     response = requests.get(bio_url, headers=self.headers, timeout=10)
-                    if response.status_code != 200:
-                        continue
+                    response.raise_for_status()
                 except requests.RequestException as e:
+                    print(e)
                     continue
 
                 soup = BeautifulSoup(response.text, "html.parser")
@@ -82,13 +83,9 @@ class B5Parser:
                 if name_container:
                     name = name_container.text
                     if name and isinstance(name, str):
-                        name = name.split(",")[0]  # Get rid of degree (e.g. ', Ph.D')
-                        name_split = name.split()
-                        if len(name_split) > 1:
-                            fac_inst.first_name = name_split[0]
-                            fac_inst.last_name = name_split[-1]
-                        else:
-                            fac_inst.first_name = name
+                        first, last = split_name(name)
+                        fac_inst.first_name = first
+                        fac_inst.last_name = last
 
                 # Extract email
                 email_container = soup.find("p", class_="people-wrapper__email")

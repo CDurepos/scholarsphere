@@ -1,4 +1,5 @@
 from scraping.utils import get_headers
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import os
 import csv
@@ -25,8 +26,7 @@ class B5Compiler:
             if os.path.exists(os.path.join(self.output_dir, output_file)):
                 raise FileExistsError(f"The output file {output_file} already exists.")
 
-        os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
-
+        os.makedirs(self.output_dir, exist_ok=True)
         self.headers = get_headers("h1")
 
     def collect(self):
@@ -49,7 +49,7 @@ class B5Compiler:
                         and "emeritus" not in text.lower()
                         and "emerita" not in text.lower()
                     ):
-                        fac_titles.append(text)
+                        fac_titles.append(norm_ws(text))
                         bio_links.append(profile_anchor["href"])
 
             # WRITE

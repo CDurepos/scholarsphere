@@ -1,9 +1,10 @@
 from scraping.utils import get_headers
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import os
 import csv
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 DEPARTMENTS = (
     ("https://sbe.umaine.edu/personnel/faculty/", "biology_and_ecology.csv"),
@@ -28,8 +29,7 @@ class B4Compiler:
             if os.path.exists(os.path.join(self.output_dir, output_file)):
                 raise FileExistsError(f"The output file {output_file} already exists.")
 
-        os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
-
+        os.makedirs(self.output_dir, exist_ok=True)
         self.headers = get_headers("h1")
 
     def collect(self):
@@ -41,15 +41,18 @@ class B4Compiler:
             fac_titles = []
             bio_links = []
             for p_tag in soup.find_all("p", class_="kt-blocks-info-box-text"):
-                p_text = p_tag.get_text(strip=True).lower()
+                p_text = p_tag.contents[0]
                 if (
-                    "professor" in p_text
-                    and "emeritus" not in p_text
-                    and "emerita" not in p_text
+                    p_text
+                    and isinstance(p_text, NavigableString)
+                    and "professor" in p_text.lower()
+                    and "emeritus" not in p_text.lower()
+                    and "emerita" not in p_text.lower()
                 ):
                     a_tags = p_tag.find_all("a", href=True)
                     if a_tags:
-                        fac_titles.append(p_text)
+                        p_text = p_text.replace(" |", "")
+                        fac_titles.append(norm_ws(p_text.strip()))
                         bio_links.append(a_tags[-1]["href"])
                         
             # WRITE

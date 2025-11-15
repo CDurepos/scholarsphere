@@ -1,4 +1,5 @@
 from scraping.utils import get_headers
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import os
 import csv
@@ -35,8 +36,7 @@ class B2Compiler:
             if os.path.exists(os.path.join(self.output_dir, output_file)):
                 raise FileExistsError(f"The output file {output_file} already exists.")
 
-        os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
-
+        os.makedirs(self.output_dir, exist_ok=True)
         self.headers = get_headers("h1")
 
     def collect(self):
@@ -50,12 +50,18 @@ class B2Compiler:
             if not fac:
                 fac = soup  # some depts don't have fac id, so just start from soup
             for div in fac.find_all("div", class_="entry-content"):
-                if "professor" in div.get_text(strip=True).lower():
+                div_text = div.get_text(strip=True)
+                if (
+                    div_text
+                    and "professor" in div_text.lower()
+                    and "emeritus" not in div_text.lower()
+                    and "emerita" not in div_text.lower()
+                ):
                     header = div.find_previous_sibling("header")
                     if header:
                         a_tag = header.find("a", href=True)
                         if a_tag:
-                            fac_titles.append(div.get_text(strip=True))
+                            fac_titles.append(norm_ws(div_text))
                             bio_links.append(a_tag["href"])
 
             # WRITE

@@ -1,9 +1,10 @@
 from scraping.utils import get_headers
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import os
 import csv
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 DEPARTMENTS = (("https://umaine.edu/business/faculty-and-staff/", "business.csv"),)
 
@@ -17,7 +18,7 @@ class B3Compiler:
         compiler.collect()
     """
 
-    def __init__(self, output_dir:str):
+    def __init__(self, output_dir: str):
         self.output_dir = output_dir
         self.departments = DEPARTMENTS
 
@@ -25,8 +26,7 @@ class B3Compiler:
             if os.path.exists(os.path.join(self.output_dir, output_file)):
                 raise FileExistsError(f"The output file {output_file} already exists.")
 
-        os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
-
+        os.makedirs(self.output_dir, exist_ok=True)
         self.headers = get_headers("h1")
 
     def collect(self):
@@ -37,36 +37,34 @@ class B3Compiler:
 
             fac_titles = []
             bio_links = []
-            faculty_header = soup.find(
-                "h2",
-                class_="kt-adv-heading28745_a68738-c8 wp-block-kadence-advancedheading",
-            )
+            people_divs = {
+                "faculty_div": soup.find("div", class_="kb-row-layout-wrap kb-row-layout-id28745_1da6a3-f0 alignnone wp-block-kadence-rowlayout"),
+                "admin_div": soup.find("div", class_="kb-row-layout-wrap kb-row-layout-id28745_6ef6ea-b0 alignnone wp-block-kadence-rowlayout"),
+            }
 
-            if faculty_header and faculty_header.find("strong", string="Faculty"):
-                next_section = faculty_header.find_next_sibling()
 
-                if next_section:
-                    for parent_div in next_section.find_all(
-                        "div", class_="kt-infobox-textcontent"
-                    ):
-                        child_div = parent_div.find(
-                            "p", class_="kt-blocks-info-box-text", recursive=False
-                        )
-                        if not child_div:
+            for people_div in people_divs.values():
+                if not people_div:
+                    continue
+                for parent_div in people_div.find_all(
+                    "div", class_="kt-infobox-textcontent"
+                ):
+                    child_div = parent_div.find("p", class_="kt-blocks-info-box-text")
+                    if not child_div:
+                        continue
+                    else:
+                        title = child_div.contents[0]
+                        if (
+                            not title
+                            or not isinstance(title, NavigableString)
+                            or not "professor" in title.lower()
+                        ):
                             continue
-                        else:
-                            title = child_div.contents[0]
-                            if (
-                                not title
-                                or not isinstance(title, str)
-                                or not "professor" in title
-                            ):
-                                continue
-                            # Find <a> tags that mention "Bio"
-                            for a_tag in child_div.find_all("a", href=True):
-                                if "bio" in a_tag.text.lower():
-                                    fac_titles.append(title)
-                                    bio_links.append(a_tag["href"])
+                        # Find <a> tags that mention "Bio"
+                        for a_tag in child_div.find_all("a", href=True):
+                            if "bio" in a_tag.text.lower():
+                                fac_titles.append(norm_ws(title))
+                                bio_links.append(a_tag["href"])
 
             # WRITE
             with open(
@@ -81,4 +79,4 @@ class B3Compiler:
 
 
 if __name__ == "__main__":
-    B3Compiler().collect()
+    B3Compiler("test.csv").collect()

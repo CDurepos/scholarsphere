@@ -1,4 +1,5 @@
 from scraping.utils import get_headers
+from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import os
 import csv
@@ -35,8 +36,7 @@ class B1Compiler:
             if os.path.exists(os.path.join(self.output_dir, output_file)):
                 raise FileExistsError(f"The output file {output_file} already exists.")
 
-        os.makedirs(os.path.dirname(self.output_dir), exist_ok=True)
-
+        os.makedirs(self.output_dir, exist_ok=True)
         self.headers = get_headers("h1")
 
     def collect(self):
@@ -49,8 +49,7 @@ class B1Compiler:
                     response = requests.get(
                         url + f"/page/{curr_page}/", headers=self.headers
                     )
-                    if response.status_code != 200:
-                        break
+                    response.raise_for_status()
                 except requests.RequestException as e:
                     break
 
@@ -72,7 +71,7 @@ class B1Compiler:
                                 or " biography" in a_tag.text.lower()
                                 or " staff page" in a_tag.text.lower()
                             ):
-                                fac_titles.append(fac_position.text.strip())
+                                fac_titles.append(norm_ws(fac_position.text.strip()))
                                 bio_links.append(a_tag["href"])
 
                 curr_page += 1

@@ -13,8 +13,8 @@ COMPILER_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "biograp
 TOTAL_COMPILERS = 5
 TOTAL_PARSERS = 5
 
-FAC_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "faculty_data.csv")
-PUB_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "publication_data.csv")
+FAC_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "faculty_data", "faculty_data.csv")
+PUB_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "publication_data", "publication_data.csv")
 os.makedirs(os.path.dirname(FAC_OUTPUT_DIR), exist_ok=True)
 os.makedirs(os.path.dirname(PUB_OUTPUT_DIR), exist_ok=True)
 
@@ -51,7 +51,7 @@ def pipeline(steps: Union[int, list[int]] = None)->None:
 def step_1():
     # Output .csv files containing links to faculty biography pages
     compiler_names = ["bc" + str(i+1) for i in range(TOTAL_COMPILERS)]
-    for idx, name in enumerate(tqdm(compiler_names, "Gathering biography links.", total = len(compiler_names))):
+    for idx, name in enumerate(tqdm(compiler_names, "Gathering biography links", total = len(compiler_names))):
         module = importlib.import_module(f"scraping.umo.parsers.biography_compilers.{name}")
         compiler_class = getattr(module, f"B{idx+1}Compiler")
         compiler_class(COMPILER_OUTPUT_DIR).collect()
@@ -61,7 +61,7 @@ def step_2():
     all_fac_instances:List[Faculty] = []
     all_pub_instances:List[List[Publication]] = []
     parser_names = ["bp" + str(i+1) for i in range(TOTAL_PARSERS)]
-    for idx, name in enumerate(tqdm(parser_names, "Scraping biographys.", total = len(parser_names))):
+    for idx, name in enumerate(tqdm(parser_names, "Scraping biographys", total = len(parser_names))):
         module = importlib.import_module(f"scraping.umo.parsers.biography_parsers.{name}")
         parser_class = getattr(module, f"B{idx+1}Parser")
         fac_instances, pub_instances = parser_class(COMPILER_OUTPUT_DIR).parse()
@@ -69,8 +69,8 @@ def step_2():
         all_pub_instances += pub_instances
 
     # TODO: Make join table here, and then unwind publications (need uuid here?)
-    # dataclass_instances_to_csv(fac_instances, output_path=FAC_OUTPUT_DIR, overwrite=True)
-    # dataclass_instances_to_csv(pub_instances, output_path=PUB_OUTPUT_DIR, overwrite=True)
+    dataclass_instances_to_csv(all_fac_instances, output_path=FAC_OUTPUT_DIR, overwrite=True)
+    # dataclass_instances_to_csv(all_pub_instances, output_path=PUB_OUTPUT_DIR, overwrite=True)
 
 def step_3():
     return

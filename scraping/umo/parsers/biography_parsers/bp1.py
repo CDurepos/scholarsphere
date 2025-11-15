@@ -1,6 +1,7 @@
-from scraping.utils import get_headers
 from scraping.schemas import Faculty
+from scraping.utils import get_headers
 from scraping.publications import CitationExtractor
+from scraping.umo.utils.parse_name import split_name
 from scraping.publications.publication_parser import citation_to_publication_instance
 
 import os
@@ -53,6 +54,7 @@ class B1Parser:
             pub_instances (list[list[Publication]]): A list of all Publication instances of each faculty from this module's biography lists
             NOTE: fac_instances and pub_instances indices correspond to each other. pub_instances[0] is a list of all publications by fac_instances[0]
         """
+        staff_page_re = re.compile(re.escape("Staff Page"), re.IGNORECASE) # At least one instance where "Staff Page" was randomly included in name and needed to be removed.
         citation_extractor = CitationExtractor()
         fac_instances = []
         pub_instances = []
@@ -71,9 +73,9 @@ class B1Parser:
             ):
                 try:
                     response = requests.get(bio_url, headers=self.headers, timeout=10)
-                    if response.status_code != 200:
-                        continue
+                    response.raise_for_status()
                 except requests.RequestException as e:
+                    print(e)
                     continue
 
                 soup = BeautifulSoup(response.text, "html.parser")
@@ -93,12 +95,11 @@ class B1Parser:
                 )
                 if name:
                     name = name.text
-                    name_split = name.split()
-                    if len(name_split) > 1:
-                        fac_inst.first_name = name_split[0]
-                        fac_inst.last_name = name_split[-1]
-                    else:
-                        fac_inst.first_name = name
+                    name = staff_page_re.sub("", name) # Remove "Staff Page" from name if present
+                    first, last = split_name(name)
+                    fac_inst.first_name = first
+                    fac_inst.last_name = last
+                    
 
                 # Extract email
                 email_pattern = re.compile(
@@ -133,8 +134,7 @@ class B1Parser:
                             response = requests.get(
                                 a_tag["href"], headers=self.headers, timeout=10
                             )
-                            if response.status_code != 200:
-                                continue
+                            response.raise_for_status()
                         except requests.RequestException as e:
                             continue
                         # Can't guarantee any consistent format, so just try from body

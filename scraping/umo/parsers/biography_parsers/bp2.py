@@ -1,5 +1,6 @@
-from scraping.utils import get_headers
 from scraping.schemas import Faculty
+from scraping.utils import get_headers
+from scraping.umo.utils.parse_name import split_name
 
 import os
 import re
@@ -68,9 +69,9 @@ class B2Parser:
             ):
                 try:
                     response = requests.get(bio_url, headers=self.headers, timeout=10)
-                    if response.status_code != 200:
-                        continue
+                    response.raise_for_status()
                 except requests.RequestException as e:
+                    print(e)
                     continue
 
                 soup = BeautifulSoup(response.text, "html.parser")
@@ -93,12 +94,9 @@ class B2Parser:
                     if name:
                         name_text = name.get_text(strip=True)
                         if name_text:
-                            name_split = name_text.split()
-                            if len(name_split) > 1:
-                                fac_inst.first_name = name_split[0]
-                                fac_inst.last_name = name_split[-1]
-                            else:
-                                fac_inst.first_name = name
+                            first, last = split_name(name_text)
+                            fac_inst.first_name = first
+                            fac_inst.last_name = last
 
                 # Extract email
                 email_pattern = re.compile(
