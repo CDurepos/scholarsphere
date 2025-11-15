@@ -1,4 +1,4 @@
-CREATE TABLE publication_keywords (
+CREATE TABLE publication_explores_keywords (
     publication_id  CHAR(36)    NOT NULL,
     name            VARCHAR(64) NOT NULL,
 

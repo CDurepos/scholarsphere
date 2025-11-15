@@ -1,4 +1,4 @@
-CREATE TABLE publications (
+CREATE TABLE publication (
     publication_id  CHAR(36)        PRIMARY KEY,
     title           VARCHAR(64)     NOT NULL,
     year            INT             NOT NULL,

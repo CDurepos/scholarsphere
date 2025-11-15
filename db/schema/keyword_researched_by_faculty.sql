@@ -1,16 +1,16 @@
 CREATE TABLE keyword_researched_by_faculty (
-    name        VARCHAR(64) NOT NULL,
-    user_id     CHAR(36)    NOT NULL,
+    name        VARCHAR(64)     NOT NULL,
+    faculty_id     CHAR(36)     NOT NULL,
 
-    PRIMARY KEY (name, user_id),
+    PRIMARY KEY (name, faculty_id),
 
     FOREIGN KEY (name)
         REFERENCES keywords(name)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
-    FOREIGN KEY (user_id)
-        REFERENCES user(user_id)
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );

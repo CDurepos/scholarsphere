@@ -4,7 +4,7 @@
 -- Rather than creating an instance of institution for every funding agency
 CREATE TABLE grants_organization (
     grant_id       CHAR(36)     NOT NULL,
-    name           VARCHAR(256) NOT NULL,
+    name           VARCHAR(255) NOT NULL,
 
     PRIMARY KEY (grant_id),
 
