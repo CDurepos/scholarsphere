@@ -1,10 +1,21 @@
 CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
-    recommender_id CHAR(36) NOT NULL,
-    recommended_id CHAR(36) NOT NULL,
-    match_score FLOAT,
-    created_at DATE NOT NULL,
+    -- Model as directional relationship 
+    -- Allows for different match scoring dependent on user properties & data
+    source_user_id  CHAR(36)    NOT NULL,
+    target_user_id  CHAR(36)    NOT NULL,
+    
+    match_score     FLOAT,
+    created_at      DATE        NOT NULL,
 
-    PRIMARY KEY (recommender_id, recommended_id),
-    FOREIGN KEY (recommender_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE,
-    FOREIGN KEY (recommended_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE
+    PRIMARY KEY (source_faculty_id, target_faculty_id),
+
+    FOREIGN KEY (source_faculty_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (recommended_id)
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );

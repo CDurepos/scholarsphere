@@ -2,6 +2,14 @@
 
 This directory contains the blueprint for each table required by and utilized in the ScholarSphere application.
 
+## Attribute Typing
+
+IDs will be generated pre-insertion. Standard UUID generation is 36 characters, thus we utilize the datatype `CHAR(36)` for all IDs.
+
+For large-text values, we default to `VARCHAR(2048)`. The `TEXT` attribute allows up to `65,535` characters, so we avoid this to limit storage requirements.
+
+Otherwise, we often default to `VARCHAR(255)` for attributes where appropriate.
+
 ## Naming Convention
 
 All entity table schema are stored in a file corresponding to the name of the entity they outline.
