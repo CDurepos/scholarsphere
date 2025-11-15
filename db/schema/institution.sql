@@ -1,6 +1,6 @@
 -- Institution schema
 CREATE TABLE Institution (
-    institution_id UUID PRIMARY KEY NOT NULL UNIQUE,
+    institution_id CHAR(36) PRIMARY KEY,
     name VARCHAR(256) NOT NULL,
 
     -- Location composite attributes

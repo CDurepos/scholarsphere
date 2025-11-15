@@ -1,6 +1,6 @@
 -- Equipment schema
 CREATE TABLE equipment (
-    eq_id UUID PRIMARY KEY NOT NULL UNIQUE,
+    eq_id CHAR(36) PRIMARY KEY
     name VARCHAR(64) NOT NULL,
     description TEXT,
     availability TEXT NOT NULL,
