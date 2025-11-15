@@ -235,19 +235,10 @@ def scrape_directory_index(start_url: str = UMF_DIR_URL) -> List[str]:
 # Title & Department Parsing Enhancements
 TITLE_KEYWORDS = [
     "Professor",
-    "Associate Professor",
-    "Assistant Professor",
-    "Adjunct Professor",
     "Lecturer",
-    "Senior Lecturer",
     "Instructor",
-    "Emeritus",
-    "Co-Director",
     "Director",
     "Coordinator",
-    "Chair",
-    "Co-Chair",
-    "Dean",
 ]
 
 TITLE_KEYWORDS_RE = re.compile(
