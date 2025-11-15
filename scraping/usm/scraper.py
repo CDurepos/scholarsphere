@@ -88,7 +88,7 @@ def get_faculty_csv_from_url(url):
             # Parse title
             title_tag = person.select_one("div.people-title li")
             title, department = None, None
-            title_keywords = ["professor", "lecturer", "director", "research", "researcher"]
+            title_keywords = ["professor", "lecturer", "research", "researcher"]
             keyword_match = False
             if title_tag:
                 raw_title = title_tag.get_text(strip=True)
@@ -97,14 +97,24 @@ def get_faculty_csv_from_url(url):
                         keyword_match = True
 
                 if keyword_match:
-                    # Match patterns like "Assistant Professor, Department of Math"
-                    match = re.match(r"^(.*?),\s*(Department.*)$", raw_title, re.IGNORECASE)
-                    if match:
-                        title = match.group(1).strip()
-                        department = match.group(2).strip()
+                    raw = raw_title.strip()
+
+                    # Case 1: Contains "Department ..."
+                    dept_match = re.search(r"(Department\s+.*)$", raw, re.IGNORECASE)
+                    if dept_match:
+                        title_part = raw[:dept_match.start()].strip().rstrip(",")
+                        title = title_part if title_part else None
+                        department = dept_match.group(1).strip()
+
                     else:
-                        title = raw_title
-                        department = None
+                        # Case 2: Contains "X of Y" (e.g., Professor of Math, Lecturer of Art)
+                        of_match = re.search(r"(.+?)\s+of\s+(.*)$", raw, re.IGNORECASE)
+                        if of_match:
+                            title = of_match.group(1).strip()
+                            department = of_match.group(2).strip()
+                        else:
+                            title = raw
+                            department = None
 
                     # Parse email
                     email_tag = person.select_one("div.people-email a")
@@ -112,7 +122,11 @@ def get_faculty_csv_from_url(url):
 
                     # Parse phone
                     phone_tag = person.select_one("div.people-telephone a")
-                    phone = phone_tag.get_text(strip=True) if phone_tag else None
+                    raw_phone = phone_tag.get_text(strip=True) if phone_tag else ""
+                    pattern = r'\+?\d[\d\-\s\(\)]{7,}\d'
+                    phone_numbers = re.findall(pattern, raw_phone)
+                    # Build comma-separated string, or None if empty
+                    phone = ", ".join(num.strip() for num in phone_numbers) if phone_numbers else None
 
                     # Build Faculty object
                     faculty_member = faculty.Faculty(
@@ -127,6 +141,7 @@ def get_faculty_csv_from_url(url):
                         scraped_from=current_url)
                     if faculty_member.first_name is not None:
                         faculty_list.append(asdict(faculty_member))
+
 
                 else:
                     continue
