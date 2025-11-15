@@ -1,8 +1,8 @@
-from scraping.schemas import Faculty
 from scraping.utils import get_headers
 from scraping.publications import CitationExtractor
 from scraping.umo.utils.parse_name import split_name
 from scraping.publications.publication_parser import citation_to_publication_instance
+from scraping.schemas import Faculty, FacultyPhone, FacultyDepartment, FacultyEmail, FacultyTitle
 
 import os
 import re
@@ -51,6 +51,10 @@ class B1Parser:
 
         Returns:
             fac_instances (list[Faculty]): A list of all Faculty instances obtained from this module's biography lists
+            fac_phone_instances (list[list[FacultyPhone]]): A list of all FacultyPhone instances of each faculty from this module's biography lists 
+            fac_email_instances (list[list[FacultyEmail]]): A list of all FacultyEmail instances of each faculty from this module's biography lists
+            fac_title_instances (list[list[FacultyTitle]]): A list of all FacultyTitle instances of each faculty from this module's biography lists
+            fac_department_instances (list[list[FacultyDepartment]]): A list of all FacultyDepartment instances of each faculty from this module's biography lists 
             pub_instances (list[list[Publication]]): A list of all Publication instances of each faculty from this module's biography lists
             NOTE: fac_instances and pub_instances indices correspond to each other. pub_instances[0] is a list of all publications by fac_instances[0]
         """
@@ -58,6 +62,7 @@ class B1Parser:
         citation_extractor = CitationExtractor()
         fac_instances = []
         pub_instances = []
+        
         for idx, path in enumerate(self.input_file_paths):
             with open(path, "r", newline="", encoding="utf-8") as f:
                 reader = csv.reader(f)
