@@ -6,7 +6,7 @@ from dataclasses import asdict
 import regex as re
 
 # Use this Boolean to toggle on/off biography retrieval
-retrieve_biography = True
+retrieve_biography = False
 
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 abbreviations = [
@@ -88,39 +88,48 @@ def get_faculty_csv_from_url(url):
             # Parse title
             title_tag = person.select_one("div.people-title li")
             title, department = None, None
+            title_keywords = ["professor", "lecturer", "director", "research", "researcher"]
+            keyword_match = False
             if title_tag:
                 raw_title = title_tag.get_text(strip=True)
+                for keyword in title_keywords:
+                    if keyword in raw_title.lower():
+                        keyword_match = True
 
-                # Match patterns like "Assistant Professor, Department of Math"
-                match = re.match(r"^(.*?),\s*(Department.*)$", raw_title, re.IGNORECASE)
-                if match:
-                    title = match.group(1).strip()
-                    department = match.group(2).strip()
+                if keyword_match:
+                    # Match patterns like "Assistant Professor, Department of Math"
+                    match = re.match(r"^(.*?),\s*(Department.*)$", raw_title, re.IGNORECASE)
+                    if match:
+                        title = match.group(1).strip()
+                        department = match.group(2).strip()
+                    else:
+                        title = raw_title
+                        department = None
+
+                    # Parse email
+                    email_tag = person.select_one("div.people-email a")
+                    email = email_tag.get_text(strip=True) if email_tag else None
+
+                    # Parse phone
+                    phone_tag = person.select_one("div.people-telephone a")
+                    phone = phone_tag.get_text(strip=True) if phone_tag else None
+
+                    # Build Faculty object
+                    faculty_member = faculty.Faculty(
+                        faculty_id=None,
+                        first_name=first_name,
+                        last_name=last_name,
+                        title=title,
+                        department=department,
+                        email=email,
+                        phone_num=phone,
+                        biography=bio,
+                        scraped_from=current_url)
+                    if faculty_member.first_name is not None:
+                        faculty_list.append(asdict(faculty_member))
+
                 else:
-                    title = raw_title
-                    department = None
-
-            # Parse email
-            email_tag = person.select_one("div.people-email a")
-            email = email_tag.get_text(strip=True) if email_tag else None
-
-            # Parse phone
-            phone_tag = person.select_one("div.people-telephone a")
-            phone = phone_tag.get_text(strip=True) if phone_tag else None
-
-            # Build Faculty object
-            faculty_member = faculty.Faculty(
-                faculty_id=None,
-                first_name=first_name,
-                last_name=last_name,
-                title=title,
-                department=department,
-                email=email,
-                phone_num=phone,
-                biography=bio,
-                scraped_from=current_url )
-            if faculty_member.first_name is not None:
-                faculty_list.append(asdict(faculty_member))
+                    continue
 
     # Convert to DataFrame and save
     df = pd.DataFrame(faculty_list)
