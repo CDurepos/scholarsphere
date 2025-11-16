@@ -11,7 +11,12 @@ CREATE TABLE Institution (
     zip                 VARCHAR(16),
 
     website_url         VARCHAR(255),
-    type                VARCHAR(255),
+    type                ENUM(
+                            "Public University", 
+                            "Private University", 
+                            "Community College"
+                        )
+
 
     -- Constraints
     CHECK (zip ~ '^[0-9]{5}$' OR zip IS NULL)
