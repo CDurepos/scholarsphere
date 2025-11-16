@@ -23,7 +23,7 @@ There are exceptions.
 ## Contributions
 Each ScholarSphere team member has written the scripts for the associated procedures below...
 
-Aidan: search_faculty.sql, update_faculty.sql, insert_into_faculty.sql, add_publication_for_faculty.sql, insert_into_publication_authored_by_faculty.sql
+Aidan: search_faculty.sql, update_faculty.sql, insert_faculty.sql, add_publication_for_faculty.sql, insert_publication_authored_by_faculty.sql
 
 Clayton:
 
