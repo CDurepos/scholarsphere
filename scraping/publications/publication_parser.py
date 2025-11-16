@@ -95,6 +95,7 @@ def pub_data_to_publication_instance(pub_data: dict, doi: str = None):
     if abstract:
         abstract = html.unescape(abstract)
         abstract = BeautifulSoup(norm_ws(abstract), "html.parser").get_text()
+        abstract = re.sub(r"\s+", " ", abstract)
 
     # Create publication instance
     publication = Publication(

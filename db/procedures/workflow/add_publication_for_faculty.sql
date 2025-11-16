@@ -1,5 +1,29 @@
 DELIMITER $$
 
+/**
+ * Adds a new publication and associates it with a faculty member.
+ * 
+ * This workflow procedure combines two operations:
+ * 1. Creates a new publication record
+ * 2. Links the publication to the specified faculty member via the join table
+ * 
+ * This is a convenience procedure that handles the complete workflow of
+ * adding a publication for a faculty member in a single call.
+ * 
+ * @param p_faculty_id    Required UUID of the faculty member
+ * @param p_title         Publication title
+ * @param p_publisher     Publisher name
+ * @param p_year          Publication year
+ * @param p_doi           Digital Object Identifier (DOI)
+ * @param p_abstract      Publication abstract text
+ * 
+ * @returns Result set containing:
+ *   - publication_id: UUID of the newly created publication
+ *   - faculty_id: UUID of the associated faculty member
+ *   - action: Status message ('inserted')
+ * 
+ * @throws SQLSTATE '45000' if faculty_id is NULL
+ */
 CREATE PROCEDURE add_publication_for_faculty (
     IN p_faculty_id CHAR(36),
     IN p_title VARCHAR(64),
@@ -9,15 +33,17 @@ CREATE PROCEDURE add_publication_for_faculty (
     IN p_abstract TEXT
 )
 BEGIN
+    -- Variable to store the generated publication ID from the insert procedure
     DECLARE v_publication_id CHAR(36);
 
-    -- Validate input
+    -- Validate input: faculty_id must be provided
     IF p_faculty_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'faculty_id is required.';
     END IF;
 
-    -- 1. Insert the publication (calls the existing procedure)
+    -- Step 1: Create the publication record
+    -- The insert_into_publication procedure generates a UUID and stores it in v_publication_id
     CALL insert_into_publication(
         v_publication_id,
         p_title,
@@ -27,13 +53,14 @@ BEGIN
         p_abstract
     );
 
-    -- 2. Insert into join table (calls the existing procedure)
+    -- Step 2: Link the publication to the faculty member
+    -- This creates the many-to-many relationship in the join table
     CALL insert_into_publication_authored_by_faculty(
         p_faculty_id,
         v_publication_id
     );
 
-    -- 3. Return the resulting IDs
+    -- Step 3: Return confirmation with both IDs for reference
     SELECT v_publication_id AS publication_id,
            p_faculty_id AS faculty_id,
            'inserted' AS action;
