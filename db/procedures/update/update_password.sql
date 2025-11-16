@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS update_password;
 CREATE PROCEDURE update_password(
     IN p_faculty_id     CHAR(36),
@@ -26,4 +28,4 @@ BEGIN
     UPDATE credentials
     SET password_hash = hash_password(p_new_password, v_salt);
     WHERE faculty_id = p_faculty_id;
-END;
+END $$

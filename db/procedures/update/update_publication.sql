@@ -1,3 +1,5 @@
+DELIMITER $$
+
 -- Update publication, any parameters left null will be unchanged
 CREATE PROCEDURE update_publication(
     IN p_publication_id CHAR(36),
@@ -50,4 +52,4 @@ BEGIN
         SET citation_count = p_citation_count
         WHERE publication_id = p_publication_id;
     END IF;
-END;
+END $$

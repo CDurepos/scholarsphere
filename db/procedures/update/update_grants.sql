@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS update_grants;
 CREATE PROCEDURE update_grants(
     IN p_grant_id       CHAR(36)        NOT NULL,
@@ -14,4 +16,4 @@ BEGIN
         start_date = p_start_date, 
         end_date = p_end_date
     WHERE grant_id = p_grant_id;
-END;
+END $$

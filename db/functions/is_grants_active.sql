@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP FUNCTION IF EXISTS is_grant_active;
 
 CREATE FUNCTION is_grant_active(
@@ -6,4 +8,4 @@ CREATE FUNCTION is_grant_active(
 ) RETURNS BOOLEAN
 BEGIN
     RETURN grant_status(p_start_date, p_end_date) = `ACTIVE`;
-END;
+END $$

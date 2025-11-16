@@ -1,5 +1,7 @@
-DROP PROCEDURE IF EXISTS get_grants_by_organization;
-CREATE PROCEDURE get_grants_by_organization(
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS read_grants_by_organization;
+CREATE PROCEDURE read_grants_by_organization(
     IN  p_name  VARCHAR(256)
 )
 BEGIN   
@@ -10,4 +12,4 @@ BEGIN
             ON g.grant_id = go.grant_id
     WHERE go.name = p_name
     ORDER BY g.start_date DESC;
-END;
+END $$

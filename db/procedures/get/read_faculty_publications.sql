@@ -1,5 +1,7 @@
+DELIMITER $$
+
 --Use a procedure because we want to return a table
-CREATE PROCEDURE get_user_publications(
+CREATE PROCEDURE read_user_publications(
     IN p_faculty_id CHAR(36)
 )
 BEGIN
@@ -8,4 +10,4 @@ BEGIN
     JOIN publication_authors pa
         ON p.publication_id = pa.publication_id
     WHERE pa.faculty_id = p_faculty_id;
-END;
+END $$

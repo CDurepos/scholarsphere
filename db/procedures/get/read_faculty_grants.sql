@@ -1,5 +1,7 @@
-DROP PROCEDURE IF EXISTS get_grants_granted_to_faculty;
-CREATE PROCEDURE get_grants_granted_to_faculty(
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty;
+CREATE PROCEDURE read_grants_granted_to_faculty(
     IN p_faculty_id     CHAR(36)    NOT NULL   
 )
 BEGIN
@@ -11,4 +13,4 @@ BEGIN
     WHERE
             ggf.faculty_id = p_faculty_id
     ORDER BY g.start_date;
-END;
+END $$

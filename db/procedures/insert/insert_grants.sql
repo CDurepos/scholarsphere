@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS insert_into_grants;
 CREATE PROCEDURE insert_into_grants(
     IN      p_grant_id      CHAR(36),
@@ -13,4 +15,4 @@ BEGIN
     ) VALUES (
         p_grant_id, p_description, p_amount, p_start_date, p_end_date
     );
-END;
+END $$

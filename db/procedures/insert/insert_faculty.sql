@@ -43,5 +43,3 @@ BEGIN
 
     SELECT new_id AS faculty_id;
 END $$
-
-DELIMITER ;

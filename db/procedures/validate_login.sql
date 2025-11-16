@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS last_login;
 
 CREATE PROCEDURE last_login(
@@ -49,4 +51,4 @@ BEGIN
         SET p_status_code   = 2;
     
     END IF;
-END;
+END $$

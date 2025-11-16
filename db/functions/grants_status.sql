@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP FUNCTION IF EXISTS grant_status;
 
 CREATE FUNCTION grant_status(
@@ -16,4 +18,4 @@ BEGIN
     IF p_end_date < CURDATE() THEN
         RETURN `EXPIRED`;
     END IF;
-END;
+END $$

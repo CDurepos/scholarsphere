@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP FUNCTION IF EXISTS hash_password;
 CREATE FUNCTION fn_hash_password(
     p_plain_text     VARCHAR(255),
@@ -6,4 +8,4 @@ CREATE FUNCTION fn_hash_password(
 BEGIN
     -- Hex-encoded SHA-256 = 64 characters
     RETURN SHA2(CONCAT(p_plain_text, p_salt), 256);
-END;
+END $$

@@ -1,5 +1,5 @@
 -- Institution schema
-CREATE TABLE Institution (
+CREATE TABLE institution (
     institution_id      CHAR(36)        PRIMARY KEY,
     name                VARCHAR(256)    NOT NULL,
 

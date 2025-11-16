@@ -39,5 +39,3 @@ BEGIN
            'inserted' AS action;
 
 END $$
-
-DELIMITER ;

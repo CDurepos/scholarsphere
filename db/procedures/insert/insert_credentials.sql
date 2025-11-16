@@ -1,3 +1,5 @@
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS register_credentials;
 CREATE PROCEDURE register_credentials(
     IN p_faculty_id CHAR(36),
@@ -30,4 +32,4 @@ BEGIN
 
     INSERT INTO credentials (faculty_id, username, password_hash, password_salt, last_login)
     VALUES (p_faculty_id, p_username, p_hash, p_salt, NULL);
-END;
+END $$
