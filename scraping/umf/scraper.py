@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+"""
+UMF Faculty Scraper (enhanced with ORCID lookup)
+- Crawls the UMF Directory (faculty filter) and visits each profile page to extract:
+  first/last name, title, department, email, phone, biography, and external scholarly links.
+- Optionally cross-checks the UMF Catalog faculty listings for backfill (names + roles).
+- Attempts to enrich ORCID IDs via the public ORCID search API using name + affiliation.
+- Outputs: CSV files for Faculty and Institution records.
+
+Run:
+  python scraper.py
+"""
+
 from __future__ import annotations
 
 import os
@@ -222,10 +235,19 @@ def scrape_directory_index(start_url: str = UMF_DIR_URL) -> List[str]:
 # Title & Department Parsing Enhancements
 TITLE_KEYWORDS = [
     "Professor",
+    "Associate Professor",
+    "Assistant Professor",
+    "Adjunct Professor",
     "Lecturer",
+    "Senior Lecturer",
     "Instructor",
+    "Emeritus",
+    "Co-Director",
     "Director",
     "Coordinator",
+    "Chair",
+    "Co-Chair",
+    "Dean",
 ]
 
 TITLE_KEYWORDS_RE = re.compile(
@@ -358,9 +380,9 @@ def lookup_orcid_by_name(
     affiliation: Optional[str] = None,
 ) -> Optional[str]:
     """
-    Best-effort ORCID lookup using the public ORCID expanded-search API
-    Uses first + last name + affiliation
-    Returns a full ORCID URL or None if no confident match
+    Best-effort ORCID lookup using the public ORCID expanded-search API.
+    Uses first + last name + affiliation to reduce collisions.
+    Returns a full ORCID URL or None if no confident match.
     """
     first = norm_ws(first) or ""
     last = norm_ws(last) or ""
@@ -456,6 +478,104 @@ def lookup_orcid_by_name(
             return f"https://orcid.org/{orcid.strip()}"
 
     return None
+
+
+# Individual Profile Page
+def scrape_profile_page(url: str) -> Faculty:
+    soup = get_soup(url)
+
+    # Name
+    full_name = pick_first(
+        [
+            extract_text_or_none(soup.select_one("h1._farUsersHero__text__name")),
+            extract_text_or_none(soup.select_one("section._farUsersHero h1")),
+            extract_text_or_none(soup.select_one("h1")),
+            extract_text_or_none(soup.select_one(".entry-title")),
+        ]
+    )
+    first, last = split_name(full_name or "")
+
+    # Department & Title from hero
+    hero_dept = extract_text_or_none(
+        soup.select_one("._farUsersHero__text__officeDepartment span")
+    )
+    raw_title = extract_text_or_none(
+        soup.select_one("._farUsersHero__text__title")
+    )
+    title, department = refine_title_and_department(raw_title, hero_dept)
+
+    # Contact info blocks
+    hero_contact_lines = [
+        extract_text_or_none(el)
+        for el in soup.select("._farUsersHero__text__contactInfo")
+    ]
+    hero_contact_lines = [l for l in hero_contact_lines if l]
+
+    email = None
+    phone = None
+    for line in hero_contact_lines:
+        if not email:
+            maybe_email = clean_email(line)
+            if maybe_email:
+                email = maybe_email
+                continue
+        if not phone:
+            m = re.search(r"(\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4})", line)
+            if m:
+                phone = m.group(1)
+
+    # email fallback in page text
+    if not email:
+        text_all = soup.get_text(" ")
+        email = clean_email(text_all)
+
+    # Biography block
+    bio = None
+    bio_block = soup.select_one("section._farUsersBiography ._farUsersBiography__text")
+    if not bio_block:
+        bio_block = (
+            soup.select_one(".entry-content")
+            or soup.select_one("article")
+            or soup
+        )
+
+    paras = [extract_text_or_none(p) for p in bio_block.select("p")]
+    paras = [p for p in paras if p and len(p.split()) > 6]
+    if paras:
+        bio = "\n\n".join(paras[:6]).strip()
+
+    # Scholarly links from page content
+    orcid_url, gscholar_url, rgate_url = extract_scholarly_links(soup)
+
+    # ORCID enrichment via public search (name + affiliation)
+    if not orcid_url and first and last:
+        orcid_url = lookup_orcid_by_name(first, last, UMF_NAME)
+
+    # Phone fallback (whole page)
+    if not phone:
+        text_all = soup.get_text(" ")
+        m = re.search(r"(\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4})", text_all)
+        if m:
+            phone = m.group(1)
+
+    email = clean_email(email)
+
+    fac = Faculty(
+        faculty_id=make_faculty_id(url, email, full_name),
+        first_name=first,
+        last_name=last,
+        title=title,
+        department=department,
+        email=email,
+        phone_num=phone,
+        biography=bio,
+        research_interest=None,
+        orcid=orcid_url,
+        google_scholar_url=gscholar_url,
+        research_gate_url=rgate_url,
+        scraped_from=url,
+    )
+    return fac
 
 def scrape_umf() -> Tuple[Institution, List[Faculty]]:
     inst = Institution(
