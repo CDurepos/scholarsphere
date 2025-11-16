@@ -97,14 +97,7 @@ Each member will provide scripts or CSV files showcasing a sample data insert in
 4. Clayton:  Grants & Credentials [`grants`, `grant_providers`, `grant_recipients`, `credentials`]. **deadline**: 11/6
 
 ### D6 - Query Optimization Analysis
-Each member will provide before/after query performance results for a query on their designated tables and give justification on indexing strategies.
-1. Aidan:  Users [ `users`, `follows`, `recommendations` ]. **deadline**: 11/14
-   
-2. Abby:  Instutions & Equipment [`institutions`, `works_at`, `equipment`]. **deadline**: 11/14
-   
-3. Owen:  Publications & Keywords [`publications`, `publication_authors`, `keywords`, `publication_keywords`, `user_keywords`]. **deadline**: 11/14
-   
-4. Clayton:  Grants & Credentials [`grants`, `grant_providers`, `grant_recipients`, `credentials`]. **deadline**: 11/14
+Clayton and Aidan undertook the query optimization portion of this phase.
 
 ### D7 - Comprehensive README file (.md)
 For the **Individual Tasks**, each member will document how to run their individual scraping scripts, sample processing scripts, and SQL files. For the **Joint Tasks**, all members will document the full database recreation steps, and document any joint effort procedures such as the primary search procedure.
