@@ -6,7 +6,7 @@ CREATE TABLE grants_organization (
     grant_id       CHAR(36)     NOT NULL,
     name           VARCHAR(255) NOT NULL,
 
-    PRIMARY KEY (grant_id),
+    PRIMARY KEY (grant_id, name),
 
     FOREIGN KEY (grant_id)
         REFERENCES grants (grant_id)

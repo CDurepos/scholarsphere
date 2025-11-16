@@ -16,7 +16,7 @@ In each script, we utilize variable prefixes to clarify their role and to avoid 
 
 The majority of procedures follow the naming convention...
 
-`{operation}_{returned_or_affected_entity}_{property}.sql`
+`{operation}_{checked_or_affected_entity}_{returned_or_affected_property}.sql`
 
 There are exceptions.
 

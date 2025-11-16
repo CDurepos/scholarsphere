@@ -1,5 +1,5 @@
-DROP PROCEDURE IF EXISTS change_password;
-CREATE PROCEDURE change_password(
+DROP PROCEDURE IF EXISTS update_password;
+CREATE PROCEDURE update_password(
     IN p_faculty_id     CHAR(36),
     IN p_old_password   VARCHAR(255),
     IN p_new_password   VARCHAR(255)
