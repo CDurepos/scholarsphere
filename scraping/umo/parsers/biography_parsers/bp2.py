@@ -77,7 +77,7 @@ class B2Parser:
                 soup = BeautifulSoup(response.text, "html.parser")
                 fac_inst = Faculty()
                 # Set title
-                fac_inst.title = fac_title
+                fac_inst.title = fac_title.split(", ")
 
                 # Set department
                 fac_inst.department = os.path.basename(path)[:-4]

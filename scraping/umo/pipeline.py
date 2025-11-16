@@ -1,10 +1,11 @@
-from scraping.schemas import Faculty, Publication
 from scraping.umo.dataclass_instances.orono import umaine
 from scraping.utils.conversion import dataclass_instances_to_csv  
+from scraping.schemas import Faculty, Publication, PublicationAuthoredByFaculty
 
 import os
 import importlib
 from tqdm import tqdm
+from itertools import chain
 from typing import Union, List, Any
 
 # CFG
@@ -13,10 +14,12 @@ COMPILER_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "biograp
 TOTAL_COMPILERS = 5
 TOTAL_PARSERS = 5
 
-FAC_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "faculty_data", "faculty_data.csv")
-PUB_OUTPUT_DIR = os.path.join("scraping", "umo", "scrape_storage", "publication_data", "publication_data.csv")
+FAC_OUTPUT_DIR = os.path.join("scraping", "out", "umo_faculty.csv")
+PUB_OUTPUT_DIR = os.path.join("scraping", "out", "umo_publication.csv")
+JOIN_OUTPUT_DIR = os.path.join("scraping", "out", "umo_publication_authored_by_faculty.csv")
 os.makedirs(os.path.dirname(FAC_OUTPUT_DIR), exist_ok=True)
 os.makedirs(os.path.dirname(PUB_OUTPUT_DIR), exist_ok=True)
+os.makedirs(os.path.dirname(JOIN_OUTPUT_DIR), exist_ok=True)
 
 if os.path.exists(FAC_OUTPUT_DIR):
     raise FileExistsError(
@@ -27,6 +30,10 @@ if os.path.exists(PUB_OUTPUT_DIR):
         f"The output file '{PUB_OUTPUT_DIR}' already exists."
     )
 
+if os.path.exists(JOIN_OUTPUT_DIR):
+    raise FileExistsError(
+        f"The output file '{JOIN_OUTPUT_DIR}' already exists."
+    )
 def pipeline(steps: Union[int, list[int]] = None)->None:
     """
     Run the full UMO faculty data scraping pipeline, or specific steps of the pipeline.
@@ -68,9 +75,24 @@ def step_2():
         all_fac_instances += fac_instances
         all_pub_instances += pub_instances
 
-    # TODO: Make join table here, and then unwind publications (need uuid here?)
+    assert len(all_fac_instances) == len(all_pub_instances)
+    # TODO: Make join table here, and then unwind publications
+    # Make join table and generate temporary incremental ids
+    temp_fac_id = 0
+    temp_pub_id = 0
+    join_table_instances = []
+    for fac, publication_list in zip(all_fac_instances, all_pub_instances):
+        fac.faculty_id = temp_fac_id
+        temp_fac_id += 1
+        for pub in publication_list:
+            pub.publication_id = temp_pub_id
+            temp_pub_id += 1
+            join_table_instances.append(PublicationAuthoredByFaculty(fac.faculty_id, pub.publication_id))
+
+    all_pub_instances = list(chain.from_iterable(all_pub_instances)) # Flatten nested lists
     dataclass_instances_to_csv(all_fac_instances, output_path=FAC_OUTPUT_DIR, overwrite=True)
-    # dataclass_instances_to_csv(all_pub_instances, output_path=PUB_OUTPUT_DIR, overwrite=True)
+    dataclass_instances_to_csv(all_pub_instances, output_path=PUB_OUTPUT_DIR, overwrite=True)
+    dataclass_instances_to_csv(join_table_instances, output_path=JOIN_OUTPUT_DIR, overwrite=True)
 
 def step_3():
     return
