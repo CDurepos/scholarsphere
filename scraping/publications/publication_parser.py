@@ -16,7 +16,7 @@ def doi_to_publication_instance(doi: str) -> Publication:
     """
     pub_data = crossref_from_doi(doi=doi)
     if pub_data:
-        return pub_data_to_publication_instance(pub_data=pub_data)
+        return pub_data_to_publication_instance(pub_data=pub_data, doi=doi)
 
     return None
 
