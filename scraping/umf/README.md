@@ -59,7 +59,7 @@ These files are compatible with MySQL import workflows.
 
 ### Sample CSV Row
 
-    faculty_id,first_name,last_name,title,department,email,profile_url,orcid,google_scholar,rgate
+    faculty_id,first_name,last_name,title,department,email,scraped_from,orcid,google_scholar,rgate
     jdoe,John,Doe,Associate Professor,Mathematics,john.doe@maine.edu,https://farmington.edu/about/directory/jdoe/,https://orcid.org/0000-0002-1825-0097,,
 
 ## Importing into MySQL
@@ -71,10 +71,6 @@ These files are compatible with MySQL import workflows.
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
     IGNORE 1 LINES;
-
-### JSON Import (optional)
-
-    mysqlsh --import faculty_umf.json --table faculty
 
 # Running the Scraper
 

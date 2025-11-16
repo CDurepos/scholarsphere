@@ -1,4 +1,4 @@
-CREATE TABLE keyword_researched_by_faculty (
+CREATE TABLE faculty_researches_keyword (
     name        VARCHAR(64)     NOT NULL,
     faculty_id     CHAR(36)     NOT NULL,
 
