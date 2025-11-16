@@ -111,3 +111,137 @@ For the **Individual Tasks**, each member will document how to run their individ
 **Joint Tasks**:
 1. Database Recreation Steps - **deadline**: 11/15
 2. Key Procedure Usage - **deadline**: 11/15
+
+# COS457 Phase 2 Supplementary Material
+
+## Query Optimization Analysis
+
+### Query 1 — Generating Grant-Based Faculty Recommendations
+
+A subtle feature we implemented is a script that generates recommendations between two faculty members who have both received funds from the same grant. The original procedure looked like this:
+
+```sql
+DROP PROCEDURE IF EXISTS recommend_faculty_grants;
+DELIMITER $$
+
+CREATE PROCEDURE recommend_faculty_grants()
+BEGIN
+
+    -- INSERT directional recommendations
+    INSERT INTO faculty_recommended_to_faculty (
+        source_faculty_id,
+        target_faculty_id,
+        match_score,
+        created_at
+    )
+    SELECT
+        fA.faculty_id      AS source_faculty_id,
+        fB.faculty_id      AS target_faculty_id,
+        NULL               AS match_score,
+        CURDATE()          AS created_at
+    FROM grants_granted_to_faculty AS gA
+    JOIN grants_granted_to_faculty AS gB
+         ON gA.grant_id = gB.grant_id
+    JOIN faculty AS fA
+         ON fA.faculty_id = gA.faculty_id
+    JOIN faculty AS fB
+         ON fB.faculty_id = gB.faculty_id
+    WHERE fA.faculty_id <> fB.faculty_id
+    GROUP BY
+        fA.faculty_id,
+        fB.faculty_id;
+
+END$$
+DELIMITER ;
+```
+
+While this worked, we quickly noticed redundancy:
+
+- Joining the `faculty` table is unnecessary for this query, since we only need the `faculty_id` values, which are already present in `grants_granted_to_faculty`.
+- The `GROUP BY` clause is also redundant. Its only purpose here was to avoid duplicate insertions, but our **PRIMARY KEY** and **ON DUPLICATE KEY** constraint already enforce uniqueness for `(source_faculty_id, target_faculty_id)`.
+
+To optimize, we removed the extra joins and dropped the `GROUP BY`:
+
+```sql
+DROP PROCEDURE IF EXISTS recommend_faculty_grants;
+DELIMITER $$
+
+CREATE PROCEDURE recommend_faculty_grants()
+BEGIN
+
+    -- INSERT directional recommendations
+    INSERT INTO faculty_recommended_to_faculty (
+        source_faculty_id,
+        target_faculty_id,
+        match_score,
+        created_at
+    )
+    SELECT
+        g1.faculty_id      AS source_faculty_id,
+        g2.faculty_id      AS target_faculty_id,
+        NULL               AS match_score,
+        CURDATE()          AS created_at
+    FROM grants_granted_to_faculty AS g1
+    JOIN grants_granted_to_faculty AS g2
+         ON g1.grant_id = g2.grant_id
+    WHERE g1.faculty_id <> g2.faculty_id;
+
+END$$
+DELIMITER ;
+```
+
+---
+
+### Query 2 — Faculty Search Procedure
+
+A core feature of **ScholarSphere** is the ability to search for faculty. For now, we implement this as a straightforward SQL stored procedure, with the idea of layering in embedding-based similarity scoring later on for certain attributes.
+
+```sql
+CREATE PROCEDURE search_faculty(
+    IN p_first_name    VARCHAR(128),
+    IN p_last_name     VARCHAR(128),
+    IN p_department    VARCHAR(128),
+    IN p_institution   VARCHAR(255)
+)
+BEGIN
+    -- Use DISTINCT to handle cases where a faculty member
+    -- has multiple departments or institutions
+    SELECT DISTINCT
+        f.faculty_id,
+        f.first_name,
+        f.last_name,
+        d.department_name,
+        i.name AS institution_name
+    FROM faculty AS f
+    -- LEFT JOIN ensures we get faculty even if they have no department
+    LEFT JOIN faculty_department AS d
+        ON f.faculty_id = d.faculty_id
+    -- LEFT JOIN to get institution information through the works_at relationship
+    LEFT JOIN faculty_works_at_institution AS w
+        ON f.faculty_id = w.faculty_id
+    LEFT JOIN institution AS i
+        ON w.institution_id = i.institution_id
+    WHERE
+        -- If a parameter is NULL, we ignore that filter
+        (p_first_name   IS NULL OR f.first_name        LIKE CONCAT(p_first_name, '%'))
+        AND (p_last_name  IS NULL OR f.last_name       LIKE CONCAT(p_last_name, '%'))
+        AND (p_department IS NULL OR d.department_name LIKE CONCAT(p_department, '%'))
+        AND (p_institution IS NULL OR i.name           LIKE CONCAT(p_institution, '%'));
+END $$
+```
+
+### Supporting Indexes
+
+```sql
+CREATE INDEX idx_faculty_last_first_name
+    ON faculty(last_name, first_name);
+
+CREATE INDEX idx_faculty_department_dept_name
+    ON faculty_department(department_name);
+```
+
+Since the procedure uses prefix LIKE searches (LIKE 'prefix%') on both last_name and first_name, the index allows MySQL to scan only the relevant portion of the faculty table rather than performing a full table scan. 
+
+The index can be used when filtering by last_name alone or by both last_name and first_name, significantly improving query performance. Similarly, the index idx_faculty_department_dept_name on department_name allows the database to quickly locate matching department records without scanning the entire table. 
+
+We anticipate that the department will be an important attribute for faculty to search on. These indexes ensure that both the join operations and the filtering conditions are efficient.
