@@ -1,4 +1,4 @@
-CREATE TABLE grants (
+CREATE TABLE IF NOT EXISTS grants (
     grant_id    CHAR(36)        PRIMARY KEY,
     description VARCHAR(2048)   NULL,
     amount      DECIMAL(10,2)   NOT NULL,

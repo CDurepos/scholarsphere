@@ -1,31 +1,335 @@
--- Entities
-SOURCE schema/faculty.sql
-SOURCE schema/credentials.sql
-SOURCE schema/institution.sql 
-SOURCE schema/equipment.sql
-SOURCE schema/grants.sql
-SOURCE schema/publication.sql
+CREATE TABLE IF NOT EXISTS faculty (
+    faculty_id          CHAR(36)        PRIMARY KEY,
+    
+    -- Keep first name `NOT NULL` to ensure some info is stored for any instance
+    first_name          VARCHAR(128)    NOT NULL,
+    last_name           VARCHAR(128),
+    biography           VARCHAR(2048),
+    orcid               CHAR(19),
+    google_scholar_url  VARCHAR(255),
+    research_gate_url   VARCHAR(255),
 
--- Faculty MV Attr
-SOURCE schema/faculty_email.sql
-SOURCE schema/faculty_phone.sql
-SOURCE schema/faculty_department.sql
-SOURCE schema/faculty_title.sql
+    -- Store URLs we retrieved a users info from
+    -- Better transparency with users
+    scraped_from        VARCHAR(255),
+    
+    CHECK (
+        (google_scholar_url IS NULL 
+            OR google_scholar_url LIKE 'https://scholar.google.com/%'
+            OR google_scholar_url LIKE 'http://scholar.google.com/%')
+        AND
+        (research_gate_url IS NULL
+            OR research_gate_url LIKE 'https://www.researchgate.net/%'
+            OR research_gate_url LIKE 'http://www.researchgate.net/%')
+    )
+);
 
--- Grant MV Attr
-SOURCE schema/grants_organization.sql
+-- USER CREDENTIALS SCHEMA
+CREATE TABLE IF NOT EXISTS credentials (
+    -- ASSOCIATED USER ID
+    faculty_id        CHAR(36)      NOT NULL UNIQUE,
 
--- Faculty Relationship Tables
-SOURCE schema/faculty_follows_faculty.sql
-SOURCE schema/faculty_recommended_to_faculty.sql
-SOURCE schema/faculty_works_at_institution.sql
-SOURCE schema/faculty_researches_keyword.sql
+    username          VARCHAR(255)  NOT NULL UNIQUE,
 
--- Grant Relationship Tables
-SOURCE schema/grants_for_keyword.sql
-SOURCE schema/grants_granted_to_faculty.sql
-SOURCE schema/grants_provided_by_organization.sql
+    -- HASH OF PW
+    password_hash     VARCHAR(255)  NOT NULL,
 
--- Publication Relationship Tables
-SOURCE schema/publication_authored_by_faculty.sql
-SOURCE schema/publication_explores_keyword.sql
+    -- PW SALT FOR SECURITY
+    password_salt     VARCHAR(255)  NOT NULL,
+
+    -- TRACK LAST LOGIN
+    last_login        DATETIME      NULL,
+
+    PRIMARY KEY (faculty_id),
+
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty (faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Institution schema
+CREATE TABLE IF NOT EXISTS institution (
+    institution_id      CHAR(36)        PRIMARY KEY,
+    name                VARCHAR(256)    NOT NULL,
+
+    -- Location composite attributes
+    street_addr         VARCHAR(255),
+    city                VARCHAR(255),
+    state               VARCHAR(255),
+    country             VARCHAR(255) NOT NULL,
+    zip                 VARCHAR(16),
+
+    website_url         VARCHAR(255),
+    type                ENUM(
+                            "Public University", 
+                            "Private University", 
+                            "Community College"
+                        ),
+
+
+    -- Constraints
+    CHECK (zip IS NULL OR zip REGEXP '^[0-9]{5}$')
+);
+
+-- EQUIPMENT SCH
+CREATE TABLE IF NOT EXISTS equipment (
+    eq_id           CHAR(36)        PRIMARY KEY,
+    name            VARCHAR(64)     NOT NULL,
+
+    -- Description of the equipment itself
+    description     VARCHAR(2048),
+
+    -- TEXT DEFAULT
+    -- Allow for simple phrases `Available,` `Unavailable,` etc.
+    -- In addition to descriptive passages...
+    -- `Available Mondays 14:00-20:00 ...`
+    availability    VARCHAR(2048)            NOT NULL,
+
+    -- Each Equipment must belong to exactly one Institution
+    institution_id  CHAR(36)    NOT NULL,
+    FOREIGN KEY (institution_id)
+        REFERENCES institution(institution_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS grants (
+    grant_id    CHAR(36)        PRIMARY KEY,
+    description VARCHAR(2048)   NULL,
+    amount      DECIMAL(10,2)   NOT NULL,
+    start_date  DATE            NOT NULL,
+    end_date    DATE            NULL
+);
+
+CREATE TABLE IF NOT EXISTS publication (
+    publication_id  CHAR(36) NOT NULL PRIMARY KEY,
+
+    title           VARCHAR(64) NOT NULL,
+    year            INT NOT NULL,
+    doi             VARCHAR(64) UNIQUE,
+    abstract        TEXT,
+    publisher       VARCHAR(64) NOT NULL,
+    citation_count  INT DEFAULT 0
+);
+
+CREATE TABLE keyword (
+    name VARCHAR(64) PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS faculty_email (
+    faculty_id  CHAR(36)        NOT NULL,
+    email       VARCHAR(255),
+
+    PRIMARY KEY (faculty_id, email),
+
+    FOREIGN KEY (faculty_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    -- RegEx to check that email is indeed an email
+    CHECK (email IS NULL OR email LIKE '%_@__%.__%')
+);
+
+CREATE TABLE IF NOT EXISTS faculty_phone (
+    faculty_id  CHAR(36)        NOT NULL,
+
+    -- (Estimated) Max phone number length is 15 digits
+    -- 32 Char max for extra space
+    phone_num   VARCHAR(32),
+
+    PRIMARY KEY (faculty_id, phone_num),
+
+    FOREIGN KEY (faculty_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faculty_department (
+    faculty_id      CHAR(36)        NOT NULL,
+    department_name VARCHAR(128),
+
+    PRIMARY KEY (faculty_id, department_name),
+
+    FOREIGN KEY (faculty_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faculty_title (
+    faculty_id  CHAR(36)        NOT NULL,
+    title       VARCHAR(255),
+
+    PRIMARY KEY (faculty_id, title),
+    FOREIGN KEY (faculty_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- GRANT ORG SCHEMA
+-- Not all organizations that fund a grant may be an educational or research institution
+-- We store the names of funding org's as a MV attribute of grants 
+-- Rather than creating an instance of institution for every funding agency
+CREATE TABLE grants_organization (
+    grant_id       CHAR(36)     NOT NULL,
+    name           VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY (grant_id, name),
+
+    FOREIGN KEY (grant_id)
+        REFERENCES grants (grant_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faculty_follows_faculty(
+    follower_id     CHAR(36)    NOT NULL,
+    followee_id     CHAR(36)    NOT NULL,
+
+    PRIMARY KEY (follower_id, followee_id),
+    FOREIGN KEY (follower_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    
+    FOREIGN KEY (followee_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
+    -- Model as directional relationship 
+    -- Allows for different match scoring dependent on user properties & data
+    source_faculty_id  CHAR(36)    NOT NULL,
+    target_faculty_id  CHAR(36)    NOT NULL,
+    
+    match_score     FLOAT,
+    created_at      DATE        NOT NULL,
+
+    PRIMARY KEY (source_faculty_id, target_faculty_id),
+
+    FOREIGN KEY (source_faculty_id) 
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (target_faculty_id)
+        REFERENCES faculty(faculty_id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Represents the many-to-many relation between Faculty and Institution
+CREATE TABLE IF NOT EXISTS faculty_works_at_institution (
+    faculty_id      CHAR(36)    NOT NULL,
+    institution_id  CHAR(36)    NOT NULL,
+
+    start_date      DATE        NOT NULL,
+
+    -- Nullable end date
+    -- Users may currently work at an institution
+    end_date        DATE,
+
+    PRIMARY KEY (faculty_id, institution_id, start_date),
+
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (institution_id)
+        REFERENCES institution(institution_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faculty_researches_keyword (
+    name        VARCHAR(64)     NOT NULL,
+    faculty_id     CHAR(36)     NOT NULL,
+
+    PRIMARY KEY (name, faculty_id),
+
+    FOREIGN KEY (name)
+        REFERENCES keyword(name)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS grants_for_keyword (
+    grant_id        CHAR(36)    NOT NULL,
+    name            VARCHAR(64) NOT NULL,
+
+    PRIMARY KEY (name, grant_id),
+
+    FOREIGN KEY (name)
+        REFERENCES keyword(name)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY(grant_id)
+        REFERENCES grants(grant_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE grants_granted_to_faculty (
+    grant_id        CHAR(36)    NOT NULL,
+    faculty_id      CHAR(36)    NOT NULL,
+
+    PRIMARY KEY (grant_id, faculty_id),
+
+    FOREIGN KEY (grant_id)
+        REFERENCES grants(grant_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS publication_authored_by_faculty (
+    faculty_id         CHAR(36)    NOT NULL,
+    publication_id  CHAR(36)    NOT NULL,
+
+    PRIMARY KEY (faculty_id, publication_id),
+
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    
+    FOREIGN KEY (publication_id)
+        REFERENCES publication(publication_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+);
+
+CREATE TABLE publication_explores_keyword (
+    publication_id  CHAR(36)    NOT NULL,
+    name            VARCHAR(64) NOT NULL,
+
+    PRIMARY KEY (publication_id, name),
+
+    FOREIGN KEY (publication_id)
+        REFERENCES publication(publication_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    
+    FOREIGN KEY (name)
+        REFERENCES keyword(name)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+);

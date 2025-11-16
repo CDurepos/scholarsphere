@@ -1,5 +1,5 @@
 -- USER CREDENTIALS SCHEMA
-CREATE TABLE credentials (
+CREATE TABLE IF NOT EXISTS credentials (
     -- ASSOCIATED USER ID
     faculty_id        CHAR(36)      NOT NULL UNIQUE,
 

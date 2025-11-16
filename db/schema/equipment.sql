@@ -1,5 +1,5 @@
 -- EQUIPMENT SCH
-CREATE TABLE equipment (
+CREATE TABLE IF NOT EXISTS equipment (
     eq_id           CHAR(36)        PRIMARY KEY,
     name            VARCHAR(64)     NOT NULL,
 
@@ -15,7 +15,7 @@ CREATE TABLE equipment (
     -- Each Equipment must belong to exactly one Institution
     institution_id  CHAR(36)    NOT NULL,
     FOREIGN KEY (institution_id)
-        REFERENCES Institution(institution_id)
+        REFERENCES institution(institution_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );

@@ -12,12 +12,12 @@ CREATE TABLE faculty_works_at_institution (
     PRIMARY KEY (faculty_id, institution_id, start_date),
 
     FOREIGN KEY (faculty_id)
-        REFERENCES Faculty(faculty_id)
+        REFERENCES faculty(faculty_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
     FOREIGN KEY (institution_id)
-        REFERENCES Institution(institution_id)
+        REFERENCES institution(institution_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
