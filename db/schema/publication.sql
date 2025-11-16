@@ -1,7 +1,5 @@
-CREATE TABLE publication (
-    publication_id  CHAR(36) NOT NULL
-        PRIMARY KEY
-        DEFAULT (UUID()),
+CREATE TABLE IF NOT EXISTS publication (
+    publication_id  CHAR(36) NOT NULL PRIMARY KEY,
 
     title           VARCHAR(64) NOT NULL,
     year            INT NOT NULL,

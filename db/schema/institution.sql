@@ -1,5 +1,5 @@
 -- Institution schema
-CREATE TABLE institution (
+CREATE TABLE IF NOT EXISTS institution (
     institution_id      CHAR(36)        PRIMARY KEY,
     name                VARCHAR(256)    NOT NULL,
 
@@ -15,9 +15,9 @@ CREATE TABLE institution (
                             "Public University", 
                             "Private University", 
                             "Community College"
-                        )
+                        ),
 
 
     -- Constraints
-    CHECK (zip ~ '^[0-9]{5}$' OR zip IS NULL)
+    CHECK (zip IS NULL OR zip REGEXP '^[0-9]{5}$')
 );

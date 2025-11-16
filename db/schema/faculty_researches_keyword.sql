@@ -5,7 +5,7 @@ CREATE TABLE faculty_researches_keyword (
     PRIMARY KEY (name, faculty_id),
 
     FOREIGN KEY (name)
-        REFERENCES keywords(name)
+        REFERENCES keyword(name)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 

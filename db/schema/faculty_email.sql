@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS faculty_email (
     FOREIGN KEY (faculty_id) 
         REFERENCES faculty(faculty_id) 
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
 
     -- RegEx to check that email is indeed an email
     CHECK (email IS NULL OR email LIKE '%_@__%.__%')
