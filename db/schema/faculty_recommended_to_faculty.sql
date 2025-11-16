@@ -17,5 +17,8 @@ CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
     FOREIGN KEY (target_faculty_id)
         REFERENCES faculty(faculty_id) 
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    ON DUPLICATE KEY UPDATE match_score = VALUES(match_score);
+
 );
