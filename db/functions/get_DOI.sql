@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION get_DOI(p_id CHAR(36))
 RETURNS VARCHAR(64)
 BEGIN
@@ -6,4 +8,4 @@ BEGIN
     FROM publications
     WHERE publication_id = p_id;
     RETURN v_pub_doi;
-END;
+END $$

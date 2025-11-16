@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION count_keywords_publication(
     IN p_publication_id CHAR(36)
 )
@@ -10,4 +12,4 @@ BEGIN
     WHERE publication_id = p_publication_id;
 
     RETURN v_total;
-END;
+END $$

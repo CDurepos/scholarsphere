@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION publication_has_keyword(
     IN p_publication_id CHAR(36),
     IN p_name VARCHAR(64)
@@ -11,4 +13,4 @@ BEGIN
         WHERE publication_id = p_publication_id
           AND name = p_name
     );
-END;
+END $$

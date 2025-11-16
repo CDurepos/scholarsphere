@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION get_citation_count(p_publication_id CHAR(36))
 RETURNS INT
 BEGIN
@@ -8,4 +10,4 @@ BEGIN
     WHERE publication_id = p_publication_id;
 
     RETURN v_count;
-END;
+END $$

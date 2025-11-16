@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION keyword_exists(p_name VARCHAR(64))
 RETURNS BOOLEAN
 BEGIN
@@ -6,4 +8,4 @@ BEGIN
         FROM keyword
         WHERE name = p_name
     );
-END;
+END $$

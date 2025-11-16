@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION count_user_keywords(
     IN p_faculty_id CHAR(36)
 )
@@ -10,4 +12,4 @@ BEGIN
     WHERE faculty_id = p_faculty_id;
 
     RETURN v_total;
-END;
+END $$

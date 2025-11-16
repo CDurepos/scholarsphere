@@ -1,3 +1,5 @@
+DELIMITER $$
+
 CREATE FUNCTION count_keywords()
 RETURNS INT
 BEGIN
@@ -7,4 +9,4 @@ BEGIN
     FROM keyword;
 
     RETURN v_total;
-END;
+END $$
