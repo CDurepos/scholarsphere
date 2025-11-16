@@ -4,6 +4,37 @@ An application built to foster collaboration between Maine researchers.
 
 Built by students, for the COS457 Database Systems course at the University of Southern Maine.
 
+# How to Run
+
+## Database
+
+To utilize our database, download and setup MySQL.
+
+Once finished, you should run the command...
+
+`SOURCE ~/init/000_create_database.sql`
+
+Note that you may have to use the absolute path to this file.
+
+Once you've created the database, you should then run each script within the `migrations` directory, sequentially, in a similar manner. For example, start with:
+
+`SOURCE ~/migrations/001_init_schema.sql`
+
+## Scraping
+
+To utilize our web-scraping tools, you must have downloaded and setup a local Python interpreter and environment.
+
+Using your local environment, use the following command to install dependencies:
+
+`pip install -r scraping/requirements.txt`
+
+Once you have dependencies installed, you can run each web-scraping tool independently through the [`uma`, `umf`, `umo`, `usm`] subdirectories in the `scraping` directory.
+
+We soon plan to create one sole script to run each and every one of these scripts, and merge results into a unified, web-scraped file.
+
+
+# Team Member Contributions & Task Distribution
+
 ## GitHub Username to Student Map
 
 aidan073:      Aidan Bell
