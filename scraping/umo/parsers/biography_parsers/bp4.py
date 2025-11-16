@@ -83,6 +83,8 @@ class B4Parser:
 
                 # Extract name
                 name_container = soup.find(["h1"], class_=["page-title single-title"])
+                if not name_container:
+                    name_container = soup.find(["h2"], class_=["page-title"])
                 if name_container:
                     name = name_container.text
                     if name and isinstance(name, str):
