@@ -30,7 +30,7 @@ BEGIN
         match_score,
         created_at
     )
-    SELECT
+    SELECT DISTINCT
         g1.faculty_id      AS source_faculty_id,
         g2.faculty_id      AS target_faculty_id,
         NULL               AS match_score,
@@ -38,7 +38,10 @@ BEGIN
     FROM grants_granted_to_faculty AS g1
     JOIN grants_granted_to_faculty AS g2
          ON g1.grant_id = g2.grant_id
-    WHERE g1.faculty_id <> g2.faculty_id;
+    WHERE g1.faculty_id <> g2.faculty_id
+    ON DUPLICATE KEY UPDATE
+        match_score = VALUES(match_score),
+        created_at = VALUES(created_at);
 
 END $$
 
