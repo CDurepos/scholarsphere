@@ -9,7 +9,7 @@ CREATE TABLE faculty_works_at_institution (
     -- Users may currently work at an institution
     end_date        DATE,
 
-    PRIMARY KEY (faculty_id, institution_id, start_date),
+    PRIMARY KEY (faculty_id, institution_id),
 
     FOREIGN KEY (faculty_id)
         REFERENCES faculty(faculty_id)

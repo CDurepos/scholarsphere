@@ -1,8 +1,29 @@
 DELIMITER $$
 
-DROP PROCEDURE IF EXISTS last_login;
-
-CREATE PROCEDURE last_login(
+/**
+ * Validates user login credentials and updates last login timestamp.
+ * 
+ * This workflow procedure authenticates a user by verifying their username
+ * and password. If authentication is successful, it updates the last_login
+ * timestamp and returns the faculty_id. The password is verified using
+ * the stored salt and hash.
+ * 
+ * @param p_username    Required username to authenticate
+ * @param p_password    Required password (plain text, will be hashed for comparison)
+ * @param p_faculty_id  OUT parameter that receives the faculty_id if login succeeds
+ *                      Returns NULL if login fails
+ * @param p_status_code OUT parameter indicating the login result:
+ *                      - 0: Login successful
+ *                      - 1: Invalid password
+ *                      - 2: Username not found
+ *                      - -1: Default/error state
+ * 
+ * @returns No result set. Check the OUT parameters for login status.
+ * 
+ * @throws SQLSTATE '45000' if username or password is NULL
+ */
+DROP PROCEDURE IF EXISTS validate_login;
+CREATE PROCEDURE validate_login(
     IN  p_username      VARCHAR(255),
     IN  p_password      VARCHAR(255),
     OUT p_faculty_id    CHAR(36),
@@ -12,6 +33,11 @@ BEGIN
     DECLARE v_salt          VARCHAR(255);
     DECLARE v_expected_hash VARCHAR(255);
     DECLARE v_computed_hash CHAR(64);
+
+    IF p_username IS NULL OR p_password IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'username and password are required for validate_login';
+    END IF;
 
     -- DEFAULT OUTPUT
     SET p_status_code = -1;

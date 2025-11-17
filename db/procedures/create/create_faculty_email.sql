@@ -12,7 +12,7 @@ DELIMITER $$
  * 
  * @returns No result set (unlike other create procedures)
  */
-CREATE PROCEDURE insert_faculty_email (
+CREATE PROCEDURE create_faculty_email (
     IN p_faculty_id CHAR(36),
     IN p_email      VARCHAR(255)
 )

@@ -20,7 +20,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if first_name is NULL
  */
-CREATE PROCEDURE insert_into_faculty (
+CREATE PROCEDURE create_faculty (
     IN p_first_name          VARCHAR(128),
     IN p_last_name           VARCHAR(128),
     IN p_biography           VARCHAR(2048),
