@@ -30,6 +30,8 @@ Using your local environment, use the following command to install dependencies:
 
 Once you have dependencies installed, you can run each web-scraping tool independently through the [`uma`, `umf`, `umo`, `usm`] subdirectories in the `scraping` directory.
 
+Detailed documentation on the product of each of these scrapers, and how to run each scraper, may be found in their subdirectory's `README` file.
+
 We soon plan to create one sole script to run each and every one of these scripts, and merge results into a unified, web-scraped file.
 
 
