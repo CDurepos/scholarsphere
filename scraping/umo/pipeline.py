@@ -1,13 +1,15 @@
 from scraping.umo.dataclass_instances.orono import umaine
 from scraping.utils.conversion import dataclass_instances_to_csv
-from scraping.schemas import Faculty, Publication, PublicationAuthoredByFaculty
+from scraping.schemas import Faculty, Publication, PublicationAuthoredByFaculty, Institution
 from scraping.umo.processing.post_process_pipeline import post_process_faculty_csv
+from scraping.utils.json_output import write_faculty_jsonl, write_institution_json
 
 import os
 import importlib
 from tqdm import tqdm
 from itertools import chain
-from typing import Union, List, Any
+from typing import Union, List, Any, Dict, Tuple
+from datetime import date
 
 # CFG
 COMPILER_OUTPUT_DIR = os.path.join(
@@ -17,28 +19,7 @@ COMPILER_OUTPUT_DIR = os.path.join(
 TOTAL_COMPILERS = 5
 TOTAL_PARSERS = 5
 
-FAC_OUTPUT_FILE = os.path.join("scraping", "out", "umo_faculty_raw.csv")
-PUB_OUTPUT_FILE = os.path.join("scraping", "out", "umo_publication.csv")
-JOIN_OUTPUT_FILE = os.path.join(
-    "scraping", "out", "umo_publication_authored_by_faculty.csv"
-)
-FAC_FILTERED_OUTPUT_FILE = os.path.join("scraping", "out", "umo_faculty_filtered.csv")
-
-os.makedirs(os.path.dirname(FAC_OUTPUT_FILE), exist_ok=True)
-os.makedirs(os.path.dirname(PUB_OUTPUT_FILE), exist_ok=True)
-os.makedirs(os.path.dirname(JOIN_OUTPUT_FILE), exist_ok=True)
-os.makedirs(os.path.dirname(FAC_FILTERED_OUTPUT_FILE), exist_ok=True)
-
-if os.path.exists(FAC_OUTPUT_FILE):
-    raise FileExistsError(f"The output file '{FAC_OUTPUT_FILE}' already exists.")
-if os.path.exists(PUB_OUTPUT_FILE):
-    raise FileExistsError(f"The output file '{PUB_OUTPUT_FILE}' already exists.")
-if os.path.exists(JOIN_OUTPUT_FILE):
-    raise FileExistsError(f"The output file '{JOIN_OUTPUT_FILE}' already exists.")
-if os.path.exists(FAC_FILTERED_OUTPUT_FILE):
-    raise FileExistsError(
-        f"The output file '{FAC_FILTERED_OUTPUT_FILE}' already exists."
-    )
+UMO_INSTITUTION_ID = "umo"
 
 
 def pipeline(steps: Union[int, list[int]] = None) -> None:
@@ -93,41 +74,159 @@ def step_2():
         all_pub_instances += pub_instances
 
     assert len(all_fac_instances) == len(all_pub_instances)
-    # TODO: Make join table here, and then unwind publications
-    # Make join table and generate temporary incremental ids
-    temp_fac_id = 0
-    temp_pub_id = 0
-    join_table_instances = []
-    for fac, publication_list in zip(all_fac_instances, all_pub_instances):
-        fac.faculty_id = temp_fac_id
-        temp_fac_id += 1
-        for pub in publication_list:
-            pub.publication_id = temp_pub_id
-            temp_pub_id += 1
-            join_table_instances.append(
-                PublicationAuthoredByFaculty(fac.faculty_id, pub.publication_id)
-            )
-
-    all_pub_instances = list(
-        chain.from_iterable(all_pub_instances)
-    )  # Flatten nested lists
-    dataclass_instances_to_csv(
-        all_fac_instances, output_path=FAC_OUTPUT_FILE, overwrite=True
-    )
-    dataclass_instances_to_csv(
-        all_pub_instances, output_path=PUB_OUTPUT_FILE, overwrite=True
-    )
-    dataclass_instances_to_csv(
-        join_table_instances, output_path=JOIN_OUTPUT_FILE, overwrite=True
-    )
+    return all_fac_instances, all_pub_instances
 
 
-def step_3():
-    # Post-process faculty data: remove duplicates and entries without first names
-    post_process_faculty_csv(
-        input_file=FAC_OUTPUT_FILE, output_file=FAC_FILTERED_OUTPUT_FILE
+def convert_faculty_to_json_records(faculty_instances: List[Faculty]) -> List[Dict]:
+    """
+    Convert Faculty dataclass instances to JSON records with MV attributes as arrays.
+    
+    Args:
+        faculty_instances: List of Faculty dataclass instances
+    
+    Returns:
+        List of faculty dictionaries ready for JSON output
+    """
+    records = []
+    
+    for fac in faculty_instances:
+        # Convert MV attributes to arrays
+        emails = []
+        if fac.email:
+            if isinstance(fac.email, list):
+                emails = [e for e in fac.email if e]
+            else:
+                emails = [fac.email]
+        
+        phones = []
+        if fac.phone_num:
+            if isinstance(fac.phone_num, list):
+                phones = [p for p in fac.phone_num if p]
+            else:
+                phones = [fac.phone_num]
+        
+        departments = []
+        if fac.department:
+            if isinstance(fac.department, list):
+                departments = [d for d in fac.department if d]
+            else:
+                departments = [fac.department]
+        
+        titles = []
+        if fac.title:
+            if isinstance(fac.title, list):
+                titles = [t for t in fac.title if t]
+            else:
+                titles = [fac.title]
+        
+        record = {
+            'first_name': fac.first_name,
+            'last_name': fac.last_name,
+            'biography': fac.biography,
+            'orcid': fac.orcid,
+            'google_scholar_url': fac.google_scholar_url,
+            'research_gate_url': fac.research_gate_url,
+            'scraped_from': fac.scraped_from,
+            'emails': emails,
+            'phones': phones,
+            'departments': departments,
+            'titles': titles,
+            'institution_id': UMO_INSTITUTION_ID,
+            'start_date': date.today().isoformat(),
+            'end_date': None,
+        }
+        
+        records.append(record)
+    
+    return records
+
+
+def scrape_umo(output_dir: str = "scraping/out") -> Tuple[Institution, List[Dict]]:
+    """
+    Scrape UMO faculty data and return institution and faculty records.
+    
+    Args:
+        output_dir: Directory to write output files (default: scraping/out)
+    
+    Returns:
+        Tuple of (Institution, list) where list contains faculty dictionaries
+        with all attributes including MV attributes as arrays.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Create institution
+    inst = Institution(
+        institution_id=UMO_INSTITUTION_ID,
+        name=umaine.name,
+        website_url=umaine.website_url,
+        institution_type=umaine.institution_type,
+        street_addr=umaine.street_addr,
+        city=umaine.city,
+        state=umaine.state,
+        country=umaine.country,
+        zip_code=umaine.zip_code,
     )
+    
+    # Run pipeline steps
+    print("[INFO] Step 1: Gathering biography links...")
+    step_1()
+    
+    print("[INFO] Step 2: Scraping biography pages...")
+    all_fac_instances, all_pub_instances = step_2()
+    
+    # Filter out faculty without first names
+    filtered_faculty = [f for f in all_fac_instances if f.first_name and f.first_name.strip()]
+    
+    # Remove duplicates (same first name, last name, and email)
+    seen = set()
+    unique_faculty = []
+    for fac in filtered_faculty:
+        key = (fac.first_name, fac.last_name, fac.email)
+        if key not in seen:
+            seen.add(key)
+            unique_faculty.append(fac)
+    
+    print(f"[INFO] Filtered {len(all_fac_instances)} -> {len(unique_faculty)} unique faculty")
+    
+    # Convert to JSON records
+    faculty_records = convert_faculty_to_json_records(unique_faculty)
+    
+    return inst, faculty_records
+
+
+def main(output_dir: str = "scraping/out"):
+    """
+    Main function to scrape UMO data and output JSON files.
+    
+    Args:
+        output_dir: Directory to write output files (default: scraping/out)
+    """
+    inst, faculty_records = scrape_umo(output_dir)
+    print(f"[INFO] Scraped {len(faculty_records)} faculty records")
+    
+    # Write faculty JSONL file
+    faculty_output = os.path.join(output_dir, "umo_faculty.jsonl")
+    write_faculty_jsonl(faculty_records, faculty_output)
+    print(f"[INFO] Wrote: {faculty_output}")
+    
+    # Write institution JSON file
+    institution_output = os.path.join(output_dir, "umo_institution.json")
+    institution_dict = {
+        'institution_id': inst.institution_id,
+        'name': inst.name,
+        'website_url': inst.website_url,
+        'type': inst.institution_type,
+        'street_addr': inst.street_addr,
+        'city': inst.city,
+        'state': inst.state,
+        'country': inst.country,
+        'zip': inst.zip_code,
+    }
+    write_institution_json(institution_dict, institution_output)
+    print(f"[INFO] Wrote: {institution_output}")
+    
+    return faculty_output, institution_output
 
 
 if __name__ == "__main__":
-    pipeline(2)
+    main()

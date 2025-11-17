@@ -17,7 +17,9 @@ import os
 import re
 import time
 import unicodedata
+import csv
 from typing import Optional, Iterable, List, Dict, Tuple
+from datetime import date
 
 import certifi
 import requests
@@ -28,6 +30,7 @@ from urllib3.util.retry import Retry
 from scraping.schemas import Faculty, Institution
 from scraping.utils import get_headers
 from scraping.utils.conversion import dataclass_instances_to_csv
+from scraping.utils.json_output import write_faculty_jsonl, write_institution_json
 
 UMF_DIR_URL = "https://farmington.edu/about/directory/?user_type=faculty"
 UMF_DIR_BASE = "https://farmington.edu"
@@ -166,6 +169,51 @@ def clean_email(s: Optional[str]) -> Optional[str]:
         s = re.sub(pat, repl, s, flags=re.I)
     m = re.search(r"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}", s or "", flags=re.I)
     return m.group(0).lower() if m else None
+
+
+def clean_biography(bio: Optional[str]) -> Optional[str]:
+    """
+    Clean biography text by filtering out unwanted content like cookie notices,
+    website boilerplate, and other non-biography content.
+    """
+    if not bio:
+        return None
+    
+    bio = norm_ws(bio)
+    if not bio:
+        return None
+    
+    # Patterns to filter out unwanted text
+    unwanted_patterns = [
+        r"University of Maine.*?Farmington.*?This website uses cookies",
+        r"This website uses cookies.*?",
+        r"University of Maine.*?Farmington.*?cookie",
+        r"cookie.*?policy",
+        r"privacy.*?policy",
+        r"terms.*?of.*?service",
+        r"University of Maine.*?Farmington.*?website",
+        r"^\s*(University of Maine|UMF|Farmington).*?$",  # Lines that are just university name
+    ]
+    
+    # Remove unwanted patterns
+    for pattern in unwanted_patterns:
+        bio = re.sub(pattern, "", bio, flags=re.I | re.DOTALL)
+    
+    # Additional checks: if bio is too short or contains mostly boilerplate, return None
+    bio_words = bio.split()
+    if len(bio_words) < 10:  # Too short to be a real biography
+        return None
+    
+    # Check if bio is mostly just university name variations
+    university_terms = ["university", "maine", "farmington", "umf", "campus", "college"]
+    bio_lower = bio.lower()
+    university_word_count = sum(1 for term in university_terms if term in bio_lower)
+    if university_word_count > len(bio_words) * 0.5:  # More than 50% university terms
+        return None
+    
+    # Final normalization
+    bio = norm_ws(bio)
+    return bio if bio and len(bio.strip()) > 20 else None
 
 
 def make_faculty_id(url: str, email: Optional[str], full_name: Optional[str]) -> str:
@@ -543,6 +591,7 @@ def scrape_profile_page(url: str) -> Faculty:
     paras = [p for p in paras if p and len(p.split()) > 6]
     if paras:
         bio = "\n\n".join(paras[:6]).strip()
+        bio = clean_biography(bio)  # Clean the biography to remove unwanted text
 
     # Scholarly links from page content
     orcid_url, gscholar_url, rgate_url = extract_scholarly_links(soup)
@@ -577,7 +626,14 @@ def scrape_profile_page(url: str) -> Faculty:
     )
     return fac
 
-def scrape_umf() -> Tuple[Institution, List[Faculty]]:
+def scrape_umf() -> Tuple[Institution, List[Dict]]:
+    """
+    Scrape UMF faculty data and return institution and faculty records.
+    
+    Returns:
+        Tuple of (Institution, list) where list contains faculty dictionaries
+        with all attributes including MV attributes as arrays.
+    """
     inst = Institution(
         institution_id="umf",
         name=UMF_NAME,
@@ -594,12 +650,69 @@ def scrape_umf() -> Tuple[Institution, List[Faculty]]:
     profile_links = scrape_directory_index(UMF_DIR_URL)
     print(f"[INFO] Found {len(profile_links)} profile links")
 
-    faculty_map: Dict[str, Faculty] = {}
+    # List of faculty records with MV attributes as arrays
+    faculty_records = []
+
     for i, url in enumerate(profile_links, start=1):
         try:
             f = scrape_profile_page(url)
-            key = f.faculty_id or f"person-{i}"
-            faculty_map[key] = f
+            
+            # Collect emails as array
+            emails = []
+            if f.email:
+                if isinstance(f.email, list):
+                    emails = [e for e in f.email if e]
+                else:
+                    if f.email:
+                        emails = [f.email]
+            
+            # Collect phones as array
+            phones = []
+            if f.phone_num:
+                if isinstance(f.phone_num, list):
+                    phones = [p for p in f.phone_num if p]
+                else:
+                    if f.phone_num:
+                        phones = [f.phone_num]
+            
+            # Collect departments as array
+            departments = []
+            if f.department:
+                if isinstance(f.department, list):
+                    departments = [d for d in f.department if d]
+                else:
+                    if f.department:
+                        departments = [f.department]
+            
+            # Collect titles as array
+            titles = []
+            if f.title:
+                if isinstance(f.title, list):
+                    titles = [t for t in f.title if t]
+                else:
+                    if f.title:
+                        titles = [f.title]
+            
+            # Create faculty record with MV attributes as arrays
+            faculty_record = {
+                'first_name': f.first_name,
+                'last_name': f.last_name,
+                'biography': f.biography,
+                'orcid': f.orcid,
+                'google_scholar_url': f.google_scholar_url,
+                'research_gate_url': f.research_gate_url,
+                'scraped_from': f.scraped_from,
+                'emails': emails,
+                'phones': phones,
+                'departments': departments,
+                'titles': titles,
+                'institution_id': inst.institution_id,
+                'start_date': date.today().isoformat(),
+                'end_date': None,
+            }
+            
+            faculty_records.append(faculty_record)
+            
             print(
                 f"[OK] {f.first_name or '?'} {f.last_name or '?'} "
                 f"| {f.title or ''} | {url}"
@@ -609,22 +722,117 @@ def scrape_umf() -> Tuple[Institution, List[Faculty]]:
 
     try:
         print("[INFO] Backfilling names/roles from catalog…")
-        before = len(faculty_map)
-        after = len(faculty_map)
+        before = len(faculty_records)
+        after = len(faculty_records)
         print(f"[INFO] Catalog backfill added {after - before} records")
     except Exception as e:
         print(f"[WARN] Catalog backfill failed: {e}")
+    
+    return inst, faculty_records
 
-    return inst, list(faculty_map.values())
+
+def write_faculty_csv(records: List[Dict], output_path: str):
+    """Write faculty main table CSV."""
+    if not records:
+        return
+    headers = ['faculty_id', 'first_name', 'last_name', 'biography', 'orcid', 
+               'google_scholar_url', 'research_gate_url', 'scraped_from']
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=headers, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(records)
 
 
-def main():
-    inst, people = scrape_umf()
-    print(f"[INFO] Scraped {len(people)} faculty records")
-    dataclass_instances_to_csv(people, "faculty_umf.csv", overwrite=True)
-    print("[INFO] Wrote: faculty_umf.csv")
-    dataclass_instances_to_csv([inst], "institution_umf.csv", overwrite=True)
-    print("[INFO] Wrote: institution_umf.csv")
+def write_faculty_email_csv(records: List[Tuple[str, str]], output_path: str):
+    """Write faculty_email table CSV."""
+    if not records:
+        return
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['faculty_id', 'email'])
+        writer.writerows(records)
+
+
+def write_faculty_phone_csv(records: List[Tuple[str, str]], output_path: str):
+    """Write faculty_phone table CSV."""
+    if not records:
+        return
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['faculty_id', 'phone_num'])
+        writer.writerows(records)
+
+
+def write_faculty_department_csv(records: List[Tuple[str, str]], output_path: str):
+    """Write faculty_department table CSV."""
+    if not records:
+        return
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['faculty_id', 'department_name'])
+        writer.writerows(records)
+
+
+def write_faculty_title_csv(records: List[Tuple[str, str]], output_path: str):
+    """Write faculty_title table CSV."""
+    if not records:
+        return
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['faculty_id', 'title'])
+        writer.writerows(records)
+
+
+def write_institution_csv(inst: Institution, output_path: str):
+    """Write institution table CSV."""
+    dataclass_instances_to_csv([inst], output_path, overwrite=True)
+
+
+def write_faculty_works_at_institution_csv(records: List[Tuple[str, str, str, Optional[str]]], output_path: str):
+    """Write faculty_works_at_institution table CSV."""
+    if not records:
+        return
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['faculty_id', 'institution_id', 'start_date', 'end_date'])
+        writer.writerows(records)
+
+
+def main(output_dir: str = "scraping/out"):
+    """
+    Main function to scrape UMF data and output JSON files.
+    
+    Args:
+        output_dir: Directory to write output files (default: scraping/out)
+    """
+    import os
+    os.makedirs(output_dir, exist_ok=True)
+    
+    inst, faculty_records = scrape_umf()
+    print(f"[INFO] Scraped {len(faculty_records)} faculty records")
+    
+    # Write faculty JSONL file
+    faculty_output = os.path.join(output_dir, "umf_faculty.jsonl")
+    write_faculty_jsonl(faculty_records, faculty_output)
+    print(f"[INFO] Wrote: {faculty_output}")
+    
+    # Write institution JSON file
+    institution_output = os.path.join(output_dir, "umf_institution.json")
+    institution_dict = {
+        'institution_id': inst.institution_id,
+        'name': inst.name,
+        'website_url': inst.website_url,
+        'type': inst.institution_type,
+        'street_addr': inst.street_addr,
+        'city': inst.city,
+        'state': inst.state,
+        'country': inst.country,
+        'zip': inst.zip_code,
+    }
+    write_institution_json(institution_dict, institution_output)
+    print(f"[INFO] Wrote: {institution_output}")
+    
+    return faculty_output, institution_output
 
 
 if __name__ == "__main__":
