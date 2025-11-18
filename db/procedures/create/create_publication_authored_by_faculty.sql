@@ -17,7 +17,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id or publication_id is NULL
  */
-CREATE PROCEDURE insert_publication_authored_by_faculty (
+CREATE PROCEDURE create_publication_authored_by_faculty (
     IN p_faculty_id CHAR(36),
     IN p_publication_id CHAR(36)
 )

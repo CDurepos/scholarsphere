@@ -15,7 +15,7 @@ DELIMITER $$
  *   - phone_num: The phone number that was inserted
  *   - action: Status message ('inserted')
  */
-CREATE PROCEDURE insert_faculty_phone (
+CREATE PROCEDURE create_faculty_phone (
     IN p_faculty_id CHAR(36),
     IN p_phone_num  VARCHAR(32)
 )

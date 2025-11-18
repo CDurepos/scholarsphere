@@ -17,7 +17,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if follower_id or followee_id is NULL, if they are the same, or if either faculty doesn't exist
  */
-CREATE PROCEDURE insert_faculty_follows_faculty (
+CREATE PROCEDURE create_faculty_follows_faculty (
     IN p_follower_id CHAR(36),
     IN p_followee_id CHAR(36)
 )

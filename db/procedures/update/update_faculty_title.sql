@@ -23,6 +23,12 @@ CREATE PROCEDURE update_faculty_title (
     IN p_new_title    VARCHAR(255)
 )
 BEGIN
+    -- Validate that all required parameters are provided
+    IF p_faculty_id IS NULL OR p_old_title IS NULL OR p_new_title IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id, old_title, and new_title are required for update_faculty_title';
+    END IF;
+
     -- Update the specific title record
     -- Both faculty_id AND old_title are needed in WHERE clause because
     -- a faculty member can have multiple titles, so we need to identify which one to change
@@ -30,6 +36,12 @@ BEGIN
     SET title = p_new_title
     WHERE faculty_id = p_faculty_id
       AND title      = p_old_title;
+
+    -- Check if any rows were actually updated
+    IF ROW_COUNT() = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No matching faculty/title entry to update';
+    END IF;
 
     -- Return confirmation showing both old and new values
     SELECT p_faculty_id AS faculty_id,

@@ -17,7 +17,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id or department_name is NULL
  */
-CREATE PROCEDURE insert_faculty_department (
+CREATE PROCEDURE create_faculty_department (
     IN p_faculty_id CHAR(36),
     IN p_department_name VARCHAR(128)
 )
