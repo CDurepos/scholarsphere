@@ -44,33 +44,53 @@ The following normalization steps are applied during scraping:
 -   Extracting ORCID, Google Scholar, and ResearchGate URLs when present
 -   Correcting obfuscated email formats such as "name \[at\] domain
     \[dot\] edu"
+-   Cleaning biography text to remove cookie notices, boilerplate, and other unwanted content
 
 ## Output Format
 
-The scraper produces structured results in CSV format. JSON export can
-be enabled if needed.
+The scraper produces structured results in CSV format, with one CSV file per database table. This allows for direct import into MySQL tables that match the schema structure.
 
 Default output files:
 
--   `faculty_umf.csv`
--   `institution_umf.csv`
+-   `faculty_umf.csv` - Main faculty records (faculty_id, first_name, last_name, biography, orcid, google_scholar_url, research_gate_url, scraped_from)
+-   `faculty_email_umf.csv` - Faculty email addresses (faculty_id, email)
+-   `faculty_phone_umf.csv` - Faculty phone numbers (faculty_id, phone_num)
+-   `faculty_department_umf.csv` - Faculty departments (faculty_id, department_name)
+-   `faculty_title_umf.csv` - Faculty titles (faculty_id, title)
+-   `institution_umf.csv` - Institution information
+-   `faculty_works_at_institution_umf.csv` - Faculty-institution relationships (faculty_id, institution_id, start_date, end_date)
 
-These files are compatible with MySQL import workflows.
+These files are compatible with MySQL import workflows and can be directly loaded into their respective tables.
 
-### Sample CSV Row
+### Biography Cleaning
 
-    faculty_id,first_name,last_name,title,department,email,scraped_from,orcid,google_scholar,rgate
-    jdoe,John,Doe,Associate Professor,Mathematics,john.doe@maine.edu,https://farmington.edu/about/directory/jdoe/,https://orcid.org/0000-0002-1825-0097,,
+The scraper includes automatic cleaning of biography text to filter out unwanted content such as:
+- Cookie notices and privacy policy text
+- Website boilerplate content
+- University name-only entries
+- Text that is too short or contains mostly university-related terms
+
+Only meaningful biography content is retained in the output.
 
 ## Importing into MySQL
 
 ### CSV Import
+
+Each CSV file can be imported into its corresponding table:
 
     LOAD DATA INFILE 'faculty_umf.csv'
     INTO TABLE faculty
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
     IGNORE 1 LINES;
+
+    LOAD DATA INFILE 'faculty_email_umf.csv'
+    INTO TABLE faculty_email
+    FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+    IGNORE 1 LINES;
+
+    -- Repeat for other tables as needed
 
 # Running the Scraper
 

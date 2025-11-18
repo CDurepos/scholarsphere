@@ -19,3 +19,4 @@ BEGIN
         RETURN `EXPIRED`;
     END IF;
 END $$
+DELIMITER ;

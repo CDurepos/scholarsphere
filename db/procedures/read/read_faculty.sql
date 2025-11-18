@@ -29,5 +29,4 @@ BEGIN
     FROM faculty f
     WHERE f.faculty_id = p_faculty_id;
 END $$
-
 DELIMITER ;

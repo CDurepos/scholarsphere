@@ -27,5 +27,4 @@ BEGIN
     INSERT INTO grants_for_keyword(grant_id, name) 
     VALUES(p_grant_id, p_name);
 END $$
-
 DELIMITER ;

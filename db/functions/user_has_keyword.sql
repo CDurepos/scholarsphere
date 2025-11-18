@@ -14,3 +14,5 @@ BEGIN
           AND name = p_name
     );
 END $$
+
+DELIMITER ;

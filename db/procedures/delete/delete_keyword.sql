@@ -26,5 +26,4 @@ BEGIN
     DELETE FROM keyword
     WHERE name = p_name;
 END $$
-
 DELIMITER ;

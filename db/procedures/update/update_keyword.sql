@@ -30,15 +30,10 @@ BEGIN
     UPDATE keyword
     SET name = p_new_name
     WHERE name = p_old_name;
-<<<<<<< HEAD
-END $$
-
-DELIMITER ;
-=======
 
     IF ROW_COUNT() = 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Keyword with old_name does not exist';
     END IF;
 END $$
->>>>>>> main
+DELIMITER ;
