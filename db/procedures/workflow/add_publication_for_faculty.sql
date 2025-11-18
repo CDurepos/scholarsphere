@@ -26,11 +26,13 @@ DELIMITER $$
  */
 CREATE PROCEDURE add_publication_for_faculty (
     IN p_faculty_id CHAR(36),
+    IN p_publication_id CHAR(36),
     IN p_title VARCHAR(64),
     IN p_publisher VARCHAR(255),
     IN p_year INT,
     IN p_doi VARCHAR(64),
-    IN p_abstract TEXT
+    IN p_abstract TEXT,
+    IN p_citation_count INT
 )
 BEGIN
     -- Variable to store the generated publication ID
@@ -38,15 +40,12 @@ BEGIN
     DECLARE v_generated_id CHAR(36);
 
     -- Validate input: faculty_id must be provided
-    IF p_faculty_id IS NULL THEN
+    IF p_faculty_id IS NULL OR p_publication_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'faculty_id is required.';
+            SET MESSAGE_TEXT = 'faculty_id and publication_id are required.';
     END IF;
 
-    -- Step 1: Generate a UUID for the new publication
-    SET v_publication_id = UUID();
-
-    -- Step 2: Create the publication record
+    -- Step 1: Create the publication record
     CALL create_publication(
         v_publication_id,
         p_title,
@@ -54,17 +53,18 @@ BEGIN
         p_year,
         p_doi,
         p_abstract,
+        p_citation_count,
         v_generated_id
     );
 
-    -- Step 3: Link the publication to the faculty member
+    -- Step 2: Link the publication to the faculty member
     -- This creates the many-to-many relationship in the join table
     CALL create_publication_authored_by_faculty(
         p_faculty_id,
         v_publication_id
     );
 
-    -- Step 4: Return confirmation with both IDs for reference
+    -- Step 3: Return confirmation with both IDs for reference
     SELECT v_publication_id AS publication_id,
            p_faculty_id AS faculty_id,
            'inserted' AS action;
