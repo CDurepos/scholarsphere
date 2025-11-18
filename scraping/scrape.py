@@ -1,66 +1,72 @@
 #!/usr/bin/env python3
 """
-Master script to run all scrapers and collect JSON output.
+Scraper orchestration script.
 
-This script:
-1. Runs each scraper (uma, umf, umo, usm)
-2. Collects JSON output from each
-3. Saves all output to the scraping/out directory
+Runs all institution scrapers (UMA, UMF, UMO, USM) and collects their JSON output
+into the scraping/out directory. Each scraper produces two files:
+- {institution}_faculty.jsonl: Newline-delimited JSON with faculty records
+- {institution}_institution.json: Single JSON object with institution data
 
 Usage:
-    python scraping/run_all_scrapers.py
+    python scraping/scrape.py
 """
 
 import os
 import sys
 from pathlib import Path
+from typing import Tuple, List
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-def run_umf_scraper(output_dir: str) -> tuple:
+def run_umf_scraper(output_dir: str) -> Tuple[str, str]:
     """Run UMF scraper and return output file paths."""
     print("\n" + "="*60)
     print("Running UMF Scraper")
     print("="*60)
     from scraping.umf.scraper import main as umf_main
-    faculty_file, institution_file = umf_main(output_dir)
-    return faculty_file, institution_file
+    return umf_main(output_dir)
 
 
-def run_uma_scraper(output_dir: str) -> tuple:
+def run_uma_scraper(output_dir: str) -> Tuple[str, str]:
     """Run UMA scraper and return output file paths."""
     print("\n" + "="*60)
     print("Running UMA Scraper")
     print("="*60)
     from scraping.uma.scraper import main as uma_main
-    faculty_file, institution_file = uma_main(output_dir)
-    return faculty_file, institution_file
+    return uma_main(output_dir)
 
 
-def run_umo_scraper(output_dir: str) -> tuple:
+def run_umo_scraper(output_dir: str) -> Tuple[str, str]:
     """Run UMO scraper and return output file paths."""
     print("\n" + "="*60)
     print("Running UMO Scraper")
     print("="*60)
     from scraping.umo.pipeline import main as umo_main
-    faculty_file, institution_file = umo_main(output_dir)
-    return faculty_file, institution_file
+    return umo_main(output_dir)
 
 
-def run_usm_scraper(output_dir: str) -> tuple:
+def run_usm_scraper(output_dir: str) -> Tuple[str, str]:
     """Run USM scraper and return output file paths."""
     print("\n" + "="*60)
     print("Running USM Scraper")
     print("="*60)
     from scraping.usm.scraper import main as usm_main
-    faculty_file, institution_file = usm_main(output_dir)
-    return faculty_file, institution_file
+    return usm_main(output_dir)
+
+
+def count_jsonl_records(file_path: str) -> int:
+    """Count the number of records in a JSONL file."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return sum(1 for line in f if line.strip())
+    except Exception:
+        return 0
 
 
 def main():
-    """Main orchestration function."""
+    """Orchestrate all scrapers and collect output."""
     output_dir = "scraping/out"
     os.makedirs(output_dir, exist_ok=True)
     
@@ -68,11 +74,6 @@ def main():
     print("ScholarSphere Scraper Orchestration")
     print("="*60)
     
-    # Track all scraped files
-    all_faculty_files = []
-    all_institution_files = []
-    
-    # Run each scraper
     scrapers = [
         ("UMF", run_umf_scraper),
         ("UMA", run_uma_scraper),
@@ -80,14 +81,19 @@ def main():
         ("USM", run_usm_scraper),
     ]
     
+    all_faculty_files: List[str] = []
+    all_institution_files: List[str] = []
+    
     for name, scraper_func in scrapers:
         try:
             print(f"\n[INFO] Running {name} scraper...")
             faculty_file, institution_file = scraper_func(output_dir)
-            if faculty_file:
+            
+            if faculty_file and os.path.exists(faculty_file):
                 all_faculty_files.append(faculty_file)
                 print(f"[OK] {name} faculty data: {faculty_file}")
-            if institution_file:
+            
+            if institution_file and os.path.exists(institution_file):
                 all_institution_files.append(institution_file)
                 print(f"[OK] {name} institution data: {institution_file}")
         except Exception as e:
@@ -96,30 +102,23 @@ def main():
             traceback.print_exc()
             continue
     
-    # Print final summary
     print("\n" + "="*60)
     print("Scraping Summary")
     print("="*60)
+    
     print(f"Institution files: {len(all_institution_files)}")
     for inst_file in all_institution_files:
-        if inst_file and os.path.exists(inst_file):
-            size = os.path.getsize(inst_file)
-            print(f"  - {inst_file} ({size} bytes)")
+        size = os.path.getsize(inst_file)
+        print(f"  - {inst_file} ({size} bytes)")
     
     print(f"\nFaculty files: {len(all_faculty_files)}")
     for faculty_file in all_faculty_files:
-        if faculty_file and os.path.exists(faculty_file):
-            size = os.path.getsize(faculty_file)
-            # Count lines in JSONL file
-            try:
-                with open(faculty_file, 'r', encoding='utf-8') as f:
-                    line_count = sum(1 for line in f if line.strip())
-                print(f"  - {faculty_file} ({line_count} records, {size} bytes)")
-            except Exception as e:
-                print(f"  - {faculty_file} ({size} bytes)")
+        size = os.path.getsize(faculty_file)
+        record_count = count_jsonl_records(faculty_file)
+        print(f"  - {faculty_file} ({record_count} records, {size} bytes)")
     
     print(f"\n[INFO] All scrapers completed! Output saved to: {output_dir}")
-    print("[INFO] Ready for data insertion (not performed in this script)")
+    print("[INFO] Ready for data insertion (run scraping/insert.py)")
 
 
 if __name__ == "__main__":
