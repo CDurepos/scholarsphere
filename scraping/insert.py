@@ -150,6 +150,7 @@ def generate_institution_id(name: str) -> str:
         raise ValueError("Institution name is required for UUID generation")
     return str(uuid.uuid5(INSTITUTION_NAMESPACE, name))
 
+
 def generate_publication_id(title: str, written_by_uuid: str) -> str:
     """
     Generate deterministic UUID for a publication.
@@ -162,7 +163,9 @@ def generate_publication_id(title: str, written_by_uuid: str) -> str:
         UUID string
     """
     if not title or not written_by_uuid:
-        raise ValueError("Publication title and author UUID is required for UUID generation")
+        raise ValueError(
+            "Publication title and author UUID is required for UUID generation"
+        )
     identifier = f"{title}:{written_by_uuid}".strip(":")
     return str(uuid.uuid5(PUBLICATION_NAMESPACE, identifier))
 
@@ -180,7 +183,9 @@ def generate_faculty_id(first_name: str, last_name: str, scraped_from: str) -> s
         UUID string
     """
     if not first_name or not last_name or not scraped_from:
-        raise ValueError("Faculty first_name, last_name, and scraped_from is required for UUID generation")
+        raise ValueError(
+            "Faculty first_name, last_name, and scraped_from is required for UUID generation"
+        )
 
     identifier = f"{first_name}:{last_name}:{scraped_from}".strip(":")
     return str(uuid.uuid5(FACULTY_NAMESPACE, identifier))
@@ -207,7 +212,7 @@ def insert_institution_record(
         cursor = conn.cursor()
 
         institution_name = record.get("name", "")
-        #NOTE: SAME INSTITUTION ACRONYM WOULD GIVE SAME UUID
+        # NOTE: SAME INSTITUTION ACRONYM WOULD GIVE SAME UUID
         institution_id = generate_institution_id(institution_name)
 
         db.call_procedure(
@@ -270,7 +275,11 @@ def insert_faculty_record(
         scraped_from = record.get("scraped_from", "")
 
         existing_fac_id = record.get("faculty_id", None)
-        faculty_id = existing_fac_id if existing_fac_id else generate_faculty_id(first_name, last_name, scraped_from)
+        faculty_id = (
+            existing_fac_id
+            if existing_fac_id
+            else generate_faculty_id(first_name, last_name, scraped_from)
+        )
 
         db.call_procedure(
             cursor,
@@ -376,7 +385,7 @@ def insert_publication_record(
                 record.get("year"),
                 record.get("doi"),
                 record.get("abstract"),
-                record.get("citation_count")
+                record.get("citation_count"),
             ),
         )
 
