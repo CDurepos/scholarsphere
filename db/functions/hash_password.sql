@@ -9,3 +9,5 @@ BEGIN
     -- Hex-encoded SHA-256 = 64 characters
     RETURN SHA2(CONCAT(p_plain_text, p_salt), 256);
 END $$
+
+DELIMITER ;

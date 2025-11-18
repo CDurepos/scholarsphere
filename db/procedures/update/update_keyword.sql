@@ -36,3 +36,4 @@ BEGIN
             SET MESSAGE_TEXT = 'Keyword with old_name does not exist';
     END IF;
 END $$
+DELIMITER ;

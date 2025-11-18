@@ -27,3 +27,4 @@ BEGIN
     FROM publication_explores_keyword
     WHERE publication_id = p_publication_id;
 END $$
+DELIMITER ;

@@ -26,3 +26,4 @@ BEGIN
     DELETE FROM grants
     WHERE grant_id = p_grant_id;
 END $$
+DELIMITER ;

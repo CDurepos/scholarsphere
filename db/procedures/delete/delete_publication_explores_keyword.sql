@@ -28,3 +28,4 @@ BEGIN
     WHERE publication_id = p_publication_id
       AND name = p_name;
 END $$
+DELIMITER ;

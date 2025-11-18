@@ -69,3 +69,5 @@ BEGIN
     -- Return the generated ID so the caller knows the new faculty member's identifier
     SELECT new_id AS faculty_id;
 END $$
+
+DELIMITER ;

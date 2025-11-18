@@ -32,3 +32,5 @@ BEGIN
         p_grant_id, p_description, p_amount, p_start_date, p_end_date
     );
 END $$
+
+DELIMITER ;

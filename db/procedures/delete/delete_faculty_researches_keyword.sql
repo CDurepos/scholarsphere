@@ -28,3 +28,4 @@ BEGIN
     WHERE faculty_id = p_faculty_id
       AND name = p_name;
 END $$
+DELIMITER ;

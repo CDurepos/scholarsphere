@@ -10,3 +10,5 @@ BEGIN
     WHERE publication_id = p_publication_id;
     RETURN v_year;
 END $$
+
+DELIMITER ;

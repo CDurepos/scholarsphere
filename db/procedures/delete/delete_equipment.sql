@@ -32,3 +32,5 @@ END $$
 
 DELIMITER ;
 
+
+DELIMITER ;

@@ -27,3 +27,4 @@ BEGIN
     INSERT INTO grants_granted_to_faculty(faculty_id, grant_id)
     VALUES(p_faculty_id, p_grant_id);
 END $$
+DELIMITER ;

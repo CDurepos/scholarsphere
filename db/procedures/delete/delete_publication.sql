@@ -26,3 +26,5 @@ BEGIN
     DELETE FROM publication
     WHERE publication_id = p_id;
 END $$
+
+DELIMITER ;

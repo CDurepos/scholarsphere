@@ -50,3 +50,5 @@ END $$
 
 DELIMITER ;
 
+
+DELIMITER ;

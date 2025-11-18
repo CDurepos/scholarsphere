@@ -70,3 +70,5 @@ END $$
 
 DELIMITER ;
 
+
+DELIMITER ;

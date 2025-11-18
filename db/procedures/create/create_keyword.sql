@@ -19,3 +19,5 @@ BEGIN
     INSERT INTO keyword (name)
     VALUES (p_name);
 END $$
+
+DELIMITER ;

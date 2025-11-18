@@ -9,3 +9,4 @@ CREATE FUNCTION is_grant_active(
 BEGIN
     RETURN grant_status(p_start_date, p_end_date) = `ACTIVE`;
 END $$
+DELIMITER ;

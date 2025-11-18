@@ -20,11 +20,11 @@ DELIMITER $$
  */
 DROP PROCEDURE IF EXISTS update_grants;
 CREATE PROCEDURE update_grants(
-    IN p_grant_id       CHAR(36)        NOT NULL,
-    IN p_description    VARCHAR(2048)   NULL,
-    IN p_amount         DECIMAL(10,2)   NOT NULL,
-    IN p_start_date     DATE            NOT NULL,
-    IN p_end_date       DATE            NULL
+    IN p_grant_id       CHAR(36),
+    IN p_description    VARCHAR(2048),
+    IN p_amount         DECIMAL(10,2),
+    IN p_start_date     DATE,
+    IN p_end_date       DATE
 )
 BEGIN
     IF p_grant_id IS NULL OR p_amount IS NULL OR p_start_date IS NULL THEN
@@ -40,3 +40,4 @@ BEGIN
         end_date = p_end_date
     WHERE grant_id = p_grant_id;
 END $$
+DELIMITER ;

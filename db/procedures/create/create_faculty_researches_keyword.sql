@@ -27,3 +27,5 @@ BEGIN
     INSERT INTO faculty_researches_keyword (name, faculty_id)
     VALUES (p_name, p_faculty_id);
 END $$
+
+DELIMITER ;

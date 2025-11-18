@@ -51,3 +51,4 @@ BEGIN
         AND (p_department IS NULL OR d.department_name LIKE CONCAT(p_department, '%'))
         AND (p_institution IS NULL OR i.name            LIKE CONCAT(p_institution, '%'));
 END $$
+DELIMITER ;

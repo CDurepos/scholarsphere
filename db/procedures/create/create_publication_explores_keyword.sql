@@ -27,3 +27,5 @@ BEGIN
     INSERT INTO publication_explores_keyword(publication_id, name)
     VALUES (p_publication_id, p_name);
 END $$
+
+DELIMITER ;
