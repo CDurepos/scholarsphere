@@ -43,6 +43,3 @@ BEGIN
         match_score = VALUES(match_score),
         created_at = VALUES(created_at);
 
-END $$
-
-DELIMITER ;
