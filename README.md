@@ -126,6 +126,48 @@ For the **Individual Tasks**, each member will document how to run their individ
 ## Individual Contribution
 
 Aidan:
+* Wrote scraper for the University of Maine faculty and publications, wrote publication scraping utils using crossref api, and made scraping schemas (dataclasses).
+
+    `scraping/umo/*`
+    `scraping/publications/*`
+    `scraping/schemas/*`
+
+* Refactored data insertion script for publication insertion functionality.
+
+    `scraping/insert.py`
+
+* Created schemas and procedures pertaining to `faculty`. 
+
+    * `schema/`
+        `faculty.sql`, `faculty_phone.sql`, `faculty_email.sql`, `faculty_title.sql`, `faculty_follows_faculty.sql`, `faculty_recommended_to_faculty.sql`,     `faculty_department.sql`
+
+    * `procedures/`
+        * `create/`
+
+            `create_faculty_department.sql`, `create_faculty_email.sql`, `create_faculty_follows_faculty.sql`, `create_faculty_phone.sql`, `create_faculty_title.sql`, `create_publication_authored_by_faculty.sql`
+
+        * `read/`
+
+            `read_faculty_department.sql`, `read_faculty_email.sql`, `read_faculty_follows_faculty.sql`, `read_faculty_phone.sql`, `read_faculty_publications.sql`, `read_faculty_title.sql`, `read_faculty.sql`
+
+        * `update/`
+
+            `update_faculty_department.sql`, `update_faculty_email.sql`, `update_faculty_phone.sql`, `update_faculty_title.sql`, `update_faculty.sql`
+
+        * `delete/`
+
+            `delete_faculty_department.sql`, `delete_faculty_email.sql`, `delete_faculty_follows_faculty.sql`, `delete_faculty_phone.sql`, `delete_faculty_title.sql`, `delete_faculty.sql`, `delete_publication_authored_by_faculty.sql`
+
+        * `workflow/`
+
+            `search_faculty.sql`, `add_publication_for_faculty.sql`
+
+* Wrote index script for `faculty` entity.
+    * `migrations/`
+
+        `003_assign_faculty_index.sql`
+
+* Wrote up **Query Optimization Analysis** for **Query 2** (see below).
 
 Owen:
 
