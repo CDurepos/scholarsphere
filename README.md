@@ -42,7 +42,7 @@ To do this, add your user-set database password to the `scraping/insert.py` file
 
 Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
 
-# Team Member Contributions & Task Distribution
+# Proposed Task Distributions
 
 ## GitHub Username to Student Map
 
@@ -122,6 +122,80 @@ For the **Individual Tasks**, each member will document how to run their individ
 2. Key Procedure Usage - **deadline**: 11/15
 
 # COS457 Phase 2 Supplementary Material
+
+## Individual Contribution
+
+Aidan:
+
+Owen:
+
+Clayton:
+* Wrote scraper for the University of Maine at Farmington and associated documentation.
+
+    `scraping/umf/*`
+
+* Wrote unified script for individual scrapers produced by self and teammates.
+    
+    `scraping/scrape.py`
+
+* Wrote data insertion (to database) script utilizing output from `scrape.py`
+
+    `scraping/insert.py`
+
+*  Created schema, procedures, and functions pertaining to `grants` and `credentials`. Created procedures pertaining to `institution` and `equipment` entities.
+
+    * `schema/`
+        `grants.sql`,`grants_granted_to_faculty.sql`, `grants_organization.sql`, `credentials.sql`
+
+    * `procedures/`
+        * `create/`
+
+            `create_credentials.sql`, `create_equipment.sql`, `create_grants_granted_to_faculty.sql`, `create_grants.sql`, `create_institution.sql`
+
+        * `delete/`
+
+            `delete_equipment.sql`, `delete_grants.sql`, `delete_grants_granted_to_faculty.sql`, `delete_institution.sql`
+
+        * `read/`
+
+            `read_equipment.sql`, `read_grants_organization.sql`, `read_organization_grants.sql`, `read_institution_faculty.sql`, `read_faculty_institution.sql`
+
+        * `update/`
+
+            `update_equipment.sql`, `update_grants.sql`, `update_grants_organization.sql`, `update_institution.sql`
+        
+        * `workflow/`
+
+            `recommend_faculty_by_department.sql`, `recommend_faculty_by_grant_keyword.sql`, `recommend_faculty_by_grants.sql`, `recommend_faculty_by_institution.sql`, `recommend_faculty_by_publication.sql`, `recommend_faculty_by_shared_keyword.sql`, `validate_login.sql`
+
+    * `functions/`
+        `is_grants_active.sql`, `grants_status.sql`
+
+* Wrote index scripts for `grants` entity. 
+    * `migrations/`
+    
+        `006_assign_grants_organization_index.sql`
+
+* Wrote database initialization scripts, and `*.sh` scripts for generation.
+    * `db/`
+
+        `generate_schema.sh`,
+        `generate_procedures.sh`,
+        `generate_functions.sh`
+    * `init/`
+
+        `000_create_database.sql`,
+        `001_init_schema.sql`,
+        `002_init_procedures.sql`,
+        `003_init_functions.sql`,
+
+* Wrote up **Query Optimization Analysis** for **Query 1** (see below).
+
+* Organized file structure and ensured consistent naming across directories and teams' work. Wrote up documentation for naming conventions used in `db/migrations/README.md`, `db/functions/README.md`, and `db/procedures/README.md`.
+
+* Wrote team member contributions and documentation in `db/schema/README.md`
+
+Abby:
 
 ## Query Optimization Analysis
 
