@@ -44,7 +44,10 @@ def run_umo_scraper(output_dir: str) -> Tuple[str, str]:
     print("Running UMO Scraper")
     print("="*60)
     from scraping.umo.pipeline import main as umo_main
-    return umo_main(output_dir)
+    result = umo_main(output_dir)
+    # UMO returns (faculty_file, institution_file, publications_file)
+    # but we only need the first two for consistency
+    return result[0], result[1]
 
 
 def run_usm_scraper(output_dir: str) -> Tuple[str, str]:
@@ -75,16 +78,27 @@ def main():
     print("="*60)
     
     scrapers = [
-        ("UMF", run_umf_scraper),
-        ("UMA", run_uma_scraper),
-        ("UMO", run_umo_scraper),
-        ("USM", run_usm_scraper),
+        ("UMF", run_umf_scraper, "umf_faculty.jsonl", "umf_institution.json"),
+        ("UMA", run_uma_scraper, "uma_faculty.jsonl", "uma_institution.json"),
+        ("UMO", run_umo_scraper, "umo_faculty.jsonl", "umo_institution.json"),
+        ("USM", run_usm_scraper, "usm_faculty.jsonl", "usm_institution.json"),
     ]
     
     all_faculty_files: List[str] = []
     all_institution_files: List[str] = []
     
-    for name, scraper_func in scrapers:
+    for name, scraper_func, faculty_filename, institution_filename in scrapers:
+        faculty_file = os.path.join(output_dir, faculty_filename)
+        institution_file = os.path.join(output_dir, institution_filename)
+        
+        if os.path.exists(faculty_file) and os.path.exists(institution_file):
+            print(f"\n[SKIP] {name} scraper - output files already exist")
+            all_faculty_files.append(faculty_file)
+            all_institution_files.append(institution_file)
+            print(f"[OK] {name} faculty data: {faculty_file}")
+            print(f"[OK] {name} institution data: {institution_file}")
+            continue
+        
         try:
             print(f"\n[INFO] Running {name} scraper...")
             faculty_file, institution_file = scraper_func(output_dir)
