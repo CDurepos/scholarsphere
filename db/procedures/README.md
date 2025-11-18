@@ -23,7 +23,7 @@ There are exceptions.
 ## Contributions
 Each ScholarSphere team member has written the scripts for the associated procedures below...
 
-Aidan: search_faculty.sql, add_publication_for_faculty.sql, insert_publication_authored_by_faculty.sql, insert_faculty.sql, update_faculty.sql, read_faculty.sql, delete_faculty.sql, insert_faculty_title.sql, update_faculty_title.sql, read_faculty_title.sql, delete_faculty_title.sql, insert_faculty_phone.sql, update_faculty_phone.sql, read_faculty_phone.sql, delete_faculty_phone.sql, insert_faculty_email.sql, update_faculty_email.sql, read_faculty_email.sql, delete_faculty_email.sql, insert_faculty_department.sql, update_faculty_department.sql, read_faculty_department.sql, delete_faculty_department.sql
+Aidan: search_faculty.sql, add_publication_for_faculty.sql, create_publication_authored_by_faculty.sql, create_faculty.sql, update_faculty.sql, read_faculty.sql, delete_faculty.sql, create_faculty_title.sql, update_faculty_title.sql, read_faculty_title.sql, delete_faculty_title.sql, create_faculty_phone.sql, update_faculty_phone.sql, read_faculty_phone.sql, delete_faculty_phone.sql, create_faculty_email.sql, update_faculty_email.sql, read_faculty_email.sql, delete_faculty_email.sql, create_faculty_department.sql, update_faculty_department.sql, read_faculty_department.sql, delete_faculty_department.sql
 
 Clayton:
 

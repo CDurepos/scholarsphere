@@ -18,9 +18,9 @@ TOTAL_COMPILERS = 5
 TOTAL_PARSERS = 5
 
 FAC_OUTPUT_FILE = os.path.join("scraping", "out", "umo_faculty_raw.csv")
-PUB_OUTPUT_FILE = os.path.join("scraping", "out", "umo_publication.csv")
+PUB_OUTPUT_FILE = os.path.join("scraping", "out", "umo_publication_raw.csv")
 JOIN_OUTPUT_FILE = os.path.join(
-    "scraping", "out", "umo_publication_authored_by_faculty.csv"
+    "scraping", "out", "umo_publication_authored_by_faculty_raw.csv"
 )
 FAC_FILTERED_OUTPUT_FILE = os.path.join("scraping", "out", "umo_faculty_filtered.csv")
 
@@ -125,7 +125,7 @@ def step_2():
 def step_3():
     # Post-process faculty data: remove duplicates and entries without first names
     post_process_faculty_csv(
-        input_file=FAC_OUTPUT_FILE, output_file=FAC_FILTERED_OUTPUT_FILE
+        fac_input_file=FAC_OUTPUT_FILE, join_input_file=JOIN_OUTPUT_FILE, pub_input_file=PUB_OUTPUT_FILE, fac_output_file=FAC_FILTERED_OUTPUT_FILE
     )
 
 
