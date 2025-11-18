@@ -14,3 +14,5 @@ BEGIN
             ggf.faculty_id = p_faculty_id
     ORDER BY g.start_date;
 END $$
+
+DELIMITER ;

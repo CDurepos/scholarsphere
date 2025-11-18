@@ -22,4 +22,5 @@ BEGIN
     WHERE g1.faculty_id <> g2.faculty_id
 
 END$$
+
 DELIMITER;

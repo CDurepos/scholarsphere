@@ -39,3 +39,5 @@ BEGIN
            p_publication_id AS publication_id,
            'inserted' AS action;
 END $$
+
+DELIMITER ;

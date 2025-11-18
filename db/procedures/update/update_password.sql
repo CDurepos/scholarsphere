@@ -29,3 +29,5 @@ BEGIN
     SET password_hash = hash_password(p_new_password, v_salt);
     WHERE faculty_id = p_faculty_id;
 END $$
+
+DELIMITER ;

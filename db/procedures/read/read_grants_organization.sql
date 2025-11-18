@@ -9,3 +9,5 @@ BEGIN
     FROM grants_organization
     WHERE grant_id = p_grant_id;
 END $$
+
+DELIMITER ;

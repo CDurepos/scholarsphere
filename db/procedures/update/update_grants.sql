@@ -17,3 +17,5 @@ BEGIN
         end_date = p_end_date
     WHERE grant_id = p_grant_id;
 END $$
+
+DELIMITER ;

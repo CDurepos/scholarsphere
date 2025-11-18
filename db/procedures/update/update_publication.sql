@@ -53,3 +53,5 @@ BEGIN
         WHERE publication_id = p_publication_id;
     END IF;
 END $$
+
+DELIMITER ;

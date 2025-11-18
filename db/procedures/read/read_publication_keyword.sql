@@ -8,3 +8,5 @@ BEGIN
     FROM publication_keywords
     WHERE publication_id = p_publication_id;
 END $$
+
+DELIMITER ;

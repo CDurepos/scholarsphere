@@ -14,3 +14,5 @@ BEGIN
     INSERT INTO publication (publication_id, title, publisher, year, doi, abstract, citation_count)
     VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, 0);
 END $$
+
+DELIMITER ;

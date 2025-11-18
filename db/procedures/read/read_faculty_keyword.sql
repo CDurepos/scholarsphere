@@ -8,3 +8,5 @@ BEGIN
     FROM user_keywords
     WHERE faculty_id = p_faculty_id;
 END $$
+
+DELIMITER ;

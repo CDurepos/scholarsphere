@@ -9,3 +9,5 @@ BEGIN
     SET name = p_new_name
     WHERE name = p_old_name;
 END $$
+
+DELIMITER ;
