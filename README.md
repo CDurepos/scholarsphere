@@ -6,20 +6,6 @@ Built by students, for the COS457 Database Systems course at the University of S
 
 # How to Run
 
-## Database
-
-To utilize our database, download and setup MySQL.
-
-Once finished, you should run the command...
-
-`SOURCE ~/init/000_create_database.sql`
-
-Note that you may have to use the absolute path to this file.
-
-Once you've created the database, you should then run each script within the `migrations` directory, sequentially, in a similar manner. For example, start with:
-
-`SOURCE ~/migrations/001_init_schema.sql`
-
 ## Scraping
 
 To utilize our web-scraping tools, you must have downloaded and setup a local Python interpreter and environment.
@@ -28,12 +14,33 @@ Using your local environment, use the following command to install dependencies:
 
 `pip install -r scraping/requirements.txt`
 
-Once you have dependencies installed, you can run each web-scraping tool independently through the [`uma`, `umf`, `umo`, `usm`] subdirectories in the `scraping` directory.
+Once you have dependencies installed, you can run the unified scraper utilizing the command...
 
-Detailed documentation on the product of each of these scrapers, and how to run each scraper, may be found in their subdirectory's `README` file.
+`python ~/scraper.py`
 
-We soon plan to create one sole script to run each and every one of these scripts, and merge results into a unified, web-scraped file.
+This may take some time. We suggest moving to Database setup while the scraper runs.
 
+## Database
+
+To utilize our database, download and setup MySQL.
+
+Once finished, you should enter the `mysql` shell and run the command...
+
+`SOURCE ~/init/000_create_database.sql`
+
+Note that you may have to use the absolute path to this file.
+
+Once you've created the database, you should then run each of the remaining scripts within the `init` directory. Following this, you should do the same for the scripts within the `migrations` directory. Each file in these directories begins with a prefix following the format `XXX_`, these indicate the order in which the scripts should be run.
+
+## Data Loading
+
+Once you've got the database setup & the scraper finishes gathering data, it's time to load the data into the freshly initialized database.
+
+To do this, add your user-set database password to the `scraping/insert.py` file. Then, run:
+
+`python ~/insert.py`
+
+Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
 
 # Team Member Contributions & Task Distribution
 
