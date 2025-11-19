@@ -193,7 +193,7 @@ if __name__ == "__main__":
     citation4 = """N.S. Mandal, A. Sen, and R.D. Astumian, “Kinetic Asymmetry versus Dissipation in the Evolution of Chemical Systems as Exemplified by Single Enzyme Chemotaxis,” J Am Chem Soc 145(10), 5730-5738 (2023)."""
 
     import os
-    from scraping.utils.csv_converter import dataclass_instances_to_csv
+    from scraping.utils.conversion import dataclass_instances_to_csv
 
     inst = citation_to_publication_instance(citation3)
     dataclass_instances_to_csv(
