@@ -72,5 +72,4 @@ BEGIN
     -- Return confirmation of the update
     SELECT p_faculty_id AS faculty_id, 'updated' AS action;
 END $$
-
 DELIMITER ;

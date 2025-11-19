@@ -6,20 +6,6 @@ Built by students, for the COS457 Database Systems course at the University of S
 
 # How to Run
 
-## Database
-
-To utilize our database, download and setup MySQL.
-
-Once finished, you should run the command...
-
-`SOURCE ~/init/000_create_database.sql`
-
-Note that you may have to use the absolute path to this file.
-
-Once you've created the database, you should then run each script within the `migrations` directory, sequentially, in a similar manner. For example, start with:
-
-`SOURCE ~/migrations/001_init_schema.sql`
-
 ## Scraping
 
 To utilize our web-scraping tools, you must have downloaded and setup a local Python interpreter and environment.
@@ -28,14 +14,35 @@ Using your local environment, use the following command to install dependencies:
 
 `pip install -r scraping/requirements.txt`
 
-Once you have dependencies installed, you can run each web-scraping tool independently through the [`uma`, `umf`, `umo`, `usm`] subdirectories in the `scraping` directory.
+Once you have dependencies installed, you can run the unified scraper utilizing the command...
 
-Detailed documentation on the product of each of these scrapers, and how to run each scraper, may be found in their subdirectory's `README` file.
+`python ~/scraper.py`
 
-We soon plan to create one sole script to run each and every one of these scripts, and merge results into a unified, web-scraped file.
+This may take some time. We suggest moving to Database setup while the scraper runs.
 
+## Database
 
-# Team Member Contributions & Task Distribution
+To utilize our database, download and setup MySQL.
+
+Once finished, you should enter the `mysql` shell and run the command...
+
+`SOURCE ~/init/000_create_database.sql`
+
+Note that you may have to use the absolute path to this file.
+
+Once you've created the database, you should then run each of the remaining scripts within the `init` directory. Following this, you should do the same for the scripts within the `migrations` directory. Each file in these directories begins with a prefix following the format `XXX_`, these indicate the order in which the scripts should be run.
+
+## Data Loading
+
+Once you've got the database setup & the scraper finishes gathering data, it's time to load the data into the freshly initialized database.
+
+To do this, add your user-set database password to the `scraping/insert.py` file. Then, run:
+
+`python ~/insert.py`
+
+Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
+
+# Proposed Task Distributions
 
 ## GitHub Username to Student Map
 
@@ -115,6 +122,122 @@ For the **Individual Tasks**, each member will document how to run their individ
 2. Key Procedure Usage - **deadline**: 11/15
 
 # COS457 Phase 2 Supplementary Material
+
+## Individual Contribution
+
+Aidan:
+* Wrote scraper for the University of Maine faculty and publications, wrote publication scraping utils using crossref api, and made scraping schemas (dataclasses).
+
+    `scraping/umo/*`
+    `scraping/publications/*`
+    `scraping/schemas/*`
+
+* Refactored data insertion script for publication insertion functionality.
+
+    `scraping/insert.py`
+
+* Created schemas and procedures pertaining to `faculty`. 
+
+    * `schema/`
+        `faculty.sql`, `faculty_phone.sql`, `faculty_email.sql`, `faculty_title.sql`, `faculty_follows_faculty.sql`, `faculty_recommended_to_faculty.sql`,     `faculty_department.sql`
+
+    * `procedures/`
+        * `create/`
+
+            `create_faculty_department.sql`, `create_faculty_email.sql`, `create_faculty_follows_faculty.sql`, `create_faculty_phone.sql`, `create_faculty_title.sql`, `create_publication_authored_by_faculty.sql`
+
+        * `read/`
+
+            `read_faculty_department.sql`, `read_faculty_email.sql`, `read_faculty_follows_faculty.sql`, `read_faculty_phone.sql`, `read_faculty_publications.sql`, `read_faculty_title.sql`, `read_faculty.sql`
+
+        * `update/`
+
+            `update_faculty_department.sql`, `update_faculty_email.sql`, `update_faculty_phone.sql`, `update_faculty_title.sql`, `update_faculty.sql`
+
+        * `delete/`
+
+            `delete_faculty_department.sql`, `delete_faculty_email.sql`, `delete_faculty_follows_faculty.sql`, `delete_faculty_phone.sql`, `delete_faculty_title.sql`, `delete_faculty.sql`, `delete_publication_authored_by_faculty.sql`
+
+        * `workflow/`
+
+            `search_faculty.sql`, `add_publication_for_faculty.sql`
+
+* Wrote index script for `faculty` entity.
+    * `migrations/`
+
+        `003_assign_faculty_index.sql`
+
+* Wrote up **Query Optimization Analysis** for **Query 2** (see below).
+
+Owen:
+
+Clayton:
+* Wrote scraper for the University of Maine at Farmington and associated documentation.
+
+    `scraping/umf/*`
+
+* Wrote unified script for individual scrapers produced by self and teammates.
+    
+    `scraping/scrape.py`
+
+* Wrote data insertion (to database) script utilizing output from `scrape.py`
+
+    `scraping/insert.py`
+
+*  Created schema, procedures, and functions pertaining to `grants` and `credentials`. Created procedures pertaining to `institution` and `equipment` entities.
+
+    * `schema/`
+        `grants.sql`,`grants_granted_to_faculty.sql`, `grants_organization.sql`, `credentials.sql`
+
+    * `procedures/`
+        * `create/`
+
+            `create_credentials.sql`, `create_equipment.sql`, `create_grants_granted_to_faculty.sql`, `create_grants.sql`, `create_institution.sql`
+
+        * `delete/`
+
+            `delete_equipment.sql`, `delete_grants.sql`, `delete_grants_granted_to_faculty.sql`, `delete_institution.sql`
+
+        * `read/`
+
+            `read_equipment.sql`, `read_grants_organization.sql`, `read_organization_grants.sql`, `read_institution_faculty.sql`, `read_faculty_institution.sql`
+
+        * `update/`
+
+            `update_equipment.sql`, `update_grants.sql`, `update_grants_organization.sql`, `update_institution.sql`
+        
+        * `workflow/`
+
+            `recommend_faculty_by_department.sql`, `recommend_faculty_by_grant_keyword.sql`, `recommend_faculty_by_grants.sql`, `recommend_faculty_by_institution.sql`, `recommend_faculty_by_publication.sql`, `recommend_faculty_by_shared_keyword.sql`, `validate_login.sql`
+
+    * `functions/`
+        `is_grants_active.sql`, `grants_status.sql`
+
+* Wrote index scripts for `grants` entity. 
+    * `migrations/`
+    
+        `006_assign_grants_organization_index.sql`
+
+* Wrote database initialization scripts, and `*.sh` scripts for generation.
+    * `db/`
+
+        `generate_schema.sh`,
+        `generate_procedures.sh`,
+        `generate_functions.sh`
+    * `init/`
+
+        `000_create_database.sql`,
+        `001_init_schema.sql`,
+        `002_init_procedures.sql`,
+        `003_init_functions.sql`,
+
+* Wrote up **Query Optimization Analysis** for **Query 1** (see below).
+
+* Organized file structure and ensured consistent naming across directories and teams' work. Wrote up documentation for naming conventions used in `db/migrations/README.md`, `db/functions/README.md`, and `db/procedures/README.md`.
+
+* Wrote team member contributions and documentation in `db/schema/README.md`
+
+Abby:
 
 ## Query Optimization Analysis
 

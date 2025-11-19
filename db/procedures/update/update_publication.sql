@@ -76,10 +76,5 @@ BEGIN
         SET citation_count = p_citation_count
         WHERE publication_id = p_publication_id;
     END IF;
-<<<<<<< HEAD
 END $$
-
 DELIMITER ;
-=======
-END $$
->>>>>>> main

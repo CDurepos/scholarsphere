@@ -27,5 +27,4 @@ BEGIN
     FROM faculty_researches_keyword
     WHERE faculty_id = p_faculty_id;
 END $$
-
 DELIMITER ;

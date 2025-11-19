@@ -26,12 +26,12 @@ CREATE PROCEDURE create_publication(
     IN p_year INT,
     IN p_doi VARCHAR(64),
     IN p_abstract TEXT,
+    IN p_citation_count INT,
     OUT p_generated_id CHAR(36)
 )
 BEGIN
     SET p_generated_id = UUID();
     INSERT INTO publication (publication_id, title, publisher, year, doi, abstract, citation_count)
-    VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, 0);
+    VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, p_citation_count);
 END $$
-
 DELIMITER ;

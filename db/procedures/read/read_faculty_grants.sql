@@ -23,9 +23,14 @@ DELIMITER $$
  */
 DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty;
 CREATE PROCEDURE read_grants_granted_to_faculty(
-    IN p_faculty_id     CHAR(36)    NOT NULL   
+    IN p_faculty_id     CHAR(36)
 )
 BEGIN
+    -- Validate that faculty_id is provided
+    IF p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required';
+    END IF;
     SELECT  g.*,
             grants_status(g.start_date, g.end_date) AS derived_status
     FROM    grants AS g
@@ -35,5 +40,4 @@ BEGIN
             ggf.faculty_id = p_faculty_id
     ORDER BY g.start_date;
 END $$
-
 DELIMITER ;

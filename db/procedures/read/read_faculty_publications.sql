@@ -36,5 +36,4 @@ BEGIN
         ON p.publication_id = pa.publication_id
     WHERE pa.faculty_id = p_faculty_id;
 END $$
-
 DELIMITER ;

@@ -10,3 +10,5 @@ BEGIN
 
     RETURN v_total;
 END $$
+
+DELIMITER ;

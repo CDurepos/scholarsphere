@@ -9,3 +9,4 @@ BEGIN
     WHERE publication_id = p_id;
     RETURN v_pub_doi;
 END $$
+DELIMITER ;

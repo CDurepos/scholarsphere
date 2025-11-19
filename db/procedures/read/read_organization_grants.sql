@@ -39,5 +39,4 @@ BEGIN
     WHERE go.name = p_name
     ORDER BY g.start_date DESC;
 END $$
-
 DELIMITER ;

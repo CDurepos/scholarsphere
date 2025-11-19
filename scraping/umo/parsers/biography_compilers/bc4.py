@@ -24,16 +24,17 @@ class B4Compiler:
     def __init__(self, output_dir:str):
         self.output_dir = output_dir
         self.departments = DEPARTMENTS
-
-        for url, output_file in self.departments:
-            if os.path.exists(os.path.join(self.output_dir, output_file)):
-                raise FileExistsError(f"The output file {output_file} already exists.")
-
         os.makedirs(self.output_dir, exist_ok=True)
         self.headers = get_headers("h1")
 
     def collect(self):
         for url, output_file in self.departments:
+            output_path = os.path.join(self.output_dir, output_file)
+            
+            if os.path.exists(output_path):
+                print(f"[SKIP] {output_file} already exists, skipping...")
+                continue
+            
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
@@ -57,8 +58,8 @@ class B4Compiler:
                         
             # WRITE
             with open(
-                os.path.join(self.output_dir, output_file),
-                "x",
+                output_path,
+                "w",
                 newline="",
                 encoding="utf-8",
             ) as f:

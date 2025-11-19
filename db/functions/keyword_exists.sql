@@ -9,3 +9,5 @@ BEGIN
         WHERE name = p_name
     );
 END $$
+
+DELIMITER ;
