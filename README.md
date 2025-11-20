@@ -170,6 +170,30 @@ Aidan:
 * Wrote up **Query Optimization Analysis** for **Query 2** (see below).
 
 Owen:
+* Wrote scraper for the University of Maine at Augusta and made a csv of the relevant faculty.
+     'scraping/uma/*'
+        
+  
+* Created the schemas, procedures, and functions pertaining to publications, publication_authors, keywords, publication_keywords, and user_keywords.
+
+* 'schema/':
+     'faculty_keyword.sql','grants_for_keyword.sql','keyword.sql','publication_authored_by_faculty.sql','publication_keyword.sql', 'publication.sql', 'publication_explores_keyword.sql', 'faculty_researches_keyword.sql'
+ 
+* 'procedures/'
+  *'create/'
+     'create_faculty_researches_keyword.sql', 'create_publication_explores_keyword.sql', 'create_publication.sql', 'create_faculty_researches_keyword.sql', 'create_grants_for_keyword.sql', 'create_keyword.sql', 'create_publication.sql'
+
+  *'delete/'
+     'delete_faculty_researches_keyword.sql', 'delete_keyword'.sql', 'delete_publications.sql','delete_publication_explores_keyword.sql'
+
+   * 'read/'
+     'read_publication_keyword.sql','read_faculty_keyword.sql'
+     
+  * 'update/'
+     'update_keyword.sql', 'update_publication.sql'
+    
+*'functions/'
+   'count_keywords.sql', 'count_keywords_publications.sql', 'count_user_keywords.sql', 'get_DOI.sql', 'get_citation_count.sql', 'get_publication_title.sql', 'get_publication_year.sql', 'get_publication_year.sql', 'keyword_exists.sql', 'publication_has_keyword.sql', 'user_has_keyword.sql'
 
 Clayton:
 * Wrote scraper for the University of Maine at Farmington and associated documentation.
