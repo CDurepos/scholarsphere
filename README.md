@@ -42,7 +42,7 @@ To do this, add your user-set database password to the `scraping/insert.py` file
 
 Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
 
-# Proposed Task Distributions
+# COS457 Phase 2 Task Distribution
 
 ## GitHub Username to Student Map
 
@@ -53,8 +53,6 @@ CDurepos:      Clayton Durepos
 abbyPitcairn:  Abby Pitcairn
 
 OwenLeitzell:  Owen Leitzell
-
-## Task Distribution
 
 ### D1 - Recorded Video Demonstration
 1. Clayton: Show the database running from scratch (creation, data loading, constraints in action). **deadline**: 11/15
