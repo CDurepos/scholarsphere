@@ -44,7 +44,7 @@ Once this operation finishes... Congrats! You've got the ScholarSphere Database 
 
 # COS457 Phase 2 Task Distribution
 
-## GitHub Username to Student Map
+### GitHub Username to Student Map
 
 aidan073:      Aidan Bell
 
