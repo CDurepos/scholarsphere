@@ -237,7 +237,26 @@ Clayton:
 
 * Wrote team member contributions and documentation in `db/schema/README.md`
 
-Abby:
+Abby: 
+* Scraping - Created the USM faculty scraper to scrape alphabetically organized faculty directory as well as faculty personal webpages using scraped first_name and last_name fields. Additionally created fake equipment data for demonstration purposes. 
+
+* SQL Schemas - Created schema for equipment, institution, and works_at relation table.
+
+   * `equipment.sql`
+   * `institution.sql`
+   * `faculty_works_at_institution.sql`
+   
+
+* SQL Procedures/functions - Created equipment_load.sql and equipment_search.sql functionality.
+
+     * `equipment_load.sql`
+     * `euipment_search.sql`
+
+* Query Optimization - Built indexes for equipment and institutions for faster lookup.
+
+* Video - Demonstrated web scraping and data cleaning.
+
+   
 
 ## Query Optimization Analysis
 
