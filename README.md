@@ -49,11 +49,11 @@ Once this operation finishes... Congrats! You've got the ScholarSphere Database 
 * ____: Search, Recommendation
 
 ### Backend
-* ____: RESTful API Endpoints & Logic, Bash setup scripts
+* Aidan: RESTful API Endpoints & Logic, Bash setup scripts
 * ____: DB Connection, Helper functions
 
 ### Advanced DB Features
-* ____: Database indexing & query optimization
+* Aidan: Database indexing & query optimization
 * ____: Transaction management / ACID compliance
 * ____: Database security & authentication
 * ____: Backup & recovery procedures
