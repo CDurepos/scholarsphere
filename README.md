@@ -42,6 +42,22 @@ To do this, add your user-set database password to the `scraping/insert.py` file
 
 Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
 
+# COS457 Phase 3 Task Distribution
+
+### Frontend
+* ____: Login & Auth, Profiles
+* ____: Search, Recommendation
+
+### Backend
+* ____: RESTful API Endpoints & Logic
+* ____: Helper Functions, DB Connection
+
+### Advanced DB Features
+* ____: Database indexing & query optimization
+* ____: Transaction management / ACID compliance
+* ____: Database security & authentication
+* ____: Backup & recovery procedures
+
 # COS457 Phase 2 Task Distribution
 
 ### GitHub Username to Student Map
