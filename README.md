@@ -45,7 +45,7 @@ Once this operation finishes... Congrats! You've got the ScholarSphere Database 
 # COS457 Phase 3 Task Distribution
 
 ### Frontend
-* ____: Login & Auth, Profiles
+* Clayton: Login & Auth, Profiles
 * ____: Search, Recommendation
 
 ### Backend
@@ -55,7 +55,7 @@ Once this operation finishes... Congrats! You've got the ScholarSphere Database 
 ### Advanced DB Features
 * Aidan: Database indexing & query optimization
 * ____: Transaction management / ACID compliance
-* ____: Database security & authentication
+* Clayton: Database security & authentication
 * ____: Backup & recovery procedures
 
 # COS457 Phase 2 Task Distribution
