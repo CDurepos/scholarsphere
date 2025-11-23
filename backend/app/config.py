@@ -6,7 +6,7 @@ load_dotenv()
 
 class Config:
     # === Flask settings ===
-    DEBUG = os.getenv("DEBUG") == "True"
+    DEBUG = os.getenv("DEBUG", "False") == "True"
     SECRET_KEY = os.getenv("SECRET_KEY")
 
     # === Database settings ===
@@ -18,5 +18,5 @@ class Config:
 
     # === Other project settings ===
 
-    if not all([DEBUG, SECRET_KEY, DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME]):
-        raise ValueError(f"Missing environment variables in {__file__}")
+    if not all([SECRET_KEY, DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME]):
+        raise ValueError(f"Missing necessary environment variables in {__file__}")
