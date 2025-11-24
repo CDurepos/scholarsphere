@@ -1,0 +1,112 @@
+.signup-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      210% 210% at 50% 170%,
+      rgba(246, 248, 255, 0) 0%,
+      rgba(246, 248, 255, 0.8) 15%,
+      rgba(31, 76, 153, 0.8) 45%,
+      #0b264f 60%,
+      #071835 75%  
+    );
+  padding: 2rem;
+}
+
+.signup-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.signup-card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 25px 70px var(--color-shadow-strong);
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  z-index: 1;
+}
+
+.signup-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.signup-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  gap: 0.5rem;
+}
+
+.progress-step {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-surface-alt);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: var(--color-accent);
+  color: var(--color-primary);
+  box-shadow: 0 6px 12px var(--color-shadow-strong);
+}
+
+.progress-line {
+  flex: 1;
+  height: 3px;
+  background: var(--color-surface-alt);
+  max-width: 60px;
+  transition: all 0.3s ease;
+}
+
+.progress-line.active {
+  background: var(--color-accent);
+}
+
+.error-message {
+  background: rgba(11, 38, 79, 0.08);
+  color: var(--color-primary-dark);
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+}
+
+.signup-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.signup-footer a {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-footer a:hover {
+  text-decoration: underline;
+}
+
+
