@@ -1,3 +1,11 @@
+"""
+Institution-related API endpoints
+v11.25.2025
+
+Contributions:
+    Architecture/boilerplate by Clayton Durepos
+"""
+
 from backend.app.services.search_service import search_faculty
 from backend.app.utils.search_filters import get_valid_search_filters
 
