@@ -5,7 +5,21 @@
  * Replace the base URL with your actual backend API endpoint when ready.
  */
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Backend API URL
+const API_BASE_URL = 'http://127.0.0.1:5000'; // Backend API URL
+
+/**
+ * Get institution list from the DB
+ * @returns {Promise<Array>} Array of institution objects
+ */
+export const getInstitutions = async () => {
+  const response = await fetch(`${API_BASE_URL}/institution`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.json();
+};
 
 /**
  * Search for faculty members using the search endpoint
@@ -38,7 +52,7 @@ export const searchFaculty = async (params = {}) => {
   if (params.institution) queryParams.append('institution', params.institution);
   
   // Backend search endpoint is at /search/ (no /api prefix)
-  const response = await fetch(`http://localhost:5000/search?${queryParams.toString()}`, {
+  const response = await fetch(`${API_BASE_URL}/search?${queryParams.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

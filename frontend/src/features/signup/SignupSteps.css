@@ -158,3 +158,29 @@
   display: block;
 }
 
+.confirmation-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.step-button-primary {
+  background: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.step-button-primary:hover:not(:disabled) {
+  background: #cf8f30;
+}
+
+.step-button-secondary {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.step-button-secondary:hover:not(:disabled) {
+  background: rgba(11, 38, 79, 0.05);
+}
+

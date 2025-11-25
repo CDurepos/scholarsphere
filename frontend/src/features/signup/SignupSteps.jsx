@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './SignupSteps.css';
 
 /**
@@ -98,7 +98,268 @@ export function SignupStep1({ onSubmit, institutions, loading }) {
   );
 }
 
-// Step 2a: "Does this look right?" - for existing faculty
+// Step 2: Combined confirmation + form component
+export function SignupStep2({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting }) {
+  // If we need to show confirmation first, show that
+  if (showConfirmation) {
+    return (
+      <div className="signup-step">
+        <h2 className="step-title">Step 2: Is this you?</h2>
+        <p className="step-description">
+          We found a faculty member in our database with this information:
+        </p>
+
+        <div className="faculty-info-summary">
+          <p><strong>Name:</strong> {initialData.first_name} {initialData.last_name}</p>
+          <p><strong>Institution:</strong> {initialData.institution_name}</p>
+        </div>
+
+        <div className="confirmation-buttons">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="step-button step-button-primary"
+            disabled={loading}
+          >
+            Yes, this is me
+          </button>
+          <button
+            type="button"
+            onClick={onDeny}
+            className="step-button step-button-secondary"
+            disabled={loading}
+          >
+            No, this is not me
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise, show the form
+  return <SignupStep3Form 
+    initialData={initialData}
+    onSubmit={onSubmit}
+    loading={loading}
+    doPrefill={doPrefill}
+    stepNumber={2}
+    isExisting={isExisting}
+  />;
+}
+
+// Step 3: Unified form for all faculty information (can be prefilled or empty)
+export function SignupStep3Form({ initialData, onSubmit, loading, doPrefill = false, stepNumber = 2, isExisting = false }) {
+  // Initialize form data based on whether it should be prefilled
+  const getInitialFormData = () => {
+    if (doPrefill) {
+      // Prefill with existing data (only first item from arrays)
+      return {
+        first_name: initialData.first_name || '',
+        last_name: initialData.last_name || '',
+        institution_name: initialData.institution_name || '',
+        emails: initialData.emails && initialData.emails.length > 0 ? [initialData.emails[0]] : [''],
+        phones: initialData.phones && initialData.phones.length > 0 ? [initialData.phones[0]] : [''],
+        departments: initialData.departments && initialData.departments.length > 0 ? [initialData.departments[0]] : [''],
+        titles: initialData.titles && initialData.titles.length > 0 ? [initialData.titles[0]] : [''],
+        biography: initialData.biography || '',
+        orcid: initialData.orcid || '',
+        google_scholar_url: initialData.google_scholar_url || '',
+        research_gate_url: initialData.research_gate_url || '',
+      };
+    } else {
+      // Empty form (only keep name and institution from step 1)
+      return {
+        first_name: initialData.first_name || '',
+        last_name: initialData.last_name || '',
+        institution_name: initialData.institution_name || '',
+        emails: [''],
+        phones: [''],
+        departments: [''],
+        titles: [''],
+        biography: '',
+        orcid: '',
+        google_scholar_url: '',
+        research_gate_url: '',
+      };
+    }
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
+
+  // Update form data when doPrefill changes (user clicks Yes/No)
+  useEffect(() => {
+    if (!doPrefill) {
+      // User clicked "No" or is new - clear all DB data, keep only name/institution from step 1
+      setFormData({
+        first_name: initialData.first_name || '',
+        last_name: initialData.last_name || '',
+        institution_name: initialData.institution_name || '',
+        emails: [''],
+        phones: [''],
+        departments: [''],
+        titles: [''],
+        biography: '',
+        orcid: '',
+        google_scholar_url: '',
+        research_gate_url: '',
+      });
+    } else {
+      // User clicked "Yes" - prefill with existing data (only first item from arrays)
+      setFormData({
+        first_name: initialData.first_name || '',
+        last_name: initialData.last_name || '',
+        institution_name: initialData.institution_name || '',
+        emails: initialData.emails && initialData.emails.length > 0 ? [initialData.emails[0]] : [''],
+        phones: initialData.phones && initialData.phones.length > 0 ? [initialData.phones[0]] : [''],
+        departments: initialData.departments && initialData.departments.length > 0 ? [initialData.departments[0]] : [''],
+        titles: initialData.titles && initialData.titles.length > 0 ? [initialData.titles[0]] : [''],
+        biography: initialData.biography || '',
+        orcid: initialData.orcid || '',
+        google_scholar_url: initialData.google_scholar_url || '',
+        research_gate_url: initialData.research_gate_url || '',
+      });
+    }
+  }, [doPrefill]);
+
+  const handleArrayChange = (field, index, value) => {
+    const newArray = [...formData[field]];
+    newArray[index] = value;
+    setFormData({ ...formData, [field]: newArray });
+  };
+
+  const addArrayItem = (field) => {
+    setFormData({
+      ...formData,
+      [field]: [...formData[field], ''],
+    });
+  };
+
+  const removeArrayItem = (field, index) => {
+    setFormData({
+      ...formData,
+      [field]: formData[field].filter((_, i) => i !== index),
+    });
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Filter out empty strings from arrays
+    const cleanedData = {
+      first_name: formData.first_name.trim(),
+      last_name: formData.last_name.trim(),
+      institution_name: formData.institution_name.trim(),
+      emails: formData.emails.filter(email => email.trim() !== ''),
+      phones: formData.phones.filter(phone => phone.trim() !== ''),
+      departments: formData.departments.filter(dept => dept.trim() !== ''),
+      titles: formData.titles.filter(title => title.trim() !== ''),
+      biography: formData.biography.trim(),
+      orcid: formData.orcid.trim(),
+      google_scholar_url: formData.google_scholar_url.trim(),
+      research_gate_url: formData.research_gate_url.trim(),
+    };
+
+    onSubmit(cleanedData);
+  };
+
+  return (
+    <div className="signup-step">
+      <h2 className="step-title">Step {stepNumber}: Additional Information</h2>
+      <p className="step-description">
+        {doPrefill 
+          ? 'Please review and update your information below.'
+          : 'Please provide the following information to complete your profile.'}
+      </p>
+
+      <form onSubmit={handleSubmit} className="signup-form">
+        <div className="form-group">
+          <label htmlFor="first_name">First Name *</label>
+          <input
+            type="text"
+            id="first_name"
+            name="first_name"
+            value={formData.first_name}
+            onChange={handleChange}
+            required
+            autoComplete="given-name"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="last_name">Last Name *</label>
+          <input
+            type="text"
+            id="last_name"
+            name="last_name"
+            value={formData.last_name}
+            onChange={handleChange}
+            required
+            autoComplete="family-name"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="institution_name">Institution *</label>
+          <input
+            type="text"
+            id="institution_name"
+            name="institution_name"
+            value={formData.institution_name}
+            onChange={handleChange}
+            required
+            placeholder=""
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            value={formData.emails[0] || ''}
+            onChange={(e) => handleArrayChange('emails', 0, e.target.value)}
+            placeholder=""
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="department">Department</label>
+          <input
+            type="text"
+            id="department"
+            value={formData.departments[0] || ''}
+            onChange={(e) => handleArrayChange('departments', 0, e.target.value)}
+            placeholder=""
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="title">Title</label>
+          <input
+            type="text"
+            id="title"
+            value={formData.titles[0] || ''}
+            onChange={(e) => handleArrayChange('titles', 0, e.target.value)}
+            placeholder=""
+          />
+        </div>
+
+        <button type="submit" className="step-button" disabled={loading}>
+          {loading ? (isExisting ? 'Updating...' : 'Creating...') : 'Continue to Credentials'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Step 2a: "Does this look right?" - for existing faculty (DEPRECATED - keeping for reference)
 export function SignupStep2Exists({ facultyData, onSubmit, loading }) {
   const [formData, setFormData] = useState({
     emails: facultyData.emails || [],
@@ -403,7 +664,7 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
 
       <form onSubmit={handleSubmit} className="signup-form">
         <div className="form-group">
-          <label>Email Addresses *</label>
+          <label>Email *</label>
           {formData.emails.map((email, index) => (
             <div key={index} className="array-input-group">
               <input
@@ -434,7 +695,7 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
         </div>
 
         <div className="form-group">
-          <label>Phone Numbers</label>
+          <label>Phone</label>
           {formData.phones.map((phone, index) => (
             <div key={index} className="array-input-group">
               <input
@@ -464,7 +725,7 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
         </div>
 
         <div className="form-group">
-          <label>Departments *</label>
+          <label>Department</label>
           {formData.departments.map((dept, index) => (
             <div key={index} className="array-input-group">
               <input
@@ -472,7 +733,6 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
                 value={dept}
                 onChange={(e) => handleArrayChange('departments', index, e.target.value)}
                 placeholder="Computer Science"
-                required={index === 0}
               />
               {formData.departments.length > 1 && (
                 <button
@@ -495,7 +755,7 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
         </div>
 
         <div className="form-group">
-          <label>Titles *</label>
+          <label>Title</label>
           {formData.titles.map((title, index) => (
             <div key={index} className="array-input-group">
               <input
@@ -503,7 +763,6 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
                 value={title}
                 onChange={(e) => handleArrayChange('titles', index, e.target.value)}
                 placeholder="Professor"
-                required={index === 0}
               />
               {formData.titles.length > 1 && (
                 <button
@@ -581,7 +840,7 @@ export function SignupStep2New({ initialData, onSubmit, loading }) {
 }
 
 // Step 3: Credentials Setup
-export function SignupStep3({ onSubmit, loading }) {
+export function SignupStep3({ onSubmit, loading, stepNumber = 3 }) {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -641,7 +900,7 @@ export function SignupStep3({ onSubmit, loading }) {
 
   return (
     <div className="signup-step">
-      <h2 className="step-title">Step 3: Create Credentials</h2>
+      <h2 className="step-title">Step {stepNumber}: Create Credentials</h2>
       <p className="step-description">
         Create a username and password to access your ScholarSphere account.
       </p>
