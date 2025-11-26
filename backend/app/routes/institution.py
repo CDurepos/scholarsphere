@@ -59,7 +59,6 @@ sample = [
 
 
 @institution_bp.route("", methods=["GET"])
-@institution_bp.route("/", methods=["GET"])
 def institution():
 
     # For pre-db connection testing

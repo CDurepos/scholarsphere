@@ -13,11 +13,11 @@ from flask import Blueprint, request, jsonify
 auth_bp = Blueprint("auth", __name__)
 
 # Register credentials to faculty_id
-@auth_bp.route("/auth/register", methods=["POST"])
+@auth_bp.route("/register", methods=["POST"])
 def register():
     return None
 
 # Login verification
-@auth_bp.route("/auth/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     return None

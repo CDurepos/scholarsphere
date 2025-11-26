@@ -5,7 +5,7 @@
  * Replace the base URL with your actual backend API endpoint when ready.
  */
 
-const API_BASE_URL = 'http://127.0.0.1:5000'; // Backend API URL
+const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Backend API URL
 
 /**
  * Get institution list from the DB

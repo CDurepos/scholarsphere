@@ -15,12 +15,10 @@ faculty_bp = Blueprint("faculty", __name__)
 
 # GET by optional filters
 @faculty_bp.route("", methods=["GET"])
-@faculty_bp.route("/", methods=["GET"])
 def list_faculty():
     return None
 
 @faculty_bp.route("", methods=["POST"])
-@faculty_bp.route("/", methods=["POST"])
 def create_faculty():
     return None
 
@@ -31,7 +29,7 @@ def get_faculty():
 
 # UPDATE by faculty_id
 @faculty_bp.route("/<string:faculty_id>", methods=["PUT"])
-def list_faculty(faculty_id):
+def update_faculty(faculty_id):
     return None
 
 # DELETE faculty with faculty_id

@@ -22,7 +22,6 @@ sample = [
 
 
 @search_bp.route("", methods=["GET"])
-@search_bp.route("/", methods=["GET"])
 def search():
     results = search_faculty(**request.args)
 
