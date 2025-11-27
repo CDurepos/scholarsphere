@@ -3078,7 +3078,9 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         match_score = VALUES(match_score),
         created_at = VALUES(created_at);
+END $$
 
+DELIMITER ;
 
 
 -- Source: workflow/recommend_faculty_by_institution.sql
