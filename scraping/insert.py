@@ -3,8 +3,8 @@
 Data insertion script for scraped JSON data.
 
 Reads JSON/JSONL files from scraping/out directory and inserts all data into
-the database using stored procedures. Generates deterministic UUIDs for
-institutions and faculty using UUID v5 with namespace strings.
+the database using stored procedures. Generates random UUIDs for
+institutions, faculty, and publications using UUID v4.
 
 Usage:
     python scraping/insert.py
@@ -19,11 +19,6 @@ from typing import List, Dict, Any, Optional, Tuple
 
 import mysql.connector
 from mysql.connector import Error, pooling
-
-# Namespace UUIDs for deterministic UUID generation (UUID v5)
-FACULTY_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_DNS, "Faculty")
-INSTITUTION_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_DNS, "Institution")
-PUBLICATION_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_DNS, "Publication")
 
 # Database configuration
 DB_CONFIG = {
@@ -136,59 +131,34 @@ def find_scraped_files(output_dir: str) -> Tuple[List[str], List[str]]:
     return sorted(faculty_files), sorted(institution_files), sorted(publication_files)
 
 
-def generate_institution_id(name: str) -> str:
+def generate_institution_id() -> str:
     """
-    Generate deterministic UUID for an institution.
-
-    Args:
-        name: Institution name
+    Generate random UUID for an institution.
 
     Returns:
         UUID string
     """
-    if not name:
-        raise ValueError("Institution name is required for UUID generation")
-    return str(uuid.uuid5(INSTITUTION_NAMESPACE, name))
+    return str(uuid.uuid4())
 
 
-def generate_publication_id(title: str, written_by_uuid: str) -> str:
+def generate_publication_id() -> str:
     """
-    Generate deterministic UUID for a publication.
-
-    Args:
-        title: Publication title
-        written_by_uuid: The UUID of the publication's author
+    Generate random UUID for a publication.
 
     Returns:
         UUID string
     """
-    if not title or not written_by_uuid:
-        raise ValueError(
-            "Publication title and author UUID is required for UUID generation"
-        )
-    identifier = f"{title}:{written_by_uuid}".strip(":")
-    return str(uuid.uuid5(PUBLICATION_NAMESPACE, identifier))
+    return str(uuid.uuid4())
 
 
-def generate_faculty_id(first_name: str, last_name: str, scraped_from: str) -> str:
+def generate_faculty_id() -> str:
     """
-    Generate deterministic UUID for a faculty member.
-
-    Args:
-        first_name: Faculty first name
-        last_name: Faculty last name
-        scraped_from: Source URL for the faculty data
+    Generate random UUID for a faculty member.
 
     Returns:
         UUID string
     """
-    if not first_name or not last_name or not scraped_from:
-        raise ValueError(
-            "Faculty first_name, last_name, and scraped_from is required for UUID generation"
-        )
-
-    identifier = f"{first_name}:{last_name}:{scraped_from}".strip(":")
-    return str(uuid.uuid5(FACULTY_NAMESPACE, identifier))
+    return str(uuid.uuid4())
 
 
 def insert_institution_record(
@@ -212,8 +182,7 @@ def insert_institution_record(
         cursor = conn.cursor()
 
         institution_name = record.get("name", "")
-        # NOTE: SAME INSTITUTION ACRONYM WOULD GIVE SAME UUID
-        institution_id = generate_institution_id(institution_name)
+        institution_id = generate_institution_id()
 
         db.call_procedure(
             cursor,
@@ -270,15 +239,13 @@ def insert_faculty_record(
         cursor = conn.cursor()
         conn.start_transaction()
 
-        first_name = record.get("first_name", "")
-        last_name = record.get("last_name", "")
         scraped_from = record.get("scraped_from", "")
 
         existing_fac_id = record.get("faculty_id", None)
         faculty_id = (
             existing_fac_id
             if existing_fac_id
-            else generate_faculty_id(first_name, last_name, scraped_from)
+            else generate_faculty_id()
         )
 
         db.call_procedure(
@@ -370,9 +337,8 @@ def insert_publication_record(
         conn = db.get_connection()
         cursor = conn.cursor()
 
-        title = record["title"]
         author_uuid = record["written_by"]
-        publication_id = generate_publication_id(title, author_uuid)
+        publication_id = generate_publication_id()
 
         db.call_procedure(
             cursor,
