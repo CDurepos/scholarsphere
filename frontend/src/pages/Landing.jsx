@@ -3,6 +3,11 @@ import ConnectionParticles from '../components/ConnectionParticles';
 import logo from '../assets/logo.png';
 import './Landing.css';
 
+// Stable particle config to prevent re-renders
+const LANDING_PARTICLE_COLORS = ['#ffffff', '#dfe8ff'];
+const LANDING_PARTICLE_LINK_COLOR = '#c6d6ff';
+const LANDING_PARTICLE_QUANTITY = 70;
+
 /**
  * Landing page component - forces users to choose between Login or Signup
  */
@@ -11,9 +16,9 @@ function Landing() {
     <div className="landing-container">
       <ConnectionParticles
         className="landing-particles"
-        colors={['#ffffff', '#dfe8ff']}
-        linkColor="#c6d6ff"
-        quantity={70}
+        colors={LANDING_PARTICLE_COLORS}
+        linkColor={LANDING_PARTICLE_LINK_COLOR}
+        quantity={LANDING_PARTICLE_QUANTITY}
       />
       <div className="landing-content">
         <img src={logo} alt="ScholarSphere Logo" className="landing-logo" />

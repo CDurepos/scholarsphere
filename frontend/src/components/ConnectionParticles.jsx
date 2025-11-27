@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import Particles, { initParticlesEngine } from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
 
 /**
  * Shared particle background that visualizes faculty connections.
+ * Memoized to prevent re-renders when parent component state changes.
  */
-function ConnectionParticles({
+const ConnectionParticles = memo(function ConnectionParticles({
   className = '',
   colors = ['#ffffff', '#b5c7ff'],
   linkColor = '#bcd1ff',
@@ -73,7 +74,7 @@ function ConnectionParticles({
   }
 
   return <Particles id={particleId} className={className} options={options} />;
-}
+});
 
 export default ConnectionParticles;
 

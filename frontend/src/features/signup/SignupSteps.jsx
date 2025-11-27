@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { checkUsernameAvailable } from '../../services/api';
 import './SignupSteps.css';
 
 /**
@@ -6,8 +7,8 @@ import './SignupSteps.css';
  * Contains all signup step components in a single file
  */
 
-// Step 1: Name and Institution
-export function SignupStep1({ onSubmit, institutions, loading }) {
+// Step 1: Basic Information (Name and Institution)
+export function BasicInfoForm({ onSubmit, institutions, loading }) {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -28,9 +29,9 @@ export function SignupStep1({ onSubmit, institutions, loading }) {
 
   return (
     <div className="signup-step">
-      <h2 className="step-title">Step 1: Basic Information</h2>
+      <h2 className="step-title">Get started</h2>
       <p className="step-description">
-        Enter your name and institution to check if you already exist in our database.
+        Let's begin with some basic information.
       </p>
 
       <form onSubmit={handleSubmit} className="signup-form">
@@ -98,15 +99,15 @@ export function SignupStep1({ onSubmit, institutions, loading }) {
   );
 }
 
-// Step 2: Combined confirmation + form component
-export function SignupStep2({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting }) {
+// Step 2: Confirmation wrapper (shows confirmation or profile form)
+export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting }) {
   // If we need to show confirmation first, show that
   if (showConfirmation) {
     return (
       <div className="signup-step">
-        <h2 className="step-title">Step 2: Is this you?</h2>
+        <h2 className="step-title">Is this you?</h2>
         <p className="step-description">
-          We found a faculty member in our database with this information:
+          We found someone in our database matching this information:
         </p>
 
         <div className="faculty-info-summary">
@@ -137,7 +138,7 @@ export function SignupStep2({ initialData, onSubmit, loading, showConfirmation, 
   }
 
   // Otherwise, show the form
-  return <SignupStep3Form 
+  return <ProfileInfoForm 
     initialData={initialData}
     onSubmit={onSubmit}
     loading={loading}
@@ -147,8 +148,8 @@ export function SignupStep2({ initialData, onSubmit, loading, showConfirmation, 
   />;
 }
 
-// Step 3: Unified form for all faculty information (can be prefilled or empty)
-export function SignupStep3Form({ initialData, onSubmit, loading, doPrefill = false, stepNumber = 2, isExisting = false }) {
+// Profile Information Form (used in Step 2 - can be prefilled or empty)
+export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = false, stepNumber = 2, isExisting = false }) {
   // Initialize form data based on whether it should be prefilled
   const getInitialFormData = () => {
     if (doPrefill) {
@@ -271,11 +272,11 @@ export function SignupStep3Form({ initialData, onSubmit, loading, doPrefill = fa
 
   return (
     <div className="signup-step">
-      <h2 className="step-title">Step {stepNumber}: Additional Information</h2>
+      <h2 className="step-title">Tell us about yourself</h2>
       <p className="step-description">
         {doPrefill 
-          ? 'Please review and update your information below.'
-          : 'Please provide the following information to complete your profile.'}
+          ? 'Review and update your information below.'
+          : 'Help us learn more about you to complete your profile.'}
       </p>
 
       <form onSubmit={handleSubmit} className="signup-form">
@@ -359,494 +360,58 @@ export function SignupStep3Form({ initialData, onSubmit, loading, doPrefill = fa
   );
 }
 
-// Step 2a: "Does this look right?" - for existing faculty (DEPRECATED - keeping for reference)
-export function SignupStep2Exists({ facultyData, onSubmit, loading }) {
-  const [formData, setFormData] = useState({
-    emails: facultyData.emails || [],
-    phones: facultyData.phones || [],
-    departments: facultyData.departments || [],
-    titles: facultyData.titles || [],
-    biography: facultyData.biography || '',
-    orcid: facultyData.orcid || '',
-    google_scholar_url: facultyData.google_scholar_url || '',
-    research_gate_url: facultyData.research_gate_url || '',
-  });
-
-  const handleArrayChange = (field, index, value) => {
-    const newArray = [...formData[field]];
-    newArray[index] = value;
-    setFormData({ ...formData, [field]: newArray });
-  };
-
-  const addArrayItem = (field) => {
-    setFormData({
-      ...formData,
-      [field]: [...formData[field], ''],
-    });
-  };
-
-  const removeArrayItem = (field, index) => {
-    setFormData({
-      ...formData,
-      [field]: formData[field].filter((_, i) => i !== index),
-    });
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <div className="signup-step">
-      <h2 className="step-title">Does this look right?</h2>
-      <p className="step-description">
-        We found your information in our database. Please review and update if needed.
-      </p>
-
-      <div className="faculty-info-summary">
-        <p><strong>Name:</strong> {facultyData.first_name} {facultyData.last_name}</p>
-        <p><strong>Institution:</strong> {facultyData.institution_name}</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="signup-form">
-        <div className="form-group">
-          <label>Email Addresses</label>
-          {formData.emails.map((email, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => handleArrayChange('emails', index, e.target.value)}
-                placeholder="email@example.com"
-              />
-              {formData.emails.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('emails', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('emails')}
-            className="add-button"
-          >
-            + Add Email
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label>Phone Numbers</label>
-          {formData.phones.map((phone, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => handleArrayChange('phones', index, e.target.value)}
-                placeholder="207-555-1234"
-              />
-              {formData.phones.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('phones', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('phones')}
-            className="add-button"
-          >
-            + Add Phone
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label>Departments</label>
-          {formData.departments.map((dept, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="text"
-                value={dept}
-                onChange={(e) => handleArrayChange('departments', index, e.target.value)}
-                placeholder="Computer Science"
-              />
-              {formData.departments.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('departments', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('departments')}
-            className="add-button"
-          >
-            + Add Department
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label>Titles</label>
-          {formData.titles.map((title, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => handleArrayChange('titles', index, e.target.value)}
-                placeholder="Professor"
-              />
-              {formData.titles.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('titles', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('titles')}
-            className="add-button"
-          >
-            + Add Title
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="biography">Biography</label>
-          <textarea
-            id="biography"
-            name="biography"
-            value={formData.biography}
-            onChange={handleChange}
-            placeholder="Your research interests and background..."
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="orcid">ORCID ID</label>
-          <input
-            type="text"
-            id="orcid"
-            name="orcid"
-            value={formData.orcid}
-            onChange={handleChange}
-            placeholder="0000-0000-0000-0000"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="google_scholar_url">Google Scholar URL</label>
-          <input
-            type="url"
-            id="google_scholar_url"
-            name="google_scholar_url"
-            value={formData.google_scholar_url}
-            onChange={handleChange}
-            placeholder="https://scholar.google.com/..."
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="research_gate_url">ResearchGate URL</label>
-          <input
-            type="url"
-            id="research_gate_url"
-            name="research_gate_url"
-            value={formData.research_gate_url}
-            onChange={handleChange}
-            placeholder="https://www.researchgate.net/..."
-          />
-        </div>
-
-        <button type="submit" className="step-button" disabled={loading}>
-          {loading ? 'Updating...' : 'Continue to Credentials'}
-        </button>
-      </form>
-    </div>
-  );
-}
-
-// Step 2b: Additional Information - for new faculty
-export function SignupStep2New({ initialData, onSubmit, loading }) {
-  const [formData, setFormData] = useState({
-    emails: [''],
-    phones: [''],
-    departments: [''],
-    titles: [''],
-    biography: '',
-    orcid: '',
-    google_scholar_url: '',
-    research_gate_url: '',
-  });
-
-  const handleArrayChange = (field, index, value) => {
-    const newArray = [...formData[field]];
-    newArray[index] = value;
-    setFormData({ ...formData, [field]: newArray });
-  };
-
-  const addArrayItem = (field) => {
-    setFormData({
-      ...formData,
-      [field]: [...formData[field], ''],
-    });
-  };
-
-  const removeArrayItem = (field, index) => {
-    setFormData({
-      ...formData,
-      [field]: formData[field].filter((_, i) => i !== index),
-    });
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Filter out empty strings from arrays
-    const cleanedData = {
-      emails: formData.emails.filter(email => email.trim() !== ''),
-      phones: formData.phones.filter(phone => phone.trim() !== ''),
-      departments: formData.departments.filter(dept => dept.trim() !== ''),
-      titles: formData.titles.filter(title => title.trim() !== ''),
-      biography: formData.biography.trim(),
-      orcid: formData.orcid.trim(),
-      google_scholar_url: formData.google_scholar_url.trim(),
-      research_gate_url: formData.research_gate_url.trim(),
-    };
-
-    onSubmit(cleanedData);
-  };
-
-  return (
-    <div className="signup-step">
-      <h2 className="step-title">Step 2: Additional Information</h2>
-      <p className="step-description">
-        We couldn't find you in our database. Please provide the following information.
-      </p>
-
-      <div className="faculty-info-summary">
-        <p><strong>Name:</strong> {initialData.first_name} {initialData.last_name}</p>
-        <p><strong>Institution:</strong> {initialData.institution_name}</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="signup-form">
-        <div className="form-group">
-          <label>Email *</label>
-          {formData.emails.map((email, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => handleArrayChange('emails', index, e.target.value)}
-                placeholder="email@example.com"
-                required={index === 0}
-              />
-              {formData.emails.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('emails', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('emails')}
-            className="add-button"
-          >
-            + Add Email
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label>Phone</label>
-          {formData.phones.map((phone, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => handleArrayChange('phones', index, e.target.value)}
-                placeholder="207-555-1234"
-              />
-              {formData.phones.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('phones', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('phones')}
-            className="add-button"
-          >
-            + Add Phone
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label>Department</label>
-          {formData.departments.map((dept, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="text"
-                value={dept}
-                onChange={(e) => handleArrayChange('departments', index, e.target.value)}
-                placeholder="Computer Science"
-              />
-              {formData.departments.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('departments', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('departments')}
-            className="add-button"
-          >
-            + Add Department
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label>Title</label>
-          {formData.titles.map((title, index) => (
-            <div key={index} className="array-input-group">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => handleArrayChange('titles', index, e.target.value)}
-                placeholder="Professor"
-              />
-              {formData.titles.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem('titles', index)}
-                  className="remove-button"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addArrayItem('titles')}
-            className="add-button"
-          >
-            + Add Title
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="biography">Biography</label>
-          <textarea
-            id="biography"
-            name="biography"
-            value={formData.biography}
-            onChange={handleChange}
-            placeholder="Your research interests and background..."
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="orcid">ORCID ID</label>
-          <input
-            type="text"
-            id="orcid"
-            name="orcid"
-            value={formData.orcid}
-            onChange={handleChange}
-            placeholder="0000-0000-0000-0000"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="google_scholar_url">Google Scholar URL</label>
-          <input
-            type="url"
-            id="google_scholar_url"
-            name="google_scholar_url"
-            value={formData.google_scholar_url}
-            onChange={handleChange}
-            placeholder="https://scholar.google.com/..."
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="research_gate_url">ResearchGate URL</label>
-          <input
-            type="url"
-            id="research_gate_url"
-            name="research_gate_url"
-            value={formData.research_gate_url}
-            onChange={handleChange}
-            placeholder="https://www.researchgate.net/..."
-          />
-        </div>
-
-        <button type="submit" className="step-button" disabled={loading}>
-          {loading ? 'Creating...' : 'Continue to Credentials'}
-        </button>
-      </form>
-    </div>
-  );
-}
-
-// Step 3: Credentials Setup
-export function SignupStep3({ onSubmit, loading, stepNumber = 3 }) {
+// Step 3: Credentials Setup (Username and Password)
+export function CredentialsForm({ onSubmit, loading, stepNumber = 3 }) {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
     confirmPassword: '',
   });
   const [errors, setErrors] = useState({});
+  const [usernameStatus, setUsernameStatus] = useState(null); // null = not checked, true = available, false = taken
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const usernameTimeoutRef = useRef(null);
+
+  // Debounced username checking
+  useEffect(() => {
+    // Clear previous timeout
+    if (usernameTimeoutRef.current) {
+      clearTimeout(usernameTimeoutRef.current);
+    }
+
+    // Reset status if username is too short or too long
+    if (!formData.username || formData.username.trim().length < 3 || formData.username.trim().length > 16) {
+      setUsernameStatus(null);
+      setCheckingUsername(false);
+      return;
+    }
+
+    // Set checking state
+    setCheckingUsername(true);
+    setUsernameStatus(null);
+
+    // Debounce the API call
+    usernameTimeoutRef.current = setTimeout(async () => {
+      try {
+        const result = await checkUsernameAvailable(formData.username.trim());
+        if (result.username === formData.username.trim()) {
+          setUsernameStatus(result.available);
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameStatus(false); // Assume not available on error
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 500); // Wait 500ms after user stops typing
+
+    // Cleanup
+    return () => {
+      if (usernameTimeoutRef.current) {
+        clearTimeout(usernameTimeoutRef.current);
+      }
+    };
+  }, [formData.username]);
 
   const handleChange = (e) => {
     setFormData({
@@ -867,8 +432,14 @@ export function SignupStep3({ onSubmit, loading, stepNumber = 3 }) {
 
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
+    } else if (formData.username.length < 4) {
+      newErrors.username = 'Username must be at least 4 characters';
+    } else if (formData.username.length > 16) {
+      newErrors.username = 'Username must be 16 characters or less';
+    } else if (usernameStatus === false) {
+      newErrors.username = 'Username is already taken';
+    } else if (usernameStatus === null && formData.username.trim().length >= 3) {
+      newErrors.username = 'Please wait while we check username availability';
     }
 
     if (!formData.password) {
@@ -900,28 +471,48 @@ export function SignupStep3({ onSubmit, loading, stepNumber = 3 }) {
 
   return (
     <div className="signup-step">
-      <h2 className="step-title">Step {stepNumber}: Create Credentials</h2>
+      <h2 className="step-title">Create your account</h2>
       <p className="step-description">
-        Create a username and password to access your ScholarSphere account.
+        Choose a username and password to secure your ScholarSphere account.
       </p>
 
       <form onSubmit={handleSubmit} className="signup-form">
         <div className="form-group">
           <label htmlFor="username">Username *</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            autoComplete="username"
-            className={errors.username ? 'error' : ''}
-          />
+          <div className="username-input-wrapper">
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              autoComplete="username"
+              maxLength={16}
+              className={
+                errors.username 
+                  ? 'error' 
+                  : usernameStatus === true 
+                    ? 'success' 
+                    : usernameStatus === false 
+                      ? 'error' 
+                      : ''
+              }
+            />
+            {checkingUsername && formData.username.trim().length >= 3 && (
+              <span className="username-status-icon checking">⟳</span>
+            )}
+            {!checkingUsername && usernameStatus === true && (
+              <span className="username-status-icon available">✓</span>
+            )}
+            {!checkingUsername && usernameStatus === false && (
+              <span className="username-status-icon taken">✗</span>
+            )}
+          </div>
           {errors.username && (
             <span className="error-text">{errors.username}</span>
           )}
-          <small className="form-hint">Must be at least 3 characters and unique</small>
+          <small className="form-hint">Must be 4-16 characters</small>
         </div>
 
         <div className="form-group">

@@ -239,6 +239,54 @@ export const updateFaculty = async (faculty_id, data) => {
 };
 
 /**
+ * Save a faculty member (create or update based on faculty_id)
+ * 
+ * @param {string|null|undefined} faculty_id - UUID of the faculty member (null/undefined to create new)
+ * @param {Object} data - Request body with faculty information
+ * @param {string} data.first_name - First name
+ * @param {string} [data.last_name] - Last name
+ * @param {string} data.institution_name - Institution name
+ * @param {string[]} [data.emails] - Array of email addresses
+ * @param {string[]} [data.phones] - Array of phone numbers
+ * @param {string[]} [data.departments] - Array of department names
+ * @param {string[]} [data.titles] - Array of titles
+ * @param {string} [data.biography] - Biography text
+ * @param {string} [data.orcid] - ORCID ID
+ * @param {string} [data.google_scholar_url] - Google Scholar URL
+ * @param {string} [data.research_gate_url] - ResearchGate URL
+ * 
+ * @returns {Promise<Object>} Response object
+ * @returns {string} faculty_id - UUID of the faculty member (new or existing)
+ * 
+ * Example response (create):
+ * {
+ *   "faculty_id": "uuid",
+ *   "message": "Faculty member created successfully"
+ * }
+ * 
+ * Example response (update):
+ * {
+ *   "message": "Faculty member updated successfully"
+ * }
+ */
+export const saveFaculty = async (faculty_id, data) => {
+  if (!faculty_id) {
+    // Create new faculty
+    const response = await createFaculty(data);
+    return {
+      faculty_id: response.faculty_id,
+      ...response
+    };
+  } else {
+    // Update existing faculty
+    await updateFaculty(faculty_id, data);
+    return {
+      faculty_id: faculty_id
+    };
+  }
+};
+
+/**
  * Register credentials for a faculty member
  * 
  * @param {Object} data - Request body
@@ -266,7 +314,17 @@ export const registerCredentials = async (data) => {
     },
     body: JSON.stringify(data),
   });
-  return response.json();
+  
+  const result = await response.json();
+  
+  // If the response is not ok, return error object
+  if (!response.ok) {
+    return {
+      error: result.error || 'Failed to register credentials'
+    };
+  }
+  
+  return result;
 };
 
 /**
@@ -305,5 +363,55 @@ export const login = async (data) => {
     },
     body: JSON.stringify(data),
   });
-  return response.json();
+  
+  const result = await response.json();
+  
+  // If the response is not ok, return error object
+  if (!response.ok) {
+    return {
+      error: result.error || 'Failed to login'
+    };
+  }
+  
+  return result;
+};
+
+/**
+ * Check if a username is available
+ * 
+ * @param {string} username - Username to check
+ * 
+ * @returns {Promise<Object>} Response object
+ * @returns {boolean} available - Whether the username is available
+ * @returns {string} username - The username that was checked
+ * 
+ * Example response:
+ * {
+ *   "username": "johndoe",
+ *   "available": true
+ * }
+ */
+export const checkUsernameAvailable = async (username) => {
+  if (!username || username.trim().length < 4) {
+    return { available: null, username }; // Don't check if too short
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/auth/check-username?username=${encodeURIComponent(username)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  const result = await response.json();
+  
+  // If the response is not ok, assume username is not available
+  if (!response.ok) {
+    return {
+      available: false,
+      username
+    };
+  }
+  
+  return result;
 };

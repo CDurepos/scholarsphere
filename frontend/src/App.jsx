@@ -18,8 +18,8 @@ import './App.css';
 function App() {
   // Check if user is logged in
   const isAuthenticated = () => {
-    const token = localStorage.getItem('token');
-    return !!token;
+    const facultyId = localStorage.getItem('faculty_id');
+    return !!facultyId;
   };
 
   // Protected route wrapper

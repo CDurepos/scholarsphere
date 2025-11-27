@@ -11,10 +11,10 @@ function Dashboard() {
 
   useEffect(() => {
     // Check if user is logged in
-    const token = localStorage.getItem('token');
+    const facultyId = localStorage.getItem('faculty_id');
     const facultyData = localStorage.getItem('faculty');
 
-    if (!token || !facultyData) {
+    if (!facultyId || !facultyData) {
       // Not logged in - redirect to landing
       navigate('/');
       return;
@@ -29,8 +29,8 @@ function Dashboard() {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     localStorage.removeItem('faculty');
+    localStorage.removeItem('faculty_id');
     navigate('/');
   };
 

@@ -46,6 +46,57 @@
   font-family: inherit;
 }
 
+.username-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.username-input-wrapper input {
+  width: 100%;
+  padding-right: 2.5rem; /* Make room for the icon */
+}
+
+.username-status-icon {
+  position: absolute;
+  right: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  pointer-events: none;
+  user-select: none;
+}
+
+.username-status-icon.checking {
+  color: var(--color-muted);
+  animation: spin 1s linear infinite;
+}
+
+.username-status-icon.available {
+  color: #22c55e;
+}
+
+.username-status-icon.taken {
+  color: #ef4444;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.form-group input.success {
+  border-color: #22c55e;
+}
+
+.form-group input.success:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {

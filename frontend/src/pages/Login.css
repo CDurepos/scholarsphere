@@ -61,18 +61,48 @@
   font-size: 0.9rem;
 }
 
-.form-group input {
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-wrapper input {
+  width: 100%;
   padding: 0.75rem;
+  padding-right: 2.5rem; /* Make room for the icon */
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-group input:focus {
+.auth-input-wrapper input:focus {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.auth-input-wrapper input.error {
+  border-color: #ef4444;
+}
+
+.auth-input-wrapper input.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.auth-status-icon {
+  position: absolute;
+  right: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  pointer-events: none;
+  user-select: none;
+}
+
+.auth-status-icon.error {
+  color: #ef4444;
 }
 
 .error-message {

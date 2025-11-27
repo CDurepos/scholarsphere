@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { checkFacultyExists, createFaculty, updateFaculty, registerCredentials } from '../services/api';
+import { checkFacultyExists, saveFaculty, registerCredentials } from '../services/api';
 import ConnectionParticles from '../components/ConnectionParticles';
-import { SignupStep1, SignupStep2, SignupStep3 } from '../features/signup/SignupSteps';
+import { BasicInfoForm, ConfirmationStep, CredentialsForm } from '../features/signup/SignupSteps';
 import './Signup.css';
 import { getInstitutions } from '../services/api';
+
+// Stable particle config to prevent re-renders
+const SIGNUP_PARTICLE_COLORS = ['#ffffff', '#dfe8ff'];
+const SIGNUP_PARTICLE_LINK_COLOR = '#c6d6ff';
+const SIGNUP_PARTICLE_QUANTITY = 75;
+
+// localStorage keys for signup flow
+const SIGNUP_FACULTY_ID_KEY = 'scholarsphere_signup_faculty_id';
+const SIGNUP_TIMESTAMP_KEY = 'scholarsphere_signup_timestamp';
+const SIGNUP_EXPIRY_HOURS = 24; // Expire signup data after 24 hours
 
 /**
  * Multi-step signup component
@@ -17,6 +27,54 @@ function Signup() {
   const [step, setStep] = useState(1);
   const [showConfirmation, setShowConfirmation] = useState(false); // Whether to show confirmation in step 2
   const [institutions, setInstitutions] = useState([]);
+  
+  // Helper functions for localStorage management
+  const getStoredFacultyId = () => {
+    try {
+      const storedId = localStorage.getItem(SIGNUP_FACULTY_ID_KEY);
+      const timestamp = localStorage.getItem(SIGNUP_TIMESTAMP_KEY);
+      
+      if (!storedId || !timestamp) {
+        return null;
+      }
+      
+      // Check if expired (24 hours)
+      const now = Date.now();
+      const storedTime = parseInt(timestamp, 10);
+      if (now - storedTime > SIGNUP_EXPIRY_HOURS * 60 * 60 * 1000) {
+        clearSignupData();
+        return null;
+      }
+      
+      return storedId;
+    } catch (error) {
+      console.error('Error reading from localStorage:', error);
+      return null;
+    }
+  };
+  
+  const setStoredFacultyId = (facultyId) => {
+    try {
+      if (facultyId) {
+        localStorage.setItem(SIGNUP_FACULTY_ID_KEY, facultyId);
+        localStorage.setItem(SIGNUP_TIMESTAMP_KEY, Date.now().toString());
+      } else {
+        clearSignupData();
+      }
+    } catch (error) {
+      console.error('Error writing to localStorage:', error);
+    }
+  };
+  
+  const clearSignupData = () => {
+    try {
+      localStorage.removeItem(SIGNUP_FACULTY_ID_KEY);
+      localStorage.removeItem(SIGNUP_TIMESTAMP_KEY);
+    } catch (error) {
+      console.error('Error clearing localStorage:', error);
+    }
+  };
+  
   const [signupData, setSignupData] = useState({
     first_name: '',
     last_name: '',
@@ -36,12 +94,32 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Load faculty_id from localStorage on mount
   useEffect(() => {
+    const storedFacultyId = getStoredFacultyId();
+    if (storedFacultyId) {
+      setSignupData(prev => ({
+        ...prev,
+        faculty_id: storedFacultyId,
+        exists: true, // If we have a stored ID, they exist
+      }));
+      // If we have a faculty_id, we should be on step 3 (credentials)
+      // But let's be safe and check if they're in the middle of signup
+      // For now, we'll start from step 1 if they refresh
+    }
+    
     const fetchInstitutions = async () => {
       const institutions = await getInstitutions();
       setInstitutions(institutions);
     };
     fetchInstitutions();
+    
+    // Cleanup: Clear signup data if user navigates away (optional - you may want to keep it)
+    // Uncomment if you want to clear on unmount:
+    // return () => {
+    //   // Only clear if signup is incomplete (not on step 3)
+    //   // Actually, let's keep it so they can resume
+    // };
   }, []);
 
   const handleStep1Submit = async (data) => {
@@ -60,12 +138,14 @@ function Signup() {
 
       if (response.exists && response.faculty) {
         // User exists - show confirmation first
+        const facultyId = response.faculty.faculty_id;
+        setStoredFacultyId(facultyId); // Store in localStorage
         setSignupData({
           ...signupData,
           first_name: data.first_name,
           last_name: data.last_name,
           institution_name: data.institution_name,
-          faculty_id: response.faculty.faculty_id,
+          faculty_id: facultyId,
           exists: true,
           doPrefill: false, // Will be set to true if user confirms
           emails: response.faculty.emails || [],
@@ -81,6 +161,7 @@ function Signup() {
         setStep(2); // Step 2 - show confirmation first
       } else {
         // User doesn't exist - go directly to form (empty)
+        clearSignupData(); // Clear any old signup data
         setSignupData({
           ...signupData,
           first_name: data.first_name,
@@ -111,6 +192,7 @@ function Signup() {
   // Handle confirmation step - user clicked "No, this is not me"
   const handleConfirmationNo = () => {
     // Clear all existing data and treat as new user
+    clearSignupData(); // Clear stored faculty_id
     setSignupData({
       first_name: signupData.first_name, // Keep name from step 1
       last_name: signupData.last_name,
@@ -136,36 +218,29 @@ function Signup() {
     setError('');
 
     try {
-      // Determine if we should update (PUT) or create (POST)
-      // If user exists and has a faculty_id, update them
-      // Otherwise, create a new faculty record
-      const shouldUpdate = signupData.exists && signupData.faculty_id;
-
-      if (shouldUpdate) {
-        // Update existing faculty - PUT /api/faculty/:faculty_id
-        await updateFaculty(signupData.faculty_id, formData);
-        setSignupData({
-          ...signupData,
-          ...formData,
-        });
-      } else {
-        // Create new faculty - POST /api/faculty/create
-        const response = await createFaculty(formData);
-        setSignupData({
-          ...signupData,
-          faculty_id: response.faculty_id,
-          exists: true, // Now they exist in the database
-          ...formData,
-        });
-      }
+      // Use unified saveFaculty function - it will create or update based on faculty_id
+      // If faculty_id is null/undefined, it creates a new faculty
+      // If faculty_id exists, it updates the existing faculty
+      const response = await saveFaculty(signupData.faculty_id, formData);
+      
+      // Get the faculty_id (either from response if created, or existing one if updated)
+      const facultyId = response.faculty_id || signupData.faculty_id;
+      
+      // Store faculty_id in localStorage
+      setStoredFacultyId(facultyId);
+      
+      // Update signup data
+      setSignupData({
+        ...signupData,
+        faculty_id: facultyId,
+        exists: true, // They now exist in the database (either created or updated)
+        ...formData,
+      });
 
       // Move to credentials step
       setStep(3);
     } catch (err) {
-      const shouldUpdate = signupData.exists && signupData.faculty_id;
-      setError(shouldUpdate
-        ? 'Failed to update faculty information. Please try again.'
-        : 'Failed to create faculty. Please try again.');
+      setError('Failed to save faculty information. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -176,11 +251,20 @@ function Signup() {
     setError('');
 
     try {
+      // Get faculty_id from state or localStorage (fallback)
+      const facultyId = signupData.faculty_id || getStoredFacultyId();
+      
+      if (!facultyId) {
+        setError('Faculty ID not found. Please start the signup process again.');
+        setLoading(false);
+        return;
+      }
+
       // API Endpoint: POST /api/auth/register
       // Body: { faculty_id: string, username: string, password: string }
       // Returns: { message: string } or { error: string }
       const response = await registerCredentials({
-        faculty_id: signupData.faculty_id,
+        faculty_id: facultyId,
         username: credentials.username,
         password: credentials.password,
       });
@@ -191,7 +275,8 @@ function Signup() {
         return;
       }
 
-      // Registration successful - redirect to login or auto-login
+      // Registration successful - clear signup data and redirect
+      clearSignupData();
       navigate('/login', { state: { message: 'Registration successful! Please login.' } });
     } catch (err) {
       setError('Failed to register credentials. Please try again.');
@@ -203,9 +288,9 @@ function Signup() {
     <div className="signup-container">
       <ConnectionParticles
         className="signup-particles"
-        colors={['#ffffff', '#dfe8ff']}
-        linkColor="#c6d6ff"
-        quantity={75}
+        colors={SIGNUP_PARTICLE_COLORS}
+        linkColor={SIGNUP_PARTICLE_LINK_COLOR}
+        quantity={SIGNUP_PARTICLE_QUANTITY}
       />
       <div className="signup-card">
         <h1 className="signup-title">Sign Up for ScholarSphere</h1>
@@ -221,7 +306,7 @@ function Signup() {
         </div>
 
         {step === 1 && (
-          <SignupStep1
+          <BasicInfoForm
             onSubmit={handleStep1Submit}
             institutions={institutions}
             loading={loading}
@@ -229,7 +314,7 @@ function Signup() {
         )}
 
         {step === 2 && (
-          <SignupStep2
+          <ConfirmationStep
             initialData={signupData}
             onSubmit={handleFormSubmit}
             loading={loading}
@@ -243,7 +328,7 @@ function Signup() {
         )}
 
         {step === 3 && (
-          <SignupStep3
+          <CredentialsForm
             onSubmit={handleStep3Submit}
             loading={loading}
             stepNumber={3}
