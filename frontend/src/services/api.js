@@ -25,6 +25,7 @@ export const getInstitutions = async () => {
  * Search for faculty members using the search endpoint
  * 
  * @param {Object} params - Query parameters
+ * @param {string} [params.query] - General search query (searches across name, department, institution)
  * @param {string} [params.first_name] - Faculty member's first name (partial match)
  * @param {string} [params.last_name] - Faculty member's last name (partial match)
  * @param {string} [params.department] - Department name (partial match)
@@ -46,6 +47,13 @@ export const getInstitutions = async () => {
  */
 export const searchFaculty = async (params = {}) => {
   const queryParams = new URLSearchParams();
+  
+  // If a general query is provided, pass it directly to the backend
+  // The backend should handle parsing it appropriately
+  if (params.query) {
+    queryParams.append('query', params.query.trim());
+  }
+  
   if (params.first_name) queryParams.append('first_name', params.first_name);
   if (params.last_name) queryParams.append('last_name', params.last_name);
   if (params.department) queryParams.append('department', params.department);
