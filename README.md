@@ -6,6 +6,45 @@ Built by students, for the COS457 Database Systems course at the University of S
 
 # How to Run
 
+## Frontend
+
+To run the frontend of ScholarSphere, you'll first need a working version of `Node.js`. You can install this [here](https://nodejs.org/en/download).
+
+Once you've got `Node.js` installed, install dependencies with:
+
+```
+cd frontend
+npm install
+```
+
+Finally, run a development server:
+
+```
+npm run dev
+```
+
+## Backend
+While the frontend looks pretty, it can't do much without the backend. To run this part of the application, you'll need a working version of Python. We recommend using `Anaconda`, which you can download [here](https://www.anaconda.com/download).
+
+Once that's finished up and you've got things set up, you can run the backend like so:
+
+```
+cd backend
+python run.py
+```
+
+## Database
+
+To utilize our database, download and setup MySQL.
+
+Once finished, you should enter the `mysql` shell and run the command...
+
+`SOURCE ~/init/000_create_database.sql`
+
+Note that you may have to use the absolute path to this file.
+
+Once you've created the database, you should then run each of the remaining scripts within the `init` directory. Following this, you should do the same for the scripts within the `migrations` directory. Each file in these directories begins with a prefix following the format `XXX_`, these indicate the order in which the scripts should be run.
+
 ## Scraping
 
 To utilize our web-scraping tools, you must have downloaded and setup a local Python interpreter and environment.
@@ -20,18 +59,6 @@ Once you have dependencies installed, you can run the unified scraper utilizing 
 
 This may take some time. We suggest moving to Database setup while the scraper runs.
 
-## Database
-
-To utilize our database, download and setup MySQL.
-
-Once finished, you should enter the `mysql` shell and run the command...
-
-`SOURCE ~/init/000_create_database.sql`
-
-Note that you may have to use the absolute path to this file.
-
-Once you've created the database, you should then run each of the remaining scripts within the `init` directory. Following this, you should do the same for the scripts within the `migrations` directory. Each file in these directories begins with a prefix following the format `XXX_`, these indicate the order in which the scripts should be run.
-
 ## Data Loading
 
 Once you've got the database setup & the scraper finishes gathering data, it's time to load the data into the freshly initialized database.
@@ -41,22 +68,6 @@ To do this, add your user-set database password to the `scraping/insert.py` file
 `python ~/insert.py`
 
 Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
-
-# COS457 Phase 3 Task Distribution
-
-### Frontend
-* Clayton: Login & Auth, Profiles
-* ____: Search, Recommendation
-
-### Backend
-* Aidan: RESTful API Endpoints & Logic, Bash setup scripts
-* Owen: DB Connection, Helper functions
-
-### Advanced DB Features
-* Aidan: Database indexing & query optimization
-* ____: Transaction management / ACID compliance
-* Clayton: Database security & authentication
-* Owen: Backup & recovery procedures
 
 # COS457 Phase 2 Task Distribution
 
