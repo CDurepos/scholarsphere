@@ -1,4 +1,4 @@
-from backend.app.services.search import search_faculty
+from backend.app.services.search import search_faculty_service
 from backend.app.utils.search_filters import get_valid_search_filters
 
 from flask import Blueprint, request, jsonify
@@ -23,7 +23,7 @@ sample = [
 
 @search_bp.route("/", methods=["GET"])
 def search():
-    # results = search_faculty(**request.args)
+    # results = search_faculty_service(**request.args)
 
     # For pre-db connection testing
     return jsonify(sample)

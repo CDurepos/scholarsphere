@@ -59,7 +59,6 @@ export const searchFaculty = async (params = {}) => {
   if (params.department) queryParams.append('department', params.department);
   if (params.institution) queryParams.append('institution', params.institution);
   
-  // Backend search endpoint is at /search/ (no /api prefix)
   const response = await fetch(`${API_BASE_URL}/search?${queryParams.toString()}`, {
     method: 'GET',
     headers: {

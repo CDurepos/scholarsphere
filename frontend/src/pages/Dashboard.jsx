@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TopBar from '../components/TopBar';
 import './Dashboard.css';
 
 /**
@@ -28,27 +29,13 @@ function Dashboard() {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('faculty');
-    localStorage.removeItem('faculty_id');
-    navigate('/');
-  };
-
   if (!faculty) {
     return <div className="dashboard-loading">Loading...</div>;
   }
 
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>ScholarSphere</h1>
-        <div className="dashboard-user-info">
-          <span>Welcome, {faculty.first_name} {faculty.last_name}</span>
-          <button onClick={handleLogout} className="logout-button">
-            Logout
-          </button>
-        </div>
-      </header>
+      <TopBar />
 
       <main className="dashboard-main">
         <div className="dashboard-welcome">
