@@ -1,8 +1,8 @@
 """
 Institution-related API endpoints
-v11.25.2025
 """
 
+from backend.app.db.connection import get_connection
 from flask import Blueprint, request, jsonify
 
 
@@ -53,6 +53,23 @@ sample = [
 
 
 @institution_bp.route("/", methods=["GET"])
+@institution_bp.route("", methods=["GET"])
 def institution():
-    # For pre-db connection testing
-    return jsonify(sample)
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT institution_id, name FROM institution ORDER BY name")
+        institutions = cursor.fetchall()
+        return jsonify(institutions)
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error fetching institutions: {error_details}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
