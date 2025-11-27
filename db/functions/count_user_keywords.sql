@@ -1,9 +1,11 @@
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS count_user_keywords;
 CREATE FUNCTION count_user_keywords(
-    IN p_faculty_id CHAR(36)
+    p_faculty_id CHAR(36)
 )
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_total INT;
 

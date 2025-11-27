@@ -1,7 +1,9 @@
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS get_publication_year;
 CREATE FUNCTION get_publication_year(p_publication_id CHAR(36))
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_year INT;
 

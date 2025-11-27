@@ -1,11 +1,12 @@
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS publication_has_keyword;
 CREATE FUNCTION publication_has_keyword(
-    IN p_publication_id CHAR(36),
-    IN p_name VARCHAR(64)
+    p_publication_id CHAR(36),
+    p_name VARCHAR(64)
 )
 RETURNS BOOLEAN
-DETERMINISTIC
+READS SQL DATA
 BEGIN
     RETURN EXISTS (
         SELECT 1

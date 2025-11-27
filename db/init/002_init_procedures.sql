@@ -118,10 +118,10 @@ DELIMITER $$
 /**
  * Creates a new faculty member record in the database.
  * 
- * Inserts a new faculty record with the provided information. Automatically
- * generates a new UUID for the faculty_id. Only first_name is required;
- * all other fields are optional.
+ * Inserts a new faculty record with the provided information.
+ * Only first_name & faculty_id are required; all other fields are optional.
  * 
+ * @param p_faculty_id          Required UUID for the faculty member
  * @param p_first_name          Required first name of the faculty member
  * @param p_last_name           Optional last name
  * @param p_biography           Optional biography text (max 2048 chars)
@@ -135,7 +135,9 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if first_name is NULL
  */
+DROP PROCEDURE IF EXISTS create_faculty;
 CREATE PROCEDURE create_faculty (
+    IN p_faculty_id          CHAR(36),
     IN p_first_name          VARCHAR(128),
     IN p_last_name           VARCHAR(128),
     IN p_biography           VARCHAR(2048),
@@ -145,18 +147,18 @@ CREATE PROCEDURE create_faculty (
     IN p_scraped_from        VARCHAR(255)
 )
 BEGIN
-    -- Variable to hold the generated UUID for the new faculty member
-    DECLARE new_id CHAR(36);
+
+    -- Validate that faculty_id is provided (required field)
+    IF p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required when creating a faculty record';
+    END IF;
 
     -- Validate that first_name is provided (required field)
     IF p_first_name IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'first_name is required when creating a faculty record';
     END IF;
-
-    -- Generate a new UUID for this faculty member
-    -- UUID() creates a unique 36-character identifier
-    SET new_id = UUID();
 
     -- Insert the new faculty record with all provided information
     -- NULL values are allowed for optional fields (last_name, biography, etc.)
@@ -171,7 +173,7 @@ BEGIN
         scraped_from
     )
     VALUES (
-        new_id,
+        p_faculty_id,
         p_first_name,
         p_last_name,
         p_biography,
@@ -181,8 +183,8 @@ BEGIN
         p_scraped_from
     );
 
-    -- Return the generated ID so the caller knows the new faculty member's identifier
-    SELECT new_id AS faculty_id;
+    -- Return the faculty_id so the caller knows the new faculty member's identifier
+    SELECT p_faculty_id AS faculty_id;
 END $$
 
 DELIMITER ;
@@ -677,9 +679,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: create/create_keyword.sql
 
 DELIMITER $$
@@ -737,12 +736,13 @@ CREATE PROCEDURE create_publication(
     IN p_year INT,
     IN p_doi VARCHAR(64),
     IN p_abstract TEXT,
+    IN p_citation_count INT,
     OUT p_generated_id CHAR(36)
 )
 BEGIN
     SET p_generated_id = UUID();
     INSERT INTO publication (publication_id, title, publisher, year, doi, abstract, citation_count)
-    VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, 0);
+    VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, p_citation_count);
 END $$
 DELIMITER ;
 
@@ -2909,11 +2909,13 @@ DELIMITER $$
  */
 CREATE PROCEDURE add_publication_for_faculty (
     IN p_faculty_id CHAR(36),
+    IN p_publication_id CHAR(36),
     IN p_title VARCHAR(64),
     IN p_publisher VARCHAR(255),
     IN p_year INT,
     IN p_doi VARCHAR(64),
-    IN p_abstract TEXT
+    IN p_abstract TEXT,
+    IN p_citation_count INT
 )
 BEGIN
     -- Variable to store the generated publication ID
@@ -2921,15 +2923,12 @@ BEGIN
     DECLARE v_generated_id CHAR(36);
 
     -- Validate input: faculty_id must be provided
-    IF p_faculty_id IS NULL THEN
+    IF p_faculty_id IS NULL OR p_publication_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'faculty_id is required.';
+            SET MESSAGE_TEXT = 'faculty_id and publication_id are required.';
     END IF;
 
-    -- Step 1: Generate a UUID for the new publication
-    SET v_publication_id = UUID();
-
-    -- Step 2: Create the publication record
+    -- Step 1: Create the publication record
     CALL create_publication(
         v_publication_id,
         p_title,
@@ -2937,17 +2936,18 @@ BEGIN
         p_year,
         p_doi,
         p_abstract,
+        p_citation_count,
         v_generated_id
     );
 
-    -- Step 3: Link the publication to the faculty member
+    -- Step 2: Link the publication to the faculty member
     -- This creates the many-to-many relationship in the join table
     CALL create_publication_authored_by_faculty(
         p_faculty_id,
         v_publication_id
     );
 
-    -- Step 4: Return confirmation with both IDs for reference
+    -- Step 3: Return confirmation with both IDs for reference
     SELECT v_publication_id AS publication_id,
            p_faculty_id AS faculty_id,
            'inserted' AS action;
@@ -3124,9 +3124,7 @@ BEGIN
         match_score = VALUES(match_score),
         created_at = VALUES(created_at);
 
-END $$
 
-DELIMITER ;
 
 -- Source: workflow/recommend_faculty_by_institution.sql
 

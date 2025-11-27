@@ -1,9 +1,11 @@
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS count_keywords_publication;
 CREATE FUNCTION count_keywords_publication(
-    IN p_publication_id CHAR(36)
+    p_publication_id CHAR(36)
 )
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_total INT;
 

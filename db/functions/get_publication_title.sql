@@ -1,7 +1,9 @@
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS get_publication_title;
 CREATE FUNCTION get_publication_title(p_publication_id CHAR(36))
 RETURNS VARCHAR(64)
+READS SQL DATA
 BEGIN
     DECLARE v_title VARCHAR(64);
 

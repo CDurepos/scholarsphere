@@ -1,11 +1,12 @@
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS user_has_keyword;
 CREATE FUNCTION user_has_keyword(
-    IN p_faculty_id CHAR(36),
-    IN p_name VARCHAR(64)
+    p_faculty_id CHAR(36),
+    p_name VARCHAR(64)
 )
 RETURNS BOOLEAN
-DETERMINISTIC
+READS SQL DATA
 BEGIN
     RETURN EXISTS (
         SELECT 1

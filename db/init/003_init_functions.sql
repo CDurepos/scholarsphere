@@ -6,8 +6,10 @@
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS count_keywords;
 CREATE FUNCTION count_keywords()
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_total INT;
 
@@ -24,10 +26,12 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS count_keywords_publication;
 CREATE FUNCTION count_keywords_publication(
-    IN p_publication_id CHAR(36)
+    p_publication_id CHAR(36)
 )
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_total INT;
 
@@ -45,10 +49,12 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS count_user_keywords;
 CREATE FUNCTION count_user_keywords(
-    IN p_faculty_id CHAR(36)
+    p_faculty_id CHAR(36)
 )
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_total INT;
 
@@ -66,8 +72,10 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS get_DOI;
 CREATE FUNCTION get_DOI(p_id CHAR(36))
 RETURNS VARCHAR(64)
+READS SQL DATA
 BEGIN
     DECLARE v_pub_doi VARCHAR(64);
     SELECT doi INTO v_pub_doi
@@ -82,8 +90,10 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS get_citation_count;
 CREATE FUNCTION get_citation_count(p_publication_id CHAR(36))
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_count INT;
 
@@ -101,8 +111,10 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS get_publication_title;
 CREATE FUNCTION get_publication_title(p_publication_id CHAR(36))
 RETURNS VARCHAR(64)
+READS SQL DATA
 BEGIN
     DECLARE v_title VARCHAR(64);
 
@@ -120,8 +132,10 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS get_publication_year;
 CREATE FUNCTION get_publication_year(p_publication_id CHAR(36))
 RETURNS INT
+READS SQL DATA
 BEGIN
     DECLARE v_year INT;
 
@@ -144,18 +158,22 @@ CREATE FUNCTION grant_status(
     p_start_date  DATE,
     p_end_date    DATE
 ) RETURNS VARCHAR(16)
+READS SQL DATA
 BEGIN
     IF p_start_date > CURDATE() THEN
-        RETURN `UPCOMING`;
+        RETURN 'UPCOMING';
     END IF;
 
-    IF p_start_date <= CURDATE() and p_end_date >= CURDATE() THEN
-        RETURN `ACTIVE`;
+    IF p_start_date <= CURDATE() AND p_end_date >= CURDATE() THEN
+        RETURN 'ACTIVE';
     END IF;
 
     IF p_end_date < CURDATE() THEN
-        RETURN `EXPIRED`;
+        RETURN 'EXPIRED';
     END IF;
+    
+    -- Default case (should not happen, but handle NULL dates)
+    RETURN NULL;
 END $$
 DELIMITER ;
 
@@ -165,10 +183,11 @@ DELIMITER ;
 DELIMITER $$
 
 DROP FUNCTION IF EXISTS hash_password;
-CREATE FUNCTION fn_hash_password(
+CREATE FUNCTION hash_password(
     p_plain_text     VARCHAR(255),
     p_salt          VARCHAR(255)
 ) RETURNS CHAR(64)
+DETERMINISTIC
 BEGIN
     -- Hex-encoded SHA-256 = 64 characters
     RETURN SHA2(CONCAT(p_plain_text, p_salt), 256);
@@ -187,8 +206,9 @@ CREATE FUNCTION is_grant_active(
     p_start_date DATE,
     p_end_date   DATE
 ) RETURNS BOOLEAN
+READS SQL DATA
 BEGIN
-    RETURN grant_status(p_start_date, p_end_date) = `ACTIVE`;
+    RETURN grant_status(p_start_date, p_end_date) = 'ACTIVE';
 END $$
 DELIMITER ;
 
@@ -197,8 +217,10 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS keyword_exists;
 CREATE FUNCTION keyword_exists(p_name VARCHAR(64))
 RETURNS BOOLEAN
+READS SQL DATA
 BEGIN
     RETURN EXISTS (
         SELECT 1
@@ -214,12 +236,13 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS publication_has_keyword;
 CREATE FUNCTION publication_has_keyword(
-    IN p_publication_id CHAR(36),
-    IN p_name VARCHAR(64)
+    p_publication_id CHAR(36),
+    p_name VARCHAR(64)
 )
 RETURNS BOOLEAN
-DETERMINISTIC
+READS SQL DATA
 BEGIN
     RETURN EXISTS (
         SELECT 1
@@ -236,12 +259,13 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP FUNCTION IF EXISTS user_has_keyword;
 CREATE FUNCTION user_has_keyword(
-    IN p_faculty_id CHAR(36),
-    IN p_name VARCHAR(64)
+    p_faculty_id CHAR(36),
+    p_name VARCHAR(64)
 )
 RETURNS BOOLEAN
-DETERMINISTIC
+READS SQL DATA
 BEGIN
     RETURN EXISTS (
         SELECT 1
