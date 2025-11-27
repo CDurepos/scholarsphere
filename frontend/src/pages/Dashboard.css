@@ -82,4 +82,57 @@
   color: var(--color-muted);
 }
 
+.dashboard-success-message {
+  background: linear-gradient(135deg, #0b264f 0%, #1a4a7a 100%);
+  color: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(11, 38, 79, 0.3);
+  animation: slideDown 0.3s ease-out;
+}
+
+.dashboard-success-message p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.close-message-button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 1rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  line-height: 1;
+}
+
+.close-message-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 

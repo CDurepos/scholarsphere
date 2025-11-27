@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { checkFacultyExists, saveFaculty, registerCredentials } from '../services/api';
+import { checkFacultyExists, saveFaculty, registerCredentials, login, checkCredentialsExist } from '../services/api';
 import ConnectionParticles from '../components/ConnectionParticles';
 import { BasicInfoForm, ConfirmationStep, CredentialsForm } from '../features/signup/SignupSteps';
 import './Signup.css';
@@ -82,6 +82,7 @@ function Signup() {
     faculty_id: null,
     exists: false,
     doPrefill: false, // Whether to prefill the form
+    matchType: null, // 'perfect' or 'name_only', or null
     emails: [],
     phones: [],
     departments: [],
@@ -93,6 +94,7 @@ function Signup() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasExistingCredentials, setHasExistingCredentials] = useState(false);
 
   // Load faculty_id from localStorage on mount
   useEffect(() => {
@@ -103,9 +105,7 @@ function Signup() {
         faculty_id: storedFacultyId,
         exists: true, // If we have a stored ID, they exist
       }));
-      // If we have a faculty_id, we should be on step 3 (credentials)
-      // But let's be safe and check if they're in the middle of signup
-      // For now, we'll start from step 1 if they refresh
+      // If user refreshes, they will start from step 1
     }
     
     const fetchInstitutions = async () => {
@@ -147,6 +147,7 @@ function Signup() {
           institution_name: data.institution_name,
           faculty_id: facultyId,
           exists: true,
+          matchType: response.matchType || 'perfect', // Track match type
           doPrefill: false, // Will be set to true if user confirms
           emails: response.faculty.emails || [],
           phones: response.faculty.phones || [],
@@ -181,12 +182,32 @@ function Signup() {
   };
 
   // Handle confirmation step - user clicked "Yes, this is me"
-  const handleConfirmationYes = () => {
-    setSignupData({
-      ...signupData,
-      doPrefill: true, // Prefill the form with existing data
-    });
-    setShowConfirmation(false); // Hide confirmation, show form
+  const handleConfirmationYes = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Check if credentials already exist for this faculty_id
+      const credentialsCheck = await checkCredentialsExist(signupData.faculty_id);
+      
+      if (credentialsCheck.has_credentials) {
+        // Credentials already exist - show message and allow redirect to login
+        setHasExistingCredentials(true);
+        setLoading(false);
+        return;
+      }
+      
+      // No credentials exist - continue with normal flow
+      setSignupData({
+        ...signupData,
+        doPrefill: true, // Prefill the form with existing data
+      });
+      setShowConfirmation(false); // Hide confirmation, show form
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to check credentials. Please try again.');
+      setLoading(false);
+    }
   };
 
   // Handle confirmation step - user clicked "No, this is not me"
@@ -275,9 +296,34 @@ function Signup() {
         return;
       }
 
-      // Registration successful - clear signup data and redirect
-      clearSignupData();
-      navigate('/login', { state: { message: 'Registration successful! Please login.' } });
+      // Registration successful - automatically log the user in
+      try {
+        const loginResponse = await login({
+          username: credentials.username,
+          password: credentials.password,
+        });
+
+        if (loginResponse.error) {
+          // If auto-login fails, redirect to login page with message
+          clearSignupData();
+          navigate('/login', { state: { message: 'Registration successful! Please login with your new credentials.' } });
+          return;
+        }
+
+        // Auto-login successful - store faculty data and redirect to dashboard
+        localStorage.setItem('faculty', JSON.stringify(loginResponse.faculty));
+        localStorage.setItem('faculty_id', loginResponse.faculty?.faculty_id);
+        
+        // Clear signup data
+        clearSignupData();
+        
+        // Redirect to dashboard with welcome message
+        navigate('/dashboard', { state: { welcomeMessage: 'Welcome to ScholarSphere! Your account has been created successfully.' } });
+      } catch (loginErr) {
+        // If auto-login fails, redirect to login page
+        clearSignupData();
+        navigate('/login', { state: { message: 'Registration successful! Please login with your new credentials.' } });
+      }
     } catch (err) {
       setError('Failed to register credentials. Please try again.');
       setLoading(false);
@@ -314,17 +360,49 @@ function Signup() {
         )}
 
         {step === 2 && (
-          <ConfirmationStep
-            initialData={signupData}
-            onSubmit={handleFormSubmit}
-            loading={loading}
-            institutions={institutions}
-            showConfirmation={showConfirmation}
-            onConfirm={handleConfirmationYes}
-            onDeny={handleConfirmationNo}
-            doPrefill={signupData.doPrefill}
-            isExisting={signupData.exists}
-          />
+          <>
+            {hasExistingCredentials ? (
+              <div className="signup-step">
+                <h2 className="step-title">Account Already Exists</h2>
+                <p className="step-description">
+                  It looks like you already have an account with ScholarSphere. 
+                  Please log in with your existing credentials.
+                </p>
+                <div className="confirmation-buttons">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="step-button step-button-primary"
+                  >
+                    Go to Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasExistingCredentials(false);
+                      setShowConfirmation(true);
+                    }}
+                    className="step-button step-button-secondary"
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <ConfirmationStep
+                initialData={signupData}
+                onSubmit={handleFormSubmit}
+                loading={loading}
+                institutions={institutions}
+                showConfirmation={showConfirmation}
+                onConfirm={handleConfirmationYes}
+                onDeny={handleConfirmationNo}
+                doPrefill={signupData.doPrefill}
+                isExisting={signupData.exists}
+                matchType={signupData.matchType}
+              />
+            )}
+          </>
         )}
 
         {step === 3 && (

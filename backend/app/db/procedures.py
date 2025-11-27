@@ -12,11 +12,10 @@ def sql_search(**filters: dict[str, str]):
     Returns:
         list: A list of dictionaries, each containing the faculty information.
     """
-    # TODO: Shouldn't get a connection for each call to the procedure. Use connection pooling.
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.callproc("search_faculty", list(filters.values()))
-    result = cursor.stored_results().pop().fetchall()
+    result = list(cursor.stored_results())[0].fetchall()
     cursor.close()
     conn.close()
     return result
@@ -58,12 +57,4 @@ def sql_get_recommendations(**filters: dict[str, str]):
     Returns:
         list: A list of dictionaries, each containing the recommended faculty information.
     """
-    # TODO: Shouldn't get a connection for each call to the procedure. Use connection pooling.
-    # conn = get_connection()
-    # cursor = conn.cursor(dictionary=True)
-    # cursor.callproc("TODO: create 'read_recommendations' procedure and call it here", list(filters.values()))
-    # result = cursor.stored_results().pop().fetchall()
-    # cursor.close()
-    # conn.close()
-    # return result
     return []

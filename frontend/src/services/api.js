@@ -1,11 +1,10 @@
 /**
  * API Service for ScholarSphere
  * 
- * This file contains placeholder API endpoints for authentication and faculty operations.
- * Replace the base URL with your actual backend API endpoint when ready.
+ * This file contains API service functions for authentication and faculty operations.
  */
 
-const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Backend API URL
+const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 /**
  * Get institution list from the DB
@@ -69,9 +68,48 @@ export const searchFaculty = async (params = {}) => {
 };
 
 /**
+ * Get complete faculty data by faculty_id
+ * 
+ * @param {string} faculty_id - UUID of the faculty member
+ * 
+ * @returns {Promise<Object>} Complete faculty data including emails, phones, departments, titles
+ * 
+ * Example response:
+ * {
+ *   "faculty_id": "uuid",
+ *   "first_name": "John",
+ *   "last_name": "Doe",
+ *   "emails": ["john@example.com"],
+ *   "phones": ["123-456-7890"],
+ *   "departments": ["Computer Science"],
+ *   "titles": ["Professor"],
+ *   "biography": "...",
+ *   "institution_name": "University of Southern Maine",
+ *   ...
+ * }
+ */
+export const getFacultyById = async (faculty_id) => {
+  const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch faculty data');
+  }
+  
+  return response.json();
+};
+
+/**
  * Check if a faculty member exists in the database by name and institution
- * Uses the search endpoint to find matches, prioritizing exact matches first,
- * then falling back to name-only matches
+ * Checks for perfect matches (first_name + last_name + institution_name) first,
+ * then falls back to name-only matches (first_name + last_name, different institution).
+ * After finding a match, fetches complete faculty data including emails, phones, 
+ * departments, and titles.
  * 
  * @param {Object} data - Request body
  * @param {string} data.first_name - Faculty member's first name
@@ -80,90 +118,88 @@ export const searchFaculty = async (params = {}) => {
  * 
  * @returns {Promise<Object>} Response object
  * @returns {boolean} exists - Whether the faculty member exists
- * @returns {Object|null} faculty - Faculty data if exists, null otherwise
- * 
- * Note: The search endpoint returns basic info (faculty_id, first_name, last_name, 
- * department_name, institution_name). Multi-valued fields (emails, phones, etc.)
- * are initialized as empty arrays and will need to be fetched separately if needed.
+ * @returns {Object|null} faculty - Complete faculty data if exists, null otherwise
+ * @returns {string|null} matchType - 'perfect' or 'name_only' if match found, null otherwise
  */
 export const checkFacultyExists = async (data) => {
-  // First, try to find exact match (first_name, last_name, institution_name)
+  const normalize = (str) => str?.toLowerCase().trim() || '';
+  const searchFirst = normalize(data.first_name);
+  const searchLast = normalize(data.last_name);
+  const searchInstitution = normalize(data.institution_name);
+  
+  // Helper function to fetch complete faculty data
+  const fetchCompleteFacultyData = async (match, matchType) => {
+    try {
+      const completeFacultyData = await getFacultyById(match.faculty_id);
+      return {
+        exists: true,
+        faculty: completeFacultyData,
+        matchType: matchType, // 'perfect' or 'name_only'
+      };
+    } catch (err) {
+      console.error('Error fetching complete faculty data:', err);
+      // Fallback to basic data if fetch fails
+      return {
+        exists: true,
+        faculty: {
+          faculty_id: match.faculty_id,
+          first_name: match.first_name,
+          last_name: match.last_name,
+          institution_name: match.institution_name || data.institution_name,
+          emails: [],
+          phones: [],
+          departments: match.department_name ? [match.department_name] : [],
+          titles: [],
+          biography: '',
+          orcid: '',
+          google_scholar_url: '',
+          research_gate_url: '',
+        },
+        matchType: matchType,
+      };
+    }
+  };
+  
+  // PRIORITY 1: Perfect match (first_name + last_name + institution_name)
   const searchResultsWithInstitution = await searchFaculty({
     first_name: data.first_name,
     last_name: data.last_name,
     institution: data.institution_name,
   });
   
-  // Check for exact match (case-insensitive)
-  const exactMatch = searchResultsWithInstitution.find(
+  const perfectMatch = searchResultsWithInstitution.find(
     (faculty) =>
-      faculty.first_name?.toLowerCase() === data.first_name.toLowerCase() &&
-      faculty.last_name?.toLowerCase() === data.last_name.toLowerCase() &&
-      faculty.institution_name?.toLowerCase() === data.institution_name.toLowerCase()
+      normalize(faculty.first_name) === searchFirst &&
+      normalize(faculty.last_name) === searchLast &&
+      normalize(faculty.institution_name) === searchInstitution
   );
   
-  if (exactMatch) {
-    // Return exact match with structure expected by signup flow
-    return {
-      exists: true,
-      faculty: {
-        faculty_id: exactMatch.faculty_id,
-        first_name: exactMatch.first_name,
-        last_name: exactMatch.last_name,
-        institution_name: exactMatch.institution_name,
-        // Search endpoint doesn't return these, so initialize as empty
-        // These would need to be fetched from a full faculty details endpoint
-        emails: [],
-        phones: [],
-        departments: exactMatch.department_name ? [exactMatch.department_name] : [],
-        titles: [],
-        biography: '',
-        orcid: '',
-        google_scholar_url: '',
-        research_gate_url: '',
-      },
-    };
+  if (perfectMatch) {
+    return await fetchCompleteFacultyData(perfectMatch, 'perfect');
   }
   
-  // Fallback: search by first_name and last_name only (no institution filter)
+  // PRIORITY 2: Name match (first_name + last_name, wrong institution)
   const searchResultsByNameOnly = await searchFaculty({
     first_name: data.first_name,
     last_name: data.last_name,
   });
   
-  // Find match by name only (case-insensitive)
   const nameMatch = searchResultsByNameOnly.find(
     (faculty) =>
-      faculty.first_name?.toLowerCase() === data.first_name.toLowerCase() &&
-      faculty.last_name?.toLowerCase() === data.last_name.toLowerCase()
+      normalize(faculty.first_name) === searchFirst &&
+      normalize(faculty.last_name) === searchLast &&
+      normalize(faculty.institution_name) !== searchInstitution // Different institution
   );
   
   if (nameMatch) {
-    // Return name-only match
-    return {
-      exists: true,
-      faculty: {
-        faculty_id: nameMatch.faculty_id,
-        first_name: nameMatch.first_name,
-        last_name: nameMatch.last_name,
-        institution_name: nameMatch.institution_name || data.institution_name,
-        // Search endpoint doesn't return these, so initialize as empty
-        emails: [],
-        phones: [],
-        departments: nameMatch.department_name ? [nameMatch.department_name] : [],
-        titles: [],
-        biography: '',
-        orcid: '',
-        google_scholar_url: '',
-        research_gate_url: '',
-      },
-    };
+    return await fetchCompleteFacultyData(nameMatch, 'name_only');
   }
   
   // No match found
   return {
     exists: false,
     faculty: null,
+    matchType: null,
   };
 };
 
@@ -413,4 +449,35 @@ export const checkUsernameAvailable = async (username) => {
   }
   
   return result;
+};
+
+/**
+ * Check if credentials already exist for a faculty_id
+ * 
+ * @param {string} faculty_id - UUID of the faculty member
+ * 
+ * @returns {Promise<Object>} Response object
+ * @returns {boolean} has_credentials - Whether credentials exist for this faculty_id
+ * @returns {string} faculty_id - The faculty_id that was checked
+ * 
+ * Example response:
+ * {
+ *   "faculty_id": "uuid",
+ *   "has_credentials": true
+ * }
+ */
+export const checkCredentialsExist = async (faculty_id) => {
+  const response = await fetch(`${API_BASE_URL}/auth/check-credentials/${faculty_id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to check credentials');
+  }
+  
+  return response.json();
 };

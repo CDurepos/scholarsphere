@@ -39,7 +39,7 @@ def register_credentials(data: dict):
             ),
         )
         
-        # register_credentials doesn't return a result set, but consume anyways to clear cursor
+        # Consume any result set to clear cursor
         try:
             stored_results = list(cursor.stored_results())
             if stored_results:
@@ -56,7 +56,6 @@ def register_credentials(data: dict):
     except Exception as e:
         if conn:
             conn.rollback()
-        # Log the full error for debugging
         import traceback
         error_trace = traceback.format_exc()
         print(f"Error in register_credentials service: {error_trace}")
@@ -102,12 +101,12 @@ def validate_login(data: dict):
             (
                 username,
                 password,
-                '',  # OUT p_faculty_id (placeholder - will be filled by procedure)
-                0,   # OUT p_status_code (placeholder - will be filled by procedure)
+                '',  # OUT p_faculty_id (filled by procedure)
+                0,   # OUT p_status_code (filled by procedure)
             ),
         )
         
-        # Consume any result sets first (procedure doesn't return result sets, but be safe)
+        # Consume any result sets first
         try:
             stored_results = list(cursor.stored_results())
             for result in stored_results:
@@ -239,6 +238,48 @@ def check_username_available(username: str):
         return {
             "username": username,
             "available": False
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+def check_credentials_exist(faculty_id: str):
+    """
+    Check if credentials already exist for a faculty_id.
+    
+    Args:
+        faculty_id: UUID of the faculty member to check
+    
+    Returns:
+        dict: Contains "has_credentials" (bool) and "faculty_id" (str)
+    """
+    conn = None
+    cursor = None
+    
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Check if credentials exist for this faculty_id
+        cursor.execute(
+            "SELECT faculty_id FROM credentials WHERE faculty_id = %s",
+            (faculty_id,)
+        )
+        result = cursor.fetchone()
+        
+        return {
+            "faculty_id": faculty_id,
+            "has_credentials": result is not None
+        }
+        
+    except Exception as e:
+        # On error, assume credentials exist to be safe
+        return {
+            "faculty_id": faculty_id,
+            "has_credentials": True
         }
     finally:
         if cursor:

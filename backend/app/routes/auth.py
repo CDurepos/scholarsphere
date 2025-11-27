@@ -6,6 +6,7 @@ from backend.app.services.auth import (
     register_credentials as register_credentials_service,
     check_username_available,
     validate_login,
+    check_credentials_exist,
 )
 
 from flask import Blueprint, request, jsonify
@@ -75,8 +76,7 @@ def login():
     }
     
     Returns:
-        JSON response with faculty_id, faculty data, and token (placeholder)
-        or error message
+        JSON response with faculty_id and faculty data, or error message
     """
     try:
         data = request.get_json()
@@ -139,4 +139,26 @@ def check_username():
         import traceback
         error_details = traceback.format_exc()
         print(f"Error checking username: {error_details}")
+        return jsonify({"error": str(e)}), 500
+
+
+@auth_bp.route("/check-credentials/<string:faculty_id>", methods=["GET"])
+def check_credentials(faculty_id):
+    """
+    Check if credentials already exist for a faculty_id.
+    
+    Returns:
+        JSON response with has_credentials (bool) and faculty_id
+    """
+    try:
+        if not faculty_id:
+            return jsonify({"error": "faculty_id is required"}), 400
+        
+        result = check_credentials_exist(faculty_id)
+        return jsonify(result), 200
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error checking credentials: {error_details}")
         return jsonify({"error": str(e)}), 500
