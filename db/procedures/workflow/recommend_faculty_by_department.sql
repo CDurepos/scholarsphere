@@ -52,6 +52,3 @@ BEGIN
 END $$
 
 DELIMITER ;
-
-
-DELIMITER ;

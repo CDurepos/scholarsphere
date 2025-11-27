@@ -4,6 +4,8 @@
 
 -- Source: count_keyword.sql
 
+USE scholarsphere;
+
 DELIMITER $$
 
 DROP FUNCTION IF EXISTS count_keywords;

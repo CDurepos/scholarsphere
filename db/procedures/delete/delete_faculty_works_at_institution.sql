@@ -45,6 +45,3 @@ BEGIN
 END $$
 
 DELIMITER ;
-
-
-DELIMITER ;

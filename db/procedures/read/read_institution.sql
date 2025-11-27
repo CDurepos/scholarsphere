@@ -32,6 +32,3 @@ BEGIN
 END $$
 
 DELIMITER ;
-
-
-DELIMITER ;

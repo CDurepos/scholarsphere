@@ -342,9 +342,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: create/create_faculty_phone.sql
 
 DELIMITER $$
@@ -872,9 +869,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: read/read_faculty.sql
 
 DELIMITER $$
@@ -1023,9 +1017,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: read/read_faculty_grants.sql
 
 DELIMITER $$
@@ -1109,9 +1100,6 @@ BEGIN
       AND (p_institution_id IS NULL OR fwi.institution_id = p_institution_id)
     ORDER BY fwi.faculty_id, fwi.institution_id, fwi.start_date DESC;
 END $$
-
-DELIMITER ;
-
 
 DELIMITER ;
 
@@ -1329,9 +1317,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: read/read_institution_faculty.sql
 
 DELIMITER $$
@@ -1378,9 +1363,6 @@ BEGIN
     WHERE fwi.institution_id = p_institution_id
     ORDER BY f.last_name, f.first_name;
 END $$
-
-DELIMITER ;
-
 
 DELIMITER ;
 
@@ -1542,9 +1524,6 @@ BEGIN
 
     SELECT p_equipment_id AS equipment_id, 'updated' AS action;
 END $$
-
-DELIMITER ;
-
 
 DELIMITER ;
 
@@ -1922,9 +1901,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: update/update_grants.sql
 
 DELIMITER $$
@@ -2080,9 +2056,6 @@ BEGIN
 
     SELECT p_institution_id AS institution_id, 'updated' AS action;
 END $$
-
-DELIMITER ;
-
 
 DELIMITER ;
 
@@ -2318,9 +2291,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: delete/delete_faculty.sql
 
 DELIMITER $$
@@ -2494,9 +2464,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: delete/delete_faculty_phone.sql
 
 DELIMITER $$
@@ -2662,9 +2629,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: delete/delete_grants.sql
 
 DELIMITER $$
@@ -2732,9 +2696,6 @@ BEGIN
 
     SELECT p_institution_id AS institution_id, 'deleted' AS action;
 END $$
-
-DELIMITER ;
-
 
 DELIMITER ;
 
@@ -3014,9 +2975,6 @@ END $$
 DELIMITER ;
 
 
-DELIMITER ;
-
-
 -- Source: workflow/recommend_faculty_by_grant_keyword.sql
 
 DELIMITER $$
@@ -3070,9 +3028,6 @@ BEGIN
         created_at = VALUES(created_at);
 
 END $$
-
-DELIMITER ;
-
 
 DELIMITER ;
 
