@@ -76,7 +76,7 @@ function Dashboard() {
           <div className="dashboard-card">
             <h3>Quick Actions</h3>
             <div className="quick-actions">
-              <button className="action-button">Browse Faculty</button>
+              <button className="action-button" onClick={() => navigate('/search')}>Browse Faculty</button>
               <button className="action-button">View Recommendations</button>
               <button className="action-button">Edit Profile</button>
             </div>

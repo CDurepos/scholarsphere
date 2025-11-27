@@ -1,0 +1,50 @@
+.topbar {
+  background: var(--color-surface);
+  padding: 1.5rem 2rem;
+  box-shadow: 0 6px 20px rgba(11, 38, 79, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 4px solid var(--color-accent);
+}
+
+.topbar-home {
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.topbar-home h1 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  transition: color 0.2s ease;
+}
+
+.topbar-home:hover h1 {
+  color: var(--color-accent);
+}
+
+.topbar-profile {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.topbar-profile:hover {
+  transform: scale(1.1);
+}
+
+.topbar-profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-border);
+  transition: border-color 0.2s ease;
+}
+
+.topbar-profile:hover .topbar-profile-icon {
+  border-color: var(--color-accent);
+}
+
