@@ -50,13 +50,13 @@ Once this operation finishes... Congrats! You've got the ScholarSphere Database 
 
 ### Backend
 * Aidan: RESTful API Endpoints & Logic, Bash setup scripts
-* ____: DB Connection, Helper functions
+* Owen: DB Connection, Helper functions
 
 ### Advanced DB Features
 * Aidan: Database indexing & query optimization
 * ____: Transaction management / ACID compliance
 * Clayton: Database security & authentication
-* ____: Backup & recovery procedures
+* Owen: Backup & recovery procedures
 
 # COS457 Phase 2 Task Distribution
 
