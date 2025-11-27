@@ -25,8 +25,8 @@ function Search() {
     setError('');
 
     try {
-      // For now, pass the query string as a simple search parameter
-      // The backend will handle parsing it appropriately
+      // Pass the query string as a search parameter
+      // The backend handles parsing it appropriately
       const response = await searchFaculty({ query: searchQuery.trim() });
       
       // Limit results to MAX_RESULTS

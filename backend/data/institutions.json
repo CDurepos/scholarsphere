@@ -1,0 +1,182 @@
+[
+  {
+    "name": "Bates College",
+    "street_addr": "2 Andrews Rd",
+    "city": "Lewiston",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04240",
+    "website_url": "https://www.bates.edu/",
+    "type": "Private University"
+  },
+  {
+    "name": "Bowdoin College",
+    "street_addr": "255 Maine St",
+    "city": "Brunswick",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04011",
+    "website_url": "https://www.bowdoin.edu/",
+    "type": "Private University"
+  },
+  {
+    "name": "Central Maine Community College",
+    "street_addr": "1250 Turner St",
+    "city": "Auburn",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04210",
+    "website_url": "https://www.cmcc.edu/",
+    "type": "Community College"
+  },
+  {
+    "name": "Colby College",
+    "street_addr": "4000 Mayflower Hill Dr",
+    "city": "Waterville",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04901",
+    "website_url": "https://www.colby.edu/",
+    "type": "Private University"
+  },
+  {
+    "name": "Eastern Maine Community College",
+    "street_addr": "354 Hogan Rd",
+    "city": "Bangor",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04401",
+    "website_url": "https://www.emcc.edu/",
+    "type": "Community College"
+  },
+  {
+    "name": "Kennebec Valley Community College",
+    "street_addr": "92 Western Ave",
+    "city": "Fairfield",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04937",
+    "website_url": "https://www.kvcc.me.edu/",
+    "type": "Community College"
+  },
+  {
+    "name": "Maine Maritime Academy",
+    "street_addr": "1 Pleasant St",
+    "city": "Castine",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04420",
+    "website_url": "https://mainemaritime.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "Northern Maine Community College",
+    "street_addr": "33 Edgemont Dr",
+    "city": "Presque Isle",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04769",
+    "website_url": "https://www.nmcc.edu/",
+    "type": "Community College"
+  },
+  {
+    "name": "Southern Maine Community College",
+    "street_addr": "2 Fort Rd",
+    "city": "South Portland",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04106",
+    "website_url": "https://www.smccme.edu/",
+    "type": "Community College"
+  },
+  {
+    "name": "University of Maine",
+    "street_addr": "168 College Ave",
+    "city": "Orono",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04469",
+    "website_url": "https://umaine.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "University of Maine at Augusta",
+    "street_addr": "46 University Dr",
+    "city": "Augusta",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04330",
+    "website_url": "https://www.uma.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "University of Maine at Farmington",
+    "street_addr": "111 South St",
+    "city": "Farmington",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04938",
+    "website_url": "https://www.umf.maine.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "University of Maine at Fort Kent",
+    "street_addr": "23 University Dr",
+    "city": "Fort Kent",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04743",
+    "website_url": "https://www.umfk.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "University of Maine at Machias",
+    "street_addr": "116 O'Brien Ave",
+    "city": "Machias",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04654",
+    "website_url": "https://www.umm.maine.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "University of Maine at Presque Isle",
+    "street_addr": "181 Main St",
+    "city": "Presque Isle",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04769",
+    "website_url": "https://www.umpi.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "University of Southern Maine",
+    "street_addr": "96 Falmouth St",
+    "city": "Portland",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04103",
+    "website_url": "https://usm.maine.edu/",
+    "type": "Public University"
+  },
+  {
+    "name": "Washington County Community College",
+    "street_addr": "1 College Dr",
+    "city": "Calais",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04619",
+    "website_url": "https://www.wccc.me.edu/",
+    "type": "Community College"
+  },
+  {
+    "name": "York County Community College",
+    "street_addr": "112 College Dr",
+    "city": "Wells",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04090",
+    "website_url": "https://www.yccc.edu/",
+    "type": "Community College"
+  }
+]

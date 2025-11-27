@@ -1,6 +1,7 @@
 import uuid
 from datetime import date
 from backend.app.db.connection import get_connection
+from backend.app.services.institution import get_institution_id_by_name
 
 
 def create_faculty(data: dict):
@@ -108,15 +109,10 @@ def create_faculty(data: dict):
         # Handle institution relationship if institution_name is provided
         institution_name = data.get("institution_name")
         if institution_name and institution_name.strip():
-            # Look up institution_id by name
-            cursor.execute(
-                "SELECT institution_id FROM institution WHERE name = %s",
-                (institution_name.strip(),)
-            )
-            institution_result = cursor.fetchone()
+            # Get or create institution in DB (will create from JSON if needed)
+            institution_id = get_institution_id_by_name(institution_name.strip(), cursor)
             
-            if institution_result:
-                institution_id = institution_result["institution_id"]
+            if institution_id:
                 # Create faculty-institution relationship with current date as start_date
                 cursor.callproc(
                     "create_faculty_works_at_institution",
@@ -395,16 +391,10 @@ def update_faculty(faculty_id: str, data: dict):
         # Handle institution relationship if institution_name is provided
         institution_name = data.get("institution_name")
         if institution_name and institution_name.strip():
-            # Look up institution_id by name
-            cursor.execute(
-                "SELECT institution_id FROM institution WHERE name = %s",
-                (institution_name.strip(),)
-            )
-            institution_result = cursor.fetchone()
+            # Get or create institution in DB (will create from JSON if needed)
+            institution_id = get_institution_id_by_name(institution_name.strip(), cursor)
             
-            if institution_result:
-                institution_id = institution_result["institution_id"]
-                
+            if institution_id:
                 # Check if relationship already exists
                 cursor.execute(
                     "SELECT COUNT(*) as count FROM faculty_works_at_institution WHERE faculty_id = %s AND institution_id = %s",
@@ -414,7 +404,6 @@ def update_faculty(faculty_id: str, data: dict):
                 
                 if not rel_exists:
                     # Create new relationship with current date as start_date
-                    from datetime import date
                     cursor.callproc(
                         "create_faculty_works_at_institution",
                         (faculty_id, institution_id, date.today(), None)

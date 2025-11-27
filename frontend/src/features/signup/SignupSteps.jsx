@@ -100,20 +100,34 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
 }
 
 // Step 2: Confirmation wrapper (shows confirmation or profile form)
-export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting }) {
+export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting, matchType }) {
   // If we need to show confirmation first, show that
   if (showConfirmation) {
+    // Get the institution name to display (use the one from DB if available, otherwise from search)
+    const displayInstitution = initialData.institution_name || 'Not specified';
+    
     return (
       <div className="signup-step">
         <h2 className="step-title">Is this you?</h2>
         <p className="step-description">
-          We found someone in our database matching this information:
+          {matchType === 'name_only' 
+            ? 'We found someone with the same name, but at a different institution:'
+            : 'We found someone in our database matching this information:'}
         </p>
 
         <div className="faculty-info-summary">
           <p><strong>Name:</strong> {initialData.first_name} {initialData.last_name}</p>
-          <p><strong>Institution:</strong> {initialData.institution_name}</p>
+          <p><strong>Institution:</strong> {displayInstitution}</p>
         </div>
+
+        {matchType === 'name_only' && (
+          <div className="match-warning-box">
+            <p className="match-warning">
+              ⚠️ Note: The institution in our database differs from what you entered. 
+              If this is you, you can update your institution information.
+            </p>
+          </div>
+        )}
 
         <div className="confirmation-buttons">
           <button

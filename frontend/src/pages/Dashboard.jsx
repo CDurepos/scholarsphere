@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Dashboard.css';
 
 /**
@@ -7,7 +7,9 @@ import './Dashboard.css';
  */
 function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [faculty, setFaculty] = useState(null);
+  const [welcomeMessage, setWelcomeMessage] = useState('');
 
   useEffect(() => {
     // Check if user is logged in
@@ -26,7 +28,14 @@ function Dashboard() {
       console.error('Failed to parse faculty data:', err);
       navigate('/');
     }
-  }, [navigate]);
+
+    // Check for welcome message from signup
+    if (location.state?.welcomeMessage) {
+      setWelcomeMessage(location.state.welcomeMessage);
+      // Clear the state so it doesn't show again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [navigate, location]);
 
   const handleLogout = () => {
     localStorage.removeItem('faculty');
@@ -51,6 +60,19 @@ function Dashboard() {
       </header>
 
       <main className="dashboard-main">
+        {welcomeMessage && (
+          <div className="dashboard-success-message">
+            <p>{welcomeMessage}</p>
+            <button 
+              className="close-message-button" 
+              onClick={() => setWelcomeMessage('')}
+              aria-label="Close message"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        
         <div className="dashboard-welcome">
           <h2>Welcome to ScholarSphere</h2>
           <p>Connect with Maine Faculty for Research Collaboration</p>

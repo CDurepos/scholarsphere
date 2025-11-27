@@ -16,6 +16,7 @@ import json
 import uuid
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+from datetime import date
 
 import mysql.connector
 from mysql.connector import Error, pooling
@@ -101,7 +102,7 @@ def load_json(file_path: str) -> Dict[str, Any]:
         return json.load(f)
 
 
-def find_scraped_files(output_dir: str) -> Tuple[List[str], List[str]]:
+def find_scraped_files(output_dir: str) -> Tuple[List[str], List[str], List[str]]:
     """
     Find all scraped JSON/JSONL files in the output directory.
 
@@ -117,7 +118,7 @@ def find_scraped_files(output_dir: str) -> Tuple[List[str], List[str]]:
 
     if not os.path.exists(output_dir):
         print(f"[ERROR] Output directory does not exist: {output_dir}")
-        return institution_files, faculty_files
+        return institution_files, faculty_files, publication_files
 
     for filename in os.listdir(output_dir):
         filepath = os.path.join(output_dir, filename)
@@ -128,7 +129,7 @@ def find_scraped_files(output_dir: str) -> Tuple[List[str], List[str]]:
         elif filename.endswith("_publications.jsonl"):
             publication_files.append(filepath)
 
-    return sorted(faculty_files), sorted(institution_files), sorted(publication_files)
+    return sorted(institution_files), sorted(faculty_files), sorted(publication_files)
 
 
 def generate_institution_id() -> str:
@@ -161,11 +162,132 @@ def generate_faculty_id() -> str:
     return str(uuid.uuid4())
 
 
+def get_institutions_from_json() -> List[Dict[str, Any]]:
+    """
+    Load institutions from the backend/data/institutions.json file.
+    Returns a list of institution dictionaries.
+    """
+    # Get the path to the JSON file (backend/data/institutions.json)
+    script_dir = Path(__file__).parent.parent
+    json_path = script_dir / "backend" / "data" / "institutions.json"
+    
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"[WARN] institutions.json not found at {json_path}")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Error parsing institutions.json: {e}")
+        return []
+
+
+def get_or_create_institution_by_name(
+    institution_name: str, db: DatabaseConnection, cursor=None
+) -> Optional[str]:
+    """
+    Get or create an institution in the database by name.
+    
+    First checks if the institution exists in the DB by name.
+    If not found, looks it up in the JSON file and creates it in the DB.
+    If not found in JSON, uses the scraped data if provided.
+    
+    Args:
+        institution_name: Name of the institution
+        db: DatabaseConnection instance
+        cursor: Optional database cursor (if provided, won't close it)
+    
+    Returns:
+        str: institution_id (UUID) if found/created, None otherwise
+    """
+    if not institution_name or not institution_name.strip():
+        return None
+    
+    institution_name = institution_name.strip()
+    should_close_conn = cursor is None
+    
+    try:
+        if cursor is None:
+            conn = db.get_connection()
+            cursor = conn.cursor(dictionary=True)
+        else:
+            conn = None
+        
+        # First, check if institution exists in DB
+        cursor.execute(
+            "SELECT institution_id FROM institution WHERE name = %s",
+            (institution_name,)
+        )
+        result = cursor.fetchone()
+        
+        if result:
+            return result['institution_id']
+        
+        # Institution not in DB - look it up in JSON
+        institutions = get_institutions_from_json()
+        institution_data = None
+        
+        for inst in institutions:
+            if inst.get('name') == institution_name:
+                institution_data = inst
+                break
+        
+        # If not found in JSON, we'll use scraped data (handled by caller)
+        if not institution_data:
+            return None
+        
+        # Create the institution in the database using JSON data
+        institution_id = str(uuid.uuid4())
+        
+        cursor.callproc(
+            "create_institution",
+            (
+                institution_id,
+                institution_data.get('name'),
+                institution_data.get('street_addr'),
+                institution_data.get('city'),
+                institution_data.get('state'),
+                institution_data.get('country', 'USA'),
+                institution_data.get('zip'),
+                institution_data.get('website_url'),
+                institution_data.get('type'),
+            )
+        )
+        # Consume any result set
+        try:
+            stored_results = list(cursor.stored_results())
+            if stored_results:
+                stored_results[0].fetchall()
+        except:
+            pass
+        
+        # Only commit if we created our own connection
+        if conn:
+            conn.commit()
+        
+        return institution_id
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"[ERROR] Error in get_or_create_institution_by_name: {str(e)}")
+        return None
+    finally:
+        if should_close_conn:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+
 def insert_institution_record(
     record: Dict[str, Any], db: DatabaseConnection
 ) -> Optional[str]:
     """
     Insert institution record into the database.
+    
+    Uses the new approach: checks if institution exists by name first,
+    then looks in JSON file, then falls back to scraped data.
 
     Args:
         record: Institution dictionary
@@ -174,6 +296,19 @@ def insert_institution_record(
     Returns:
         The institution_id that was used, or None if failed
     """
+    institution_name = record.get("name", "")
+    if not institution_name:
+        print("[ERROR] Institution record missing name")
+        return None
+    
+    # Try to get or create from JSON first
+    institution_id = get_or_create_institution_by_name(institution_name, db)
+    
+    if institution_id:
+        print(f"[OK] Institution found/created from JSON: {institution_name} ({institution_id})")
+        return institution_id
+    
+    # Not in JSON - create from scraped data
     conn = None
     cursor = None
 
@@ -181,8 +316,7 @@ def insert_institution_record(
         conn = db.get_connection()
         cursor = conn.cursor()
 
-        institution_name = record.get("name", "")
-        institution_id = generate_institution_id()
+        institution_id = str(uuid.uuid4())
 
         db.call_procedure(
             cursor,
@@ -193,7 +327,7 @@ def insert_institution_record(
                 record.get("street_addr"),
                 record.get("city"),
                 record.get("state"),
-                record.get("country"),
+                record.get("country", "USA"),
                 record.get("zip"),
                 record.get("website_url"),
                 record.get("type"),
@@ -201,7 +335,7 @@ def insert_institution_record(
         )
 
         conn.commit()
-        print(f"[OK] Inserted institution: {institution_name} ({institution_id})")
+        print(f"[OK] Inserted institution from scraped data: {institution_name} ({institution_id})")
         return institution_id
 
     except Exception as e:
@@ -218,7 +352,7 @@ def insert_institution_record(
 
 
 def insert_faculty_record(
-    record: Dict[str, Any], db: DatabaseConnection, institution_id_map: Dict[str, str]
+    record: Dict[str, Any], db: DatabaseConnection, institution_name_map: Dict[str, str]
 ) -> bool:
     """
     Insert a single faculty record into the database.
@@ -226,17 +360,17 @@ def insert_faculty_record(
     Args:
         record: Faculty dictionary with MV attributes as arrays
         db: DatabaseConnection instance
-        institution_id_map: Mapping from original institution_id to database UUID
+        institution_name_map: Mapping from original institution_id to institution name
 
     Returns:
-        True if insertiong is successful, else False
+        True if insertion is successful, else False
     """
     conn = None
     cursor = None
 
     try:
         conn = db.get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         conn.start_transaction()
 
         scraped_from = record.get("scraped_from", "")
@@ -247,6 +381,9 @@ def insert_faculty_record(
             if existing_fac_id
             else generate_faculty_id()
         )
+
+        first_name = record.get("first_name")
+        last_name = record.get("last_name")
 
         db.call_procedure(
             cursor,
@@ -262,16 +399,37 @@ def insert_faculty_record(
                 scraped_from,
             ),
         )
+        # Consume result set
+        try:
+            stored_results = list(cursor.stored_results())
+            if stored_results:
+                stored_results[0].fetchall()
+        except:
+            pass
 
         emails = record.get("emails", []) or []
         for email in emails:
             if email:
                 db.call_procedure(cursor, "create_faculty_email", (faculty_id, email))
+                # Consume result set
+                try:
+                    stored_results = list(cursor.stored_results())
+                    if stored_results:
+                        stored_results[0].fetchall()
+                except:
+                    pass
 
         phones = record.get("phones", []) or []
         for phone in phones:
             if phone:
                 db.call_procedure(cursor, "create_faculty_phone", (faculty_id, phone))
+                # Consume result set
+                try:
+                    stored_results = list(cursor.stored_results())
+                    if stored_results:
+                        stored_results[0].fetchall()
+                except:
+                    pass
 
         departments = record.get("departments", []) or []
         for dept in departments:
@@ -279,23 +437,51 @@ def insert_faculty_record(
                 db.call_procedure(
                     cursor, "create_faculty_department", (faculty_id, dept)
                 )
+                # Consume result set
+                try:
+                    stored_results = list(cursor.stored_results())
+                    if stored_results:
+                        stored_results[0].fetchall()
+                except:
+                    pass
 
         titles = record.get("titles", []) or []
         for title in titles:
             if title:
                 db.call_procedure(cursor, "create_faculty_title", (faculty_id, title))
+                # Consume result set
+                try:
+                    stored_results = list(cursor.stored_results())
+                    if stored_results:
+                        stored_results[0].fetchall()
+                except:
+                    pass
 
+        # Handle institution relationship using the new approach
         original_institution_id = record.get("institution_id")
         start_date = record.get("start_date")
-        if original_institution_id and start_date:
-            db_institution_id = institution_id_map.get(original_institution_id)
-            if db_institution_id:
-                end_date = record.get("end_date")
-                db.call_procedure(
-                    cursor,
-                    "create_faculty_works_at_institution",
-                    (faculty_id, db_institution_id, start_date, end_date),
+        if original_institution_id:
+            # Get institution name from the map
+            institution_name = institution_name_map.get(original_institution_id)
+            if institution_name:
+                # Get or create institution by name
+                db_institution_id = get_or_create_institution_by_name(
+                    institution_name, db, cursor
                 )
+                if db_institution_id and start_date:
+                    end_date = record.get("end_date")
+                    db.call_procedure(
+                        cursor,
+                        "create_faculty_works_at_institution",
+                        (faculty_id, db_institution_id, start_date, end_date),
+                    )
+                    # Consume result set
+                    try:
+                        stored_results = list(cursor.stored_results())
+                        if stored_results:
+                            stored_results[0].fetchall()
+                    except:
+                        pass
 
         conn.commit()
         return True
@@ -339,6 +525,7 @@ def insert_publication_record(
 
         author_uuid = record["written_by"]
         publication_id = generate_publication_id()
+        title = record.get("title", "")
 
         db.call_procedure(
             cursor,
@@ -395,7 +582,8 @@ def main():
     print("Step 1: Inserting Institutions")
     print("=" * 60)
 
-    institution_id_map: Dict[str, str] = {}
+    # Map from original institution_id to institution name (for faculty linking)
+    institution_name_map: Dict[str, str] = {}
     institutions_inserted = 0
 
     for inst_file in institution_files:
@@ -406,12 +594,14 @@ def main():
         try:
             institution = load_json(inst_file)
             original_id = institution.get("institution_id")
+            institution_name = institution.get("name", "")
             db_id = insert_institution_record(institution, db)
 
             if db_id:
                 institutions_inserted += 1
-                if original_id:
-                    institution_id_map[original_id] = db_id
+                # Map original ID to institution name (for faculty records)
+                if original_id and institution_name:
+                    institution_name_map[original_id] = institution_name
         except Exception as e:
             print(f"[ERROR] Failed to process {inst_file}: {e}")
             import traceback
@@ -419,7 +609,7 @@ def main():
             traceback.print_exc()
 
     print(f"\n[INFO] Inserted {institutions_inserted} institutions")
-    print(f"[INFO] Institution ID mapping: {len(institution_id_map)} mappings created")
+    print(f"[INFO] Institution name mapping: {len(institution_name_map)} mappings created")
 
     print("\n" + "=" * 60)
     print("Step 2: Inserting Faculty Records")
@@ -442,7 +632,7 @@ def main():
             total_stats["total_records"] += len(records)
 
             for i, record in enumerate(records, start=1):
-                success = insert_faculty_record(record, db, institution_id_map)
+                success = insert_faculty_record(record, db, institution_name_map)
                 if success:
                     total_stats["successful"] += 1
                 else:
@@ -483,11 +673,13 @@ def main():
             continue
 
         try:
-            publication = load_json(pub_file)
-            db_id = insert_publication_record(publication, db)
-
-            if db_id:
-                publications_inserted += 1
+            print(f"\n[INFO] Processing {pub_file}...")
+            publications = load_jsonl(pub_file)
+            
+            for publication in publications:
+                db_id = insert_publication_record(publication, db)
+                if db_id:
+                    publications_inserted += 1
         except Exception as e:
             print(f"[ERROR] Failed to process {pub_file}: {e}")
             import traceback
