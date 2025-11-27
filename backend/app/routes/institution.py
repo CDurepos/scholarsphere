@@ -1,13 +1,7 @@
 """
 Institution-related API endpoints
 v11.25.2025
-
-Contributions:
-    Architecture/boilerplate by Clayton Durepos
 """
-
-from backend.app.services.search_service import search_faculty
-from backend.app.utils.search_filters import get_valid_search_filters
 
 from flask import Blueprint, request, jsonify
 
@@ -58,8 +52,7 @@ sample = [
     ]
 
 
-@institution_bp.route("", methods=["GET"])
+@institution_bp.route("/", methods=["GET"])
 def institution():
-
     # For pre-db connection testing
     return jsonify(sample)
