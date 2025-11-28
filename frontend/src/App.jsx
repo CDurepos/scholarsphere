@@ -27,14 +27,17 @@ function App() {
     return isAuthenticated() ? children : <Navigate to="/" replace />;
   };
 
+  function RootRedirect() {
+    const auth = isAuthenticated();
+    return auth ? <Navigate to="/dashboard" replace /> : <Landing />;
+  }
+
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/"
-          element={
-            isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Landing />
-          }
+          element={<RootRedirect />}
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
