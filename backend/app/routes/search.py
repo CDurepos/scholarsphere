@@ -10,5 +10,5 @@ search_bp = Blueprint("search", __name__)
 @search_bp.route("/", methods=["GET"])
 @search_bp.route("", methods=["GET"])
 def search():
-    results = search_faculty(**request.args)
+    results = search_faculty_service(**request.args)
     return jsonify(results)
