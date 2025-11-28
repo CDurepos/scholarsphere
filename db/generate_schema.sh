@@ -37,6 +37,7 @@ SINGLE_REF_TABLES=(
     "equipment.sql"               # references institution
     "faculty_department.sql"      # references faculty
     "faculty_email.sql"           # references faculty
+    "faculty_generates_keyword.sql" # references faculty
     "faculty_phone.sql"           # references faculty
     "faculty_title.sql"           # references faculty
      "grants_organization.sql"    # references grants

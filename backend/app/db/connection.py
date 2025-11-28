@@ -8,4 +8,5 @@ def get_connection():
         user=current_app.config["DB_USER"],
         password=current_app.config["DB_PASS"],
         database=current_app.config["DB_NAME"],
+        autocommit=False,
     )
