@@ -68,11 +68,23 @@ function TopBar() {
     // navigate('/profile');
   };
 
+  // Helper function to truncate text with ellipsis
+  const truncateText = (text, maxLength) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   // Get user's institution and department
   const institutionName = faculty?.institution_name || 'Not specified';
   const departmentName = faculty?.departments && faculty.departments.length > 0 
     ? faculty.departments[0] 
     : 'Not specified';
+  
+  // Truncate names and institution for display
+  const truncatedFirstName = truncateText(faculty?.first_name || '', 20);
+  const truncatedLastName = truncateText(faculty?.last_name || '', 20);
+  const truncatedInstitutionName = truncateText(institutionName, 40);
+  const truncatedDepartmentName = truncateText(departmentName, 30);
 
   return (
     <header className="topbar">
@@ -124,10 +136,10 @@ function TopBar() {
                   />
                   <div className="topbar-dropdown-user-details">
                     <div className="topbar-dropdown-name">
-                      {faculty.first_name} {faculty.last_name}
+                      {truncatedFirstName} {truncatedLastName}
                     </div>
-                    <div className="topbar-dropdown-institution">{institutionName}</div>
-                    <div className="topbar-dropdown-department">{departmentName}</div>
+                    <div className="topbar-dropdown-institution">{truncatedInstitutionName}</div>
+                    <div className="topbar-dropdown-department">{truncatedDepartmentName}</div>
                   </div>
                 </div>
                 <button 

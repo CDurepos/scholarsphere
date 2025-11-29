@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import TopBar from '../components/TopBar';
 import { searchFaculty } from '../services/api';
 import './Search.css';
@@ -49,6 +49,17 @@ function Search() {
     setError('');
   };
 
+  // TODO: Implement this when the profile page is implemented
+  const handleResultClick = (facultyId) => {
+    console.log("Clicking faculty result needs implementation.", facultyId);
+  };
+
+  // Helper function to truncate text with ellipsis
+  const truncateText = (text, maxLength) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   return (
     <div className="search-container">
       <TopBar />
@@ -89,24 +100,24 @@ function Search() {
                 </div>
                 <div className="search-results-list">
                   {results.map((faculty) => (
-                    <div key={faculty.faculty_id} className="search-result-card">
+                    <div key={faculty.faculty_id} onClick={() => handleResultClick(faculty.faculty_id)} className="search-result-card">
                       <h3 className="result-name">
-                        {faculty.first_name} {faculty.last_name}
+                        {truncateText(faculty.first_name, 20)} {truncateText(faculty.last_name, 20)}
                       </h3>
                       {faculty.department_name && (
                         <p className="result-info">
                           <span className="result-label">Department:</span>{' '}
-                          {faculty.department_name}
+                          {truncateText(faculty.department_name, 30)}
                         </p>
                       )}
                       {faculty.institution_name && (
                         <p className="result-info">
                           <span className="result-label">Institution:</span>{' '}
-                          {faculty.institution_name}
+                          {truncateText(faculty.institution_name, 40)}
                         </p>
                       )}
                       {faculty.biography && (
-                        <p className="result-biography">{faculty.biography}</p>
+                        <p className="result-biography">{truncateText(faculty.biography, 200)}</p>
                       )}
                     </div>
                   ))}
