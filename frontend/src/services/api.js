@@ -58,7 +58,7 @@ export const searchFaculty = async (params = {}) => {
   if (params.department) queryParams.append('department', params.department);
   if (params.institution) queryParams.append('institution', params.institution);
   
-  const response = await fetch(`${API_BASE_URL}/search?${queryParams.toString()}`, {
+  const response = await fetch(`${API_BASE_URL}/search/faculty?${queryParams.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

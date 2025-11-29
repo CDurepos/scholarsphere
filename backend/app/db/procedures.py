@@ -3,7 +3,7 @@ from backend.app.db.transaction_context import TransactionContext
 from datetime import datetime
 
 
-def sql_search(
+def sql_search_faculty(
     transaction_context: TransactionContext, **filters: dict[str, str]
 ) -> list[dict]:
     """
