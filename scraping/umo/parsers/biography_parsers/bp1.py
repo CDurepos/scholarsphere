@@ -1,15 +1,17 @@
+from scraping.schemas import Faculty
 from scraping.utils import get_headers
 from scraping.publications import CitationExtractor
 from scraping.umo.utils.parse_name import split_name
+from scraping.umo.utils.normalize_whitespace import norm_ws
 from scraping.publications.publication_parser import citation_to_publication_instance
-from scraping.schemas import Faculty
 
 import os
 import re
 import csv
+import uuid
 import requests
 from tqdm import tqdm
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 DEPARTMENTS = (
     ("https://umaine.edu/marine/people/department/faculty/", "marine_sciences.csv"),
@@ -83,6 +85,10 @@ class B1Parser:
 
                 soup = BeautifulSoup(response.text, "html.parser")
                 fac_inst = Faculty()
+
+                # Set faculty ID
+                fac_inst.faculty_id = str(uuid.uuid4())
+
                 # Set title
                 fac_inst.title = fac_title.split(", ")
 
@@ -101,7 +107,8 @@ class B1Parser:
                     name = staff_page_re.sub(
                         "", name
                     )  # Remove "Staff Page" from name if present
-                    first, last = split_name(name)
+                    cleaned = re.sub(r"\([^)]*\)", "", name).strip()
+                    first, last = split_name(cleaned)
                     fac_inst.first_name = first
                     fac_inst.last_name = last
 
@@ -123,7 +130,7 @@ class B1Parser:
                 # Extract biography / research description
                 h_tag = soup.find(
                     [f"h{i}" for i in range(1, 4)],
-                    string=lambda text: text
+                    text=lambda text: text
                     and (
                         "research" in text.lower()
                         or "description" in text.lower()
@@ -131,24 +138,34 @@ class B1Parser:
                     ),
                 )
                 # Collect following siblings of research description header
-                for sib in h_tag.find_next_siblings():
-                    # Stop if sibling is not a p/ul/ol
-                    if sib.name not in ["p", "ul", "ol"]:
-                        break
+                fac_inst.biography = ""
+                if h_tag:
+                    for sib in h_tag.find_next_siblings():
+                        # Skip empty whitespace text nodes
+                        if isinstance(sib, NavigableString):
+                            continue
 
-                    # Handle paragraphs
-                    if sib.name == "p":
-                        fac_inst.biography.append(sib.get_text(" ", strip=True))
+                        # Stop if sibling is not a p/ul/ol
+                        if sib.name not in ["p", "ul", "ol"]:
+                            break
 
-                    # Handle list items inside ul/ol
-                    elif sib.name in ["ul", "ol"]:
-                        for li in sib.find_all("li"):
-                            fac_inst.biography.append(li.get_text(" ", strip=True))
+                        # Handle paragraphs
+                        if sib.name == "p":
+                            text = norm_ws(sib.get_text(" ", strip=True))
+                            if text:
+                                fac_inst.biography += text
+
+                        # Handle list items inside ul/ol
+                        elif sib.name in ["ul", "ol"]:
+                            for li in sib.find_all("li"):
+                                text = norm_ws(li.get_text(" ", strip=True))
+                                if text:
+                                    fac_inst.biography += text
 
                 # Extract publications
                 h_tag = soup.find(
                     [f"h{i}" for i in range(1, 7)],
-                    string=lambda text: text and "publications" in text.lower(),
+                    text=lambda text: text and "publications" in text.lower(),
                 )
                 citations = None
                 if not h_tag:
@@ -156,7 +173,7 @@ class B1Parser:
                     a_tag = soup.find(
                         "a",
                         href=True,
-                        string=lambda text: text and "publications" in text.lower(),
+                        text=lambda text: text and "publications" in text.lower(),
                     )
                     if a_tag:
                         try:
@@ -224,6 +241,8 @@ class B1Parser:
 
 
 if __name__ == "__main__":
-    parser = B1Parser()
+    parser = B1Parser(
+        input_dir=os.path.join("scraping", "umo", "scrape_storage", "biography_pages")
+    )
     f, p = parser.parse()
     print("done")

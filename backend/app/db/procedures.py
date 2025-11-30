@@ -68,7 +68,7 @@ def sql_create_faculty_generates_keyword(
     generated_at: datetime,
 ) -> list[dict]:
     """
-    Create a new keyword generation record for a faculty member.
+    Create a new keyword generation record for a faculty member. This is used to enforce rate limiting on LLM usage.
 
     Args:
         transaction_context (TransactionContext): A transaction context object to use for the database connection.

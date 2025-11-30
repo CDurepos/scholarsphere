@@ -9,6 +9,7 @@ institutions, faculty, and publications using UUID v4.
 Usage:
     python scraping/insert.py
 """
+from backend.app.utils.llama import generate_keywords_with_llama
 
 import os
 import sys
@@ -387,6 +388,8 @@ def insert_faculty_record(
             if existing_fac_id
             else generate_faculty_id()
         )
+        # TODO: This is not a great idea. The scrapers themselves should generate the faculty-keyword relationships (like written_by in publications schema).
+        record["faculty_id"] = faculty_id # Store the faculty_id in the record for later use (in the keyword insertion).
 
         first_name = record.get("first_name")
         last_name = record.get("last_name")
@@ -565,6 +568,56 @@ def insert_publication_record(
             conn.close()
 
 
+def insert_faculty_researches_keyword(
+    faculty_record: Dict[str, Any], db: DatabaseConnection
+) -> Optional[str]:
+    """
+    Given a faculty record, generate a list of keywords from the biography and insert them 
+    into the database. Then, insert the faculty-keyword relationships into the join table.
+
+    Args:
+        faculty_record: Faculty dictionary
+        db: DatabaseConnection instance
+
+    Returns:
+        True if insertion is successful, else False
+    """
+
+    try:
+        if faculty_record.get("faculty_id") is None or faculty_record.get("faculty_id").strip() == "":
+            raise ValueError(f"At keyword insertion time, faculty ID is None for faculty: {faculty_record}")
+        if not isinstance(faculty_record.get("faculty_id"), str):
+            raise ValueError(f"At keyword insertion time, faculty ID is not a string for faculty: {faculty_record}")
+        biography = faculty_record.get("biography")
+        keywords = generate_keywords_with_llama(biography, num_keywords=5)
+
+    except Exception as e:
+        print(f"[ERROR] Failed to generate keywords for faculty {faculty_record.get('first_name')} {faculty_record.get('last_name')}: {str(e)}")
+        return False
+
+    conn = None
+    cursor = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        for keyword in keywords:
+            db.call_procedure(cursor, "add_keyword_for_faculty", (faculty_record["faculty_id"], keyword))
+
+    except Exception as e:
+        if conn and conn.in_transaction:
+            conn.rollback()
+        print(f"[ERROR] Failed to insert keywords for faculty {faculty_record.get('first_name')} {faculty_record.get('last_name')}: {str(e)}")
+        return False
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return True
+
 def main():
     """Main insertion function."""
     output_dir = "scraping/out"
@@ -641,6 +694,12 @@ def main():
                 success = insert_faculty_record(record, db, institution_name_map)
                 if success:
                     total_stats["successful"] += 1
+                    # Insert keywords for this faculty member
+                    biography = record.get("biography")
+                    if biography and biography.strip() != "":
+                        keyword_success = insert_faculty_researches_keyword(record, db)
+                        if not keyword_success:
+                            print(f"[WARN] Failed to insert keywords for faculty {record.get('first_name')} {record.get('last_name')}")
                 else:
                     total_stats["failed"] += 1
 

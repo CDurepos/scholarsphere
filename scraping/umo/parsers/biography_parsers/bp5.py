@@ -7,6 +7,7 @@ from scraping.publications.publication_parser import citation_to_publication_ins
 import os
 import re
 import csv
+import uuid
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -22,7 +23,7 @@ class B5Parser:
         parser.parse()
     """
 
-    def __init__(self, input_dir:str):
+    def __init__(self, input_dir: str):
         self.input_dir = input_dir
         # Gather input files
         self.input_file_paths = []
@@ -69,6 +70,10 @@ class B5Parser:
 
                 soup = BeautifulSoup(response.text, "html.parser")
                 fac_inst = Faculty()
+
+                # Set faculty ID
+                fac_inst.faculty_id = str(uuid.uuid4())
+
                 # Set title
                 fac_inst.title = fac_title.split(", ")
 
@@ -83,7 +88,8 @@ class B5Parser:
                 if name_container:
                     name = name_container.text
                     if name and isinstance(name, str):
-                        first, last = split_name(name)
+                        cleaned = re.sub(r"\([^)]*\)", "", name).strip()
+                        first, last = split_name(cleaned)
                         fac_inst.first_name = first
                         fac_inst.last_name = last
 
@@ -95,7 +101,9 @@ class B5Parser:
                         fac_inst.email = anchor["href"].removeprefix("mailto:")
 
                 # Extract publications
-                h_tag = soup.find("div", class_="page-content") # This department isn't formatted well, so have to just start from here.
+                h_tag = soup.find(
+                    "div", class_="page-content"
+                )  # This department isn't formatted well, so have to just start from here.
                 citations = None
                 if h_tag:
                     citations = citation_extractor.tag_to_citations(tag=h_tag)
@@ -108,7 +116,10 @@ class B5Parser:
                     fac_first_name = fac_inst.first_name if fac_inst.first_name else ""
                     fac_last_name = fac_inst.last_name if fac_inst.last_name else ""
                     for citation in citations[:citation_lim]:
-                        pub_inst = citation_to_publication_instance(citation=citation, author_name=fac_first_name + " " + fac_last_name)
+                        pub_inst = citation_to_publication_instance(
+                            citation=citation,
+                            author_name=fac_first_name + " " + fac_last_name,
+                        )
                         if pub_inst:
                             pub_insts.append(pub_inst)
 
@@ -134,6 +145,6 @@ class B5Parser:
 
 
 if __name__ == "__main__":
-    parser = B5Parser()
+    parser = B5Parser(input_dir=os.path.join("scraping", "umo", "scrape_storage", "biography_pages"))
     f, p = parser.parse()
     print("done")

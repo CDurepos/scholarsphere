@@ -9,7 +9,6 @@ from scraping.schemas import (
 
 import os
 import json
-import uuid
 import importlib
 from tqdm import tqdm
 from pathlib import Path
@@ -26,7 +25,6 @@ TOTAL_COMPILERS = 5
 TOTAL_PARSERS = 5
 
 UMO_INSTITUTION_ID = "umo"
-FACULTY_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_DNS, "Faculty")
 
 
 def pipeline(steps: Union[int, list[int]] = None) -> None:
@@ -126,6 +124,7 @@ def convert_faculty_to_json_records(faculty_instances: List[Faculty]) -> List[Di
                 titles = [fac.title]
 
         record = {
+            "faculty_id": fac.faculty_id,
             "first_name": fac.first_name,
             "last_name": fac.last_name,
             "biography": fac.biography,
@@ -167,11 +166,10 @@ def convert_publications_to_json_records(
             continue
 
         fac = faculty_instances[fac_idx]
-        fac["faculty_id"] = _generate_faculty_id(
-            first_name=fac.first_name,
-            last_name=fac.last_name,
-            scraped_from=fac.scraped_from,
-        )
+        if fac.faculty_id is None or fac.faculty_id.strip() == "":
+            raise ValueError(f"At publication conversion time, faculty ID is None for faculty: {fac}")
+        if not isinstance(fac.faculty_id, str):
+            raise ValueError(f"At publication conversion time, faculty ID is not a string for faculty: {fac}")
         for pub in pub_list:
             year = None
             if pub.year is not None:
@@ -190,7 +188,7 @@ def convert_publications_to_json_records(
                     citation_count = int(pub.citation_count)
 
             pub_record = {
-                "written_by": fac["faculty_id"],
+                "written_by": fac.faculty_id,
                 "doi": pub.doi,
                 "title": pub.title,
                 "abstract": pub.abstract,
@@ -204,7 +202,7 @@ def convert_publications_to_json_records(
 
 
 def scrape_umo(
-    output_dir: str = "scraping/out",
+    output_dir: str = os.path.join("scraping", "out"),
 ) -> Tuple[Institution, List[Dict], List[Dict]]:
     """
     Scrape UMO faculty data and return institution, faculty, and publication records.
@@ -260,6 +258,8 @@ def scrape_umo(
 # Util function to identify possible junk names
 def _is_junk_name(fac: Faculty, threshold: float = 0.6) -> bool:
     first_name = fac.first_name
+    if first_name == "Director School of Computing and Information":
+        pass
     if not first_name:
         raise ValueError(
             f"No first_name attribute when trying to test for junk name for faculty: {fac}"
@@ -271,33 +271,13 @@ def _is_junk_name(fac: Faculty, threshold: float = 0.6) -> bool:
         return False
 
     email = fac.email
-    if email or email.strip() == "":
+    if email is None or email.strip() == "":
         return False
 
     candidate = f"{parts[0].lower()}.{parts[-1].lower()}"
     username = email.split("@")[0].lower()
     sim = SequenceMatcher(None, candidate, username).ratio()
     return sim < threshold
-
-
-# Util function (borrowed from insert.py) since a uuid is needed now to ensure join table is correct
-def _generate_faculty_id(first_name: str, last_name: str, scraped_from: str) -> str:
-    """
-    Generate deterministic UUID for a faculty member.
-
-    Args:
-        first_name: Faculty first name
-        last_name: Faculty last name
-        scraped_from: Source URL for the faculty data
-
-    Returns:
-        UUID string
-    """
-    if not first_name:
-        raise ValueError("Faculty first_name is required for UUID generation")
-
-    identifier = f"{first_name}:{last_name}:{scraped_from}".strip(":")
-    return str(uuid.uuid5(FACULTY_NAMESPACE, identifier))
 
 
 def write_publications_jsonl(publication_records: List[Dict], output_path: str):

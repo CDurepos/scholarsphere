@@ -13,7 +13,7 @@ DELIMITER $$
  * @param p_year       Optional publication year (INT)
  * @param p_doi        Optional Digital Object Identifier (max 64 characters)
  * @param p_abstract   Optional abstract text (TEXT field)
- * @param p_generated_id OUT parameter that receives a generated UUID (currently unused)
+ * @param p_citation_count Optional citation count (INT)
  * 
  * @returns No result set. Use read procedures to verify the insert.
  * 
@@ -26,11 +26,15 @@ CREATE PROCEDURE create_publication(
     IN p_year INT,
     IN p_doi VARCHAR(64),
     IN p_abstract TEXT,
-    IN p_citation_count INT,
-    OUT p_generated_id CHAR(36)
+    IN p_citation_count INT
 )
 BEGIN
-    SET p_generated_id = UUID();
+    -- Validate input: publication_id must be provided
+    IF p_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'publication_id is required.';
+    END IF;
+
     INSERT INTO publication (publication_id, title, publisher, year, doi, abstract, citation_count)
     VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, p_citation_count);
 END $$

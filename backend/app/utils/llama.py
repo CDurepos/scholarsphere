@@ -29,19 +29,22 @@ def _load_model():
     return _model, _tokenizer
 
 
-def generate_keywords_with_llama(biography: str, num_keywords: int = 5) -> list[str]:
+def generate_keywords_with_llama(biography: str, num_keywords: int = 5, biography_length_limit: int = 2000) -> list[str]:
     """
     Generate keywords for a faculty member's biography using llama.
 
     Args:
         biography (str): The biography of the faculty member.
         num_keywords (int): The number of keywords to generate.
+        biography_length_limit (int): The maximum length of the biography to use for keyword generation.
 
     Returns:
         list[str]: A list of keywords generated from the biography.
     """
     if not biography or not biography.strip():
         return []
+
+    biography = biography[:biography_length_limit]
 
     try:
         model, tokenizer = _load_model()
