@@ -29,6 +29,33 @@ def _load_model():
     return _model, _tokenizer
 
 
+def unload_model():
+    """
+    Unload the model and tokenizer from memory.
+    
+    This function deletes the model and tokenizer objects, clears PyTorch cache,
+    and resets the global variables to None. This should be called after
+    keyword generation is complete to free up memory.
+    """
+    global _model, _tokenizer
+    
+    if _model is not None:
+        del _model
+        _model = None
+    
+    if _tokenizer is not None:
+        del _tokenizer
+        _tokenizer = None
+    
+    # Clear PyTorch cache if CUDA is available
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    
+    # Force garbage collection
+    import gc
+    gc.collect()
+
+
 def generate_keywords_with_llama(biography: str, num_keywords: int = 5, biography_length_limit: int = 2000) -> list[str]:
     """
     Generate keywords for a faculty member's biography using llama.

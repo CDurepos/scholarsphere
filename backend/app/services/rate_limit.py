@@ -68,6 +68,8 @@ def generate_keyword_service(faculty_id: str):
             # Call LLM - if this fails, exception triggers rollback via context manager
             # Alternatively, we could wrap this in a try/except and just return an error so the context manager doesn't rollback.
             # This might be preferred if we want to consider the rate limit even if the LLM fails.
+            # NOTE: We do not unload the model here because we want to keep it loaded for the next request. If we have multiple 
+            # workers, we should carefully consider the memory implications.
             keywords = generate_keywords_with_llama(biography)
             if not keywords:
                 # Raise exception to trigger rollback of generation record

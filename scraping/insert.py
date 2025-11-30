@@ -9,7 +9,7 @@ institutions, faculty, and publications using UUID v4.
 Usage:
     python scraping/insert.py
 """
-from backend.app.utils.llama import generate_keywords_with_llama
+from backend.app.utils.llama import generate_keywords_with_llama, unload_model
 
 import os
 import sys
@@ -716,6 +716,14 @@ def main():
             traceback.print_exc()
             if "records" in locals():
                 total_stats["failed"] += len(records)
+
+    # Unload model and tokenizer from memory after all faculty keywords have been generated
+    print("\n[INFO] Unloading model from memory...")
+    try:
+        unload_model()
+        print("[OK] Model unloaded successfully")
+    except Exception as e:
+        print(f"[WARN] Failed to unload model: {str(e)}")
 
     print("\n" + "=" * 60)
     print("Insertion Summary")
