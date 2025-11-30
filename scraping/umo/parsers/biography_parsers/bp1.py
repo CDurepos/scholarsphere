@@ -32,7 +32,7 @@ class B1Parser:
         parser.parse()
     """
 
-    def __init__(self, input_dir:str):
+    def __init__(self, input_dir: str):
         self.input_dir = input_dir
         # Gather input files
         self.input_file_paths = []
@@ -54,11 +54,13 @@ class B1Parser:
             pub_instances (list[list[Publication]]): A list of all Publication instances of each faculty from this module's biography lists
             NOTE: fac_instances and pub_instances indices correspond to each other. pub_instances[0] is a list of all publications by fac_instances[0]
         """
-        staff_page_re = re.compile(re.escape("Staff Page"), re.IGNORECASE) # At least one instance where "Staff Page" was randomly included in name and needed to be removed.
+        staff_page_re = re.compile(
+            re.escape("Staff Page"), re.IGNORECASE
+        )  # At least one instance where "Staff Page" was randomly included in name and needed to be removed.
         citation_extractor = CitationExtractor()
         fac_instances = []
         pub_instances = []
-        
+
         for idx, path in enumerate(self.input_file_paths):
             with open(path, "r", newline="", encoding="utf-8") as f:
                 reader = csv.reader(f)
@@ -96,11 +98,12 @@ class B1Parser:
                 )
                 if name:
                     name = name.text
-                    name = staff_page_re.sub("", name) # Remove "Staff Page" from name if present
+                    name = staff_page_re.sub(
+                        "", name
+                    )  # Remove "Staff Page" from name if present
                     first, last = split_name(name)
                     fac_inst.first_name = first
                     fac_inst.last_name = last
-                    
 
                 # Extract email
                 email_pattern = re.compile(
@@ -116,6 +119,31 @@ class B1Parser:
                     email_match = email_pattern.search(soup.get_text(" ", strip=True))
                 if email_match:
                     fac_inst.email = email_match.group()
+
+                # Extract biography / research description
+                h_tag = soup.find(
+                    [f"h{i}" for i in range(1, 4)],
+                    string=lambda text: text
+                    and (
+                        "research" in text.lower()
+                        or "description" in text.lower()
+                        or "brief biography" in text.lower()
+                    ),
+                )
+                # Collect following siblings of research description header
+                for sib in h_tag.find_next_siblings():
+                    # Stop if sibling is not a p/ul/ol
+                    if sib.name not in ["p", "ul", "ol"]:
+                        break
+
+                    # Handle paragraphs
+                    if sib.name == "p":
+                        fac_inst.biography.append(sib.get_text(" ", strip=True))
+
+                    # Handle list items inside ul/ol
+                    elif sib.name in ["ul", "ol"]:
+                        for li in sib.find_all("li"):
+                            fac_inst.biography.append(li.get_text(" ", strip=True))
 
                 # Extract publications
                 h_tag = soup.find(
@@ -167,7 +195,10 @@ class B1Parser:
                     fac_first_name = fac_inst.first_name if fac_inst.first_name else ""
                     fac_last_name = fac_inst.last_name if fac_inst.last_name else ""
                     for citation in citations[:citation_lim]:
-                        pub_inst = citation_to_publication_instance(citation=citation, author_name=fac_first_name + " " + fac_last_name)
+                        pub_inst = citation_to_publication_instance(
+                            citation=citation,
+                            author_name=fac_first_name + " " + fac_last_name,
+                        )
                         if pub_inst:
                             pub_insts.append(pub_inst)
 

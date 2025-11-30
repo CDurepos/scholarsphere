@@ -30,7 +30,7 @@ class B2Parser:
         parser.parse()
     """
 
-    def __init__(self, input_dir:str):
+    def __init__(self, input_dir: str):
         self.input_dir = input_dir
         # Gather input files
         self.input_file_paths = []
@@ -122,6 +122,69 @@ class B2Parser:
                             fac_inst.email = possible_email_match.group()
                             break
 
+                # Extract biography / research description
+                bio_found = False
+                for strong in soup.find(
+                    "strong",
+                    string=lambda text: text
+                    and (
+                        "research interest" in text.lower()
+                        or "research interests" in text.lower()
+                        or "research areas" in text.lower()
+                    ),
+                ):
+                    bio_found = True
+                    parent = strong.parent
+                    for sib in parent.next_siblings:
+                        if sib.name not in ["p", "ul", "ol"]:
+                            break
+
+                        elif sib.find("strong") is not None:
+                            break
+
+                        # Handle paragraphs
+                        if sib.name == "p":
+                            fac_inst.biography.append(sib.get_text(" ", strip=True))
+
+                        # Handle list items inside ul/ol
+                        elif sib.name in ["ul", "ol"]:
+                            for li in sib.find_all("li"):
+                                fac_inst.biography.append(li.get_text(" ", strip=True))
+
+                if not bio_found:
+                    h_tag = soup.find(
+                        [f"h{i}" for i in range(2, 4)],
+                        string=lambda text: text
+                        and (
+                            "research interest" in text.lower()
+                            or "research interests" in text.lower()
+                            or "research areas" in text.lower()
+                        ),
+                    )
+                    if h_tag:
+                        bio_found = True
+                        parent = h_tag.parent
+                        for sib in parent.next_siblings:
+                            if sib.name not in ["p", "ul", "ol"]:
+                                break
+
+                            elif (
+                                sib.find("strong") is not None
+                                or sib.find([f"h{i}" for i in range(2, 4)]) is not None
+                            ):
+                                break
+
+                            # Handle paragraphs
+                            if sib.name == "p":
+                                fac_inst.biography.append(sib.get_text(" ", strip=True))
+
+                            # Handle list items inside ul/ol
+                            elif sib.name in ["ul", "ol"]:
+                                for li in sib.find_all("li"):
+                                    fac_inst.biography.append(
+                                        li.get_text(" ", strip=True)
+                                    )
+
                 # Extract google scholar, research gate, and orcid urls
                 for a in soup.find_all("a", href=True):
                     href = a["href"]
@@ -137,7 +200,7 @@ class B2Parser:
                             fac_inst.orcid = orcid_match.group(1)
 
                 fac_instances.append(fac_inst)
-                pub_instances.append([]) # No publications for these pages
+                pub_instances.append([])  # No publications for these pages
 
         assert len(fac_instances) == len(pub_instances)
         return fac_instances, pub_instances

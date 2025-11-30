@@ -22,7 +22,7 @@ class B3Parser:
         parser.parse()
     """
 
-    def __init__(self, input_dir:str):
+    def __init__(self, input_dir: str):
         self.input_dir = input_dir
         # Gather input files
         self.input_file_paths = []
@@ -94,8 +94,40 @@ class B3Parser:
                     if anchor:
                         fac_inst.email = anchor["href"].removeprefix("mailto:")
 
+                # Extract biography / research description
+                h_tag = soup.find(
+                    [f"h{i}" for i in range(2, 4)],
+                    string=lambda text: text
+                    and (
+                        "research interest" in text.lower()
+                        or "research interests" in text.lower()
+                        or "research areas" in text.lower()
+                    ),
+                )
+                if h_tag:
+                    for sib in h_tag.next_siblings:
+                        if sib.name not in ["p", "ul", "ol"]:
+                            break
+
+                        elif (
+                            sib.find("strong") is not None
+                            or sib.find([f"h{i}" for i in range(2, 4)]) is not None
+                        ):
+                            break
+
+                        # Handle paragraphs
+                        if sib.name == "p":
+                            fac_inst.biography.append(sib.get_text(" ", strip=True))
+
+                        # Handle list items inside ul/ol
+                        elif sib.name in ["ul", "ol"]:
+                            for li in sib.find_all("li"):
+                                fac_inst.biography.append(li.get_text(" ", strip=True))
+
                 # Extract publications
-                h_tag = soup.find("div", class_="page-content") # This department isn't formatted well, so have to just start from here.
+                h_tag = soup.find(
+                    "div", class_="page-content"
+                )  # This department isn't formatted well, so have to just start from here.
                 citations = None
                 if h_tag:
                     citations = citation_extractor.tag_to_citations(tag=h_tag)
@@ -108,7 +140,10 @@ class B3Parser:
                     fac_first_name = fac_inst.first_name if fac_inst.first_name else ""
                     fac_last_name = fac_inst.last_name if fac_inst.last_name else ""
                     for citation in citations[:citation_lim]:
-                        pub_inst = citation_to_publication_instance(citation=citation, author_name=fac_first_name + " " + fac_last_name)
+                        pub_inst = citation_to_publication_instance(
+                            citation=citation,
+                            author_name=fac_first_name + " " + fac_last_name,
+                        )
                         if pub_inst:
                             pub_insts.append(pub_inst)
 
