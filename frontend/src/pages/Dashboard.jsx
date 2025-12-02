@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import TopBar from '../components/TopBar';
+import { isAuthenticated } from '../services/api';
+import Header from '../components/Header';
 import './Dashboard.css';
 
 /**
@@ -13,29 +14,30 @@ function Dashboard() {
   const [welcomeMessage, setWelcomeMessage] = useState('');
 
   useEffect(() => {
-    // Check if user is logged in
-    const facultyId = localStorage.getItem('faculty_id');
-    const facultyData = localStorage.getItem('faculty');
+    const checkAuth = async () => {
+      const authenticated = await isAuthenticated();
+      
+      if (!authenticated) {
+        navigate('/');
+        return;
+      }
 
-    if (!facultyId || !facultyData) {
-      // Not logged in - redirect to landing
-      navigate('/');
-      return;
-    }
+      const facultyData = localStorage.getItem('faculty');
+      if (facultyData) {
+        try {
+          setFaculty(JSON.parse(facultyData));
+        } catch (err) {
+          // Invalid faculty data
+        }
+      }
 
-    try {
-      setFaculty(JSON.parse(facultyData));
-    } catch (err) {
-      console.error('Failed to parse faculty data:', err);
-      navigate('/');
-    }
+      if (location.state?.welcomeMessage) {
+        setWelcomeMessage(location.state.welcomeMessage);
+        window.history.replaceState({}, document.title);
+      }
+    };
 
-    // Check for welcome message from signup
-    if (location.state?.welcomeMessage) {
-      setWelcomeMessage(location.state.welcomeMessage);
-      // Clear the state so it doesn't show again on refresh
-      window.history.replaceState({}, document.title);
-    }
+    checkAuth();
   }, [navigate, location]);
 
   if (!faculty) {
@@ -44,7 +46,7 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <TopBar />
+      <Header />
 
       <main className="dashboard-main">
         {welcomeMessage && (

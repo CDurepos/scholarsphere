@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import TopBar from '../components/TopBar';
+import Header from '../components/Header';
 import { searchFaculty } from '../services/api';
 import './Search.css';
 
@@ -36,7 +36,6 @@ function Search() {
       
       setResults(limitedResults);
     } catch (err) {
-      console.error('Search error:', err);
       setError('An error occurred while searching. Please try again.');
       setResults([]);
     } finally {
@@ -49,9 +48,8 @@ function Search() {
     setError('');
   };
 
-  // TODO: Implement this when the profile page is implemented
   const handleResultClick = (facultyId) => {
-    console.log("Clicking faculty result needs implementation.", facultyId);
+    // TODO: Navigate to profile page when implemented
   };
 
   // Helper function to truncate text with ellipsis
@@ -62,7 +60,7 @@ function Search() {
 
   return (
     <div className="search-container">
-      <TopBar />
+      <Header />
       
       <main className="search-main">
         <div className="search-content">

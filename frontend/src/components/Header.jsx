@@ -1,34 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { logout as logoutApi } from '../services/api';
 import defaultSilhouette from '../assets/default_silhouette.png';
-import './TopBar.css';
+import './Header.css';
 
 /**
- * Reusable top bar component with profile dropdown
+ * Reusable header component with profile dropdown
  */
-function TopBar() {
+function Header() {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [faculty, setFaculty] = useState(null);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
 
-  // Get faculty data from localStorage
   useEffect(() => {
     const facultyData = localStorage.getItem('faculty');
     if (facultyData) {
       try {
         setFaculty(JSON.parse(facultyData));
       } catch (err) {
-        console.error('Failed to parse faculty data:', err);
         setFaculty(null);
       }
     } else {
       setFaculty(null);
     }
-  }, []); // Only run on mount - state is cleared immediately in handleLogout
+  }, []);
 
-  // Close dropdown when clicking outside
+  useEffect(() => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -50,9 +49,10 @@ function TopBar() {
     };
   }, [isDropdownOpen]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
     setFaculty(null);
+    await logoutApi();
     localStorage.removeItem('faculty');
     localStorage.removeItem('faculty_id');
     navigate('/', { replace: true });
@@ -64,8 +64,7 @@ function TopBar() {
 
   const handleViewProfile = () => {
     setIsDropdownOpen(false);
-    // Navigate to profile page when implemented
-    // navigate('/profile');
+    // TODO: Navigate to profile page when implemented
   };
 
   // Helper function to truncate text with ellipsis
@@ -87,16 +86,16 @@ function TopBar() {
   const truncatedDepartmentName = truncateText(departmentName, 30);
 
   return (
-    <header className="topbar">
-      <Link to="/dashboard" className="topbar-home">
+    <header className="header">
+      <Link to="/dashboard" className="header-home">
         <h1>ScholarSphere</h1>
       </Link>
       
       {faculty && (
-        <div className="topbar-profile-container">
+        <div className="header-profile-container">
           <button
             ref={buttonRef}
-            className="topbar-profile-button"
+            className="header-profile-button"
             onClick={toggleDropdown}
             aria-expanded={isDropdownOpen}
             aria-haspopup="true"
@@ -104,11 +103,11 @@ function TopBar() {
             <img 
               src={defaultSilhouette} 
               alt="Profile" 
-              className="topbar-profile-icon"
+              className="header-profile-icon"
             />
-            <span className="topbar-profile-text">Me</span>
+            <span className="header-profile-text">Me</span>
             <svg 
-              className={`topbar-dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}
+              className={`header-dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}
               width="16" 
               height="16" 
               viewBox="0 0 16 16" 
@@ -125,25 +124,25 @@ function TopBar() {
           </button>
 
           {isDropdownOpen && (
-            <div ref={dropdownRef} className="topbar-dropdown">
+            <div ref={dropdownRef} className="header-dropdown">
               {/* User Info Section */}
-              <div className="topbar-dropdown-section">
-                <div className="topbar-dropdown-user-info">
+              <div className="header-dropdown-section">
+                <div className="header-dropdown-user-info">
                   <img 
                     src={defaultSilhouette} 
                     alt="Profile" 
-                    className="topbar-dropdown-avatar"
+                    className="header-dropdown-avatar"
                   />
-                  <div className="topbar-dropdown-user-details">
-                    <div className="topbar-dropdown-name">
+                  <div className="header-dropdown-user-details">
+                    <div className="header-dropdown-name">
                       {truncatedFirstName} {truncatedLastName}
                     </div>
-                    <div className="topbar-dropdown-institution">{truncatedInstitutionName}</div>
-                    <div className="topbar-dropdown-department">{truncatedDepartmentName}</div>
+                    <div className="header-dropdown-institution">{truncatedInstitutionName}</div>
+                    <div className="header-dropdown-department">{truncatedDepartmentName}</div>
                   </div>
                 </div>
                 <button 
-                  className="topbar-dropdown-view-profile"
+                  className="header-dropdown-view-profile"
                   onClick={handleViewProfile}
                 >
                   View Profile
@@ -151,26 +150,26 @@ function TopBar() {
               </div>
 
               {/* Separator */}
-              <div className="topbar-dropdown-divider"></div>
+              <div className="header-dropdown-divider"></div>
 
               {/* Actions Section */}
-              <div className="topbar-dropdown-section">
+              <div className="header-dropdown-section">
                 <Link 
                   to="/help" 
-                  className="topbar-dropdown-link"
+                  className="header-dropdown-link"
                   onClick={() => setIsDropdownOpen(false)}
                 >
                   Help
                 </Link>
                 <Link 
                   to="/settings" 
-                  className="topbar-dropdown-link"
+                  className="header-dropdown-link"
                   onClick={() => setIsDropdownOpen(false)}
                 >
                   Settings & Privacy
                 </Link>
                 <button 
-                  className="topbar-dropdown-logout"
+                  className="header-dropdown-logout"
                   onClick={handleLogout}
                 >
                   Log out
@@ -184,5 +183,5 @@ function TopBar() {
   );
 }
 
-export default TopBar;
+export default Header;
 

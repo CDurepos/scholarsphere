@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Search from './pages/Search';
+import { isAuthenticated as checkAuth } from './services/api';
 import './App.css';
 
 /**
@@ -16,20 +18,38 @@ import './App.css';
  * - /dashboard : Main dashboard (protected route)
  */
 function App() {
-  // Check if user is logged in
-  const isAuthenticated = () => {
-    const facultyId = localStorage.getItem('faculty_id');
-    return !!facultyId;
-  };
+  const [authStatus, setAuthStatus] = useState(null);
 
-  // Protected route wrapper
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const authenticated = await checkAuth();
+      setAuthStatus(authenticated);
+    };
+    checkAuthStatus();
+  }, []);
+
   const ProtectedRoute = ({ children }) => {
-    return isAuthenticated() ? children : <Navigate to="/" replace />;
+    const [isAuth, setIsAuth] = useState(null);
+    
+    useEffect(() => {
+      const verifyAuth = async () => {
+        const authenticated = await checkAuth();
+        setIsAuth(authenticated);
+      };
+      verifyAuth();
+    }, []);
+    
+    if (isAuth === null) {
+      return <div>Loading...</div>;
+    }
+    return isAuth ? children : <Navigate to="/" replace />;
   };
 
   function RootRedirect() {
-    const auth = isAuthenticated();
-    return auth ? <Navigate to="/dashboard" replace /> : <Landing />;
+    if (authStatus === null) {
+      return <div>Loading...</div>;
+    }
+    return authStatus ? <Navigate to="/dashboard" replace /> : <Landing />;
   }
 
   return (
@@ -57,7 +77,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* Catch all - redirect to landing */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

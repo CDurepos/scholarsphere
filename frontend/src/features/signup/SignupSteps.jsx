@@ -412,8 +412,7 @@ export function CredentialsForm({ onSubmit, loading, stepNumber = 3 }) {
           setUsernameStatus(result.available);
         }
       } catch (err) {
-        console.error('Error checking username:', err);
-        setUsernameStatus(false); // Assume not available on error
+        setUsernameStatus(false);
       } finally {
         setCheckingUsername(false);
       }

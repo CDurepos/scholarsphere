@@ -53,14 +53,10 @@ function Login() {
     setLoading(true);
 
     try {
-      // API Endpoint: POST /api/auth/login
-      // Body: { username: string, password: string }
-      // Returns: { token: string, faculty: object } or { error: string }
       const response = await login(formData);
 
       if (response.error) {
         setError(response.error);
-        // Determine which field has the error
         const errorMsg = response.error.toLowerCase();
         if (errorMsg.includes('username not found') || errorMsg.includes('username')) {
           setFieldErrors({ username: true, password: false });
@@ -73,11 +69,15 @@ function Login() {
         return;
       }
 
-      // Store faculty data
+      if (!response.access_token) {
+        setError('Login successful but access token not received. Please try again.');
+        setLoading(false);
+        return;
+      }
+
       localStorage.setItem('faculty', JSON.stringify(response.faculty));
       localStorage.setItem('faculty_id', response.faculty?.faculty_id);
 
-      // Redirect to dashboard
       navigate('/dashboard');
     } catch (err) {
       setError('An error occurred. Please try again.');

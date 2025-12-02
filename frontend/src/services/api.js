@@ -4,7 +4,124 @@
  * This file contains API service functions for authentication and faculty operations.
  */
 
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Store access token in memory (not localStorage)
+let accessToken = null;
+
+/**
+ * Set the access token in memory
+ * @param {string} token - JWT access token
+ */
+export const setAccessToken = (token) => {
+  accessToken = token;
+};
+
+/**
+ * Get the current access token from memory
+ * @returns {string|null} Current access token or null
+ */
+export const getAccessToken = () => {
+  return accessToken;
+};
+
+/**
+ * Clear the access token from memory
+ */
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+/**
+ * Check if user is authenticated (has valid access token)
+ * Attempts to refresh token if expired
+ * @returns {Promise<boolean>} True if authenticated, false otherwise
+ */
+export const isAuthenticated = async () => {
+  if (!accessToken) {
+    try {
+      return await refreshAccessToken();
+    } catch (error) {
+      return false;
+    }
+  }
+  
+  try {
+    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+    const exp = payload.exp * 1000;
+    const now = Date.now();
+    
+    if (exp < now) {
+      try {
+        return await refreshAccessToken();
+      } catch (error) {
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    try {
+      return await refreshAccessToken();
+    } catch (refreshError) {
+      return false;
+    }
+  }
+};
+
+/**
+ * Refresh the access token using the refresh token cookie
+ * @returns {Promise<boolean>} True if refresh successful, false otherwise
+ */
+export const refreshAccessToken = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      clearAccessToken();
+      return false;
+    }
+    
+    const result = await response.json();
+    
+    if (result.access_token) {
+      setAccessToken(result.access_token);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    clearAccessToken();
+    return false;
+  }
+};
+
+/**
+ * Logout the current user
+ * Clears access token and calls logout endpoint
+ * @returns {Promise<void>}
+ */
+export const logout = async () => {
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    // Logout error - continue with clearing token
+  } finally {
+    clearAccessToken();
+  }
+};
 
 /**
  * Get institution list from the DB
@@ -89,12 +206,41 @@ export const searchFaculty = async (params = {}) => {
  * }
  */
 export const getFacultyById = async (faculty_id) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add Authorization header if we have an access token
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
   const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include', // Include cookies
+    headers,
   });
+  
+  // If unauthorized, try to refresh token and retry
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      // Retry with new token
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      const retryResponse = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers,
+      });
+      
+      if (!retryResponse.ok) {
+        const error = await retryResponse.json();
+        throw new Error(error.error || 'Failed to fetch faculty data');
+      }
+      
+      return retryResponse.json();
+    }
+  }
   
   if (!response.ok) {
     const error = await response.json();
@@ -137,7 +283,6 @@ export const checkFacultyExists = async (data) => {
         matchType: matchType, // 'perfect' or 'name_only'
       };
     } catch (err) {
-      console.error('Error fetching complete faculty data:', err);
       // Fallback to basic data if fetch fails
       return {
         exists: true,
@@ -263,13 +408,37 @@ export const createFaculty = async (data) => {
  * }
  */
 export const updateFaculty = async (faculty_id, data) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add Authorization header if we have an access token
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
   const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include', // Include cookies
+    headers,
     body: JSON.stringify(data),
   });
+  
+  // If unauthorized, try to refresh token and retry
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      const retryResponse = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify(data),
+      });
+      return retryResponse.json();
+    }
+  }
+  
   return response.json();
 };
 
@@ -391,24 +560,34 @@ export const registerCredentials = async (data) => {
  * }
  */
 export const login = async (data) => {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  
-  const result = await response.json();
-  
-  // If the response is not ok, return error object
-  if (!response.ok) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies for refresh token
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return {
+        error: result.error || 'Failed to login'
+      };
+    }
+    
+    if (result.access_token) {
+      setAccessToken(result.access_token);
+    }
+    
+    return result;
+  } catch (error) {
     return {
-      error: result.error || 'Failed to login'
+      error: 'Network error. Please check if the backend server is running.'
     };
   }
-  
-  return result;
 };
 
 /**

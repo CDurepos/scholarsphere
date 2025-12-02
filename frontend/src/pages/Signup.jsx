@@ -48,7 +48,6 @@ function Signup() {
       
       return storedId;
     } catch (error) {
-      console.error('Error reading from localStorage:', error);
       return null;
     }
   };
@@ -62,7 +61,7 @@ function Signup() {
         clearSignupData();
       }
     } catch (error) {
-      console.error('Error writing to localStorage:', error);
+      // Failed to write to localStorage
     }
   };
   
@@ -71,7 +70,7 @@ function Signup() {
       localStorage.removeItem(SIGNUP_FACULTY_ID_KEY);
       localStorage.removeItem(SIGNUP_TIMESTAMP_KEY);
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
+      // Failed to clear localStorage
     }
   };
   
