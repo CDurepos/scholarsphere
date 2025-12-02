@@ -1,28 +1,23 @@
 DELIMITER $$
 
 /**
- * Retrieves all titles associated with a faculty member.
+ * Retrieves all title records from the database.
  * 
- * Returns all title records for the specified faculty member. Since faculty
- * members can have multiple titles, this may return multiple rows.
- * 
- * @param p_faculty_id  Required UUID of the faculty member
+ * Returns all records from the faculty_title table.
  * 
  * @returns Result set containing:
  *   - faculty_id: UUID of the faculty member
- *   - title: One title associated with the faculty member
- *   (Multiple rows if the faculty member has multiple titles)
+ *   - title: Title
+ * 
+ * Results are ordered by faculty_id, then title.
  */
-CREATE PROCEDURE read_faculty_title (
-    IN p_faculty_id CHAR(36)
-)
+DROP PROCEDURE IF EXISTS read_faculty_title;
+CREATE PROCEDURE read_faculty_title()
 BEGIN
-    -- Retrieve all titles for the specified faculty member
-    -- Returns multiple rows if the faculty member has multiple titles
-    -- Each row represents one title association
     SELECT faculty_id, title
     FROM faculty_title
-    WHERE faculty_id = p_faculty_id;
-END$$
+    ORDER BY faculty_id, title;
+END $$
 
 DELIMITER ;
+

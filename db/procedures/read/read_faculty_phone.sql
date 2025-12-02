@@ -1,29 +1,23 @@
 DELIMITER $$
 
 /**
- * Retrieves all phone numbers associated with a faculty member.
+ * Retrieves all phone number records from the database.
  * 
- * Returns all phone number records for the specified faculty member.
- * Since faculty members can have multiple phone numbers, this may return
- * multiple rows.
- * 
- * @param p_faculty_id  Required UUID of the faculty member
+ * Returns all records from the faculty_phone table.
  * 
  * @returns Result set containing:
  *   - faculty_id: UUID of the faculty member
- *   - phone_num: One phone number associated with the faculty member
- *   (Multiple rows if the faculty member has multiple phone numbers)
+ *   - phone_num: Phone number
+ * 
+ * Results are ordered by faculty_id, then phone_num.
  */
-CREATE PROCEDURE read_faculty_phone (
-    IN p_faculty_id CHAR(36)
-)
+DROP PROCEDURE IF EXISTS read_faculty_phone;
+CREATE PROCEDURE read_faculty_phone()
 BEGIN
-    -- Retrieve all phone numbers for the specified faculty member
-    -- Returns multiple rows if the faculty member has multiple phone numbers
-    -- Each row represents one phone number association
     SELECT faculty_id, phone_num
     FROM faculty_phone
-    WHERE faculty_id = p_faculty_id;
-END$$
+    ORDER BY faculty_id, phone_num;
+END $$
 
 DELIMITER ;
+

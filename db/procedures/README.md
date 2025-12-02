@@ -20,9 +20,9 @@ The majority of procedures follow the naming convention...
 
 Read operations follow the naming convention...
 
-`{operation}_{checked_or_affected_entity}_{returned_or_affected_property}.sql`
+`read_{table-name}_by_{filter}.sql`
 
-For example, `read_faculty_institution.sql` returns a table containing the `institution_id`s corresponding to the `institution` entities that a `faculty` entity works at. In contrast, `read_institution_faculty.sql` returns a table containing the `faculty_id`s of the `faculty` entity that work at an institution.
+For example, `read_faculty-institution_by_faculty.sql` returns a table containing the `institution_id`s corresponding to the `institution` entities that a `faculty` entity works at. In contrast, `read_faculty-institution_by_institution.sql` returns a table containing the `faculty_id`s of the `faculty` entities that work at an institution.
 
 ## Contributions
 Each ScholarSphere team member has written the scripts for the associated procedures below...

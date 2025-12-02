@@ -1,37 +1,23 @@
 DELIMITER $$
 
 /**
- * Retrieves all departments associated with a faculty member.
+ * Retrieves all department records from the database.
  * 
- * Returns all department records for the specified faculty member. Since
- * faculty members can belong to multiple departments, this may return
- * multiple rows.
- * 
- * @param p_faculty_id  Required UUID of the faculty member
+ * Returns all records from the faculty_department table.
  * 
  * @returns Result set containing:
- *   - department_name: One department name associated with the faculty member
- *   (Multiple rows if the faculty member belongs to multiple departments)
+ *   - faculty_id: UUID of the faculty member
+ *   - department_name: Department name
  * 
- * @throws SQLSTATE '45000' if faculty_id is NULL
+ * Results are ordered by faculty_id, then department_name.
  */
-CREATE PROCEDURE read_faculty_department (
-    IN p_faculty_id CHAR(36)
-)
+DROP PROCEDURE IF EXISTS read_faculty_department;
+CREATE PROCEDURE read_faculty_department()
 BEGIN
-    -- Validate that faculty_id is provided
-    IF p_faculty_id IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'faculty_id is required.';
-    END IF;
-
-    -- Retrieve all departments for the specified faculty member
-    -- Returns multiple rows if the faculty member belongs to multiple departments
-    -- Each row represents one department association
-    -- Only returns department_name (not faculty_id) since it's already known
-    SELECT department_name
+    SELECT faculty_id, department_name
     FROM faculty_department
-    WHERE faculty_id = p_faculty_id;
+    ORDER BY faculty_id, department_name;
 END $$
 
 DELIMITER ;
+

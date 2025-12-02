@@ -21,8 +21,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty;
-CREATE PROCEDURE read_grants_granted_to_faculty(
+DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty_by_faculty;
+CREATE PROCEDURE read_grants_granted_to_faculty_by_faculty(
     IN p_faculty_id     CHAR(36)
 )
 BEGIN

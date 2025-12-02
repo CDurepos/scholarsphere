@@ -14,8 +14,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if grant_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_organization;
-CREATE PROCEDURE read_grants_organization(
+DROP PROCEDURE IF EXISTS read_grants_organization_by_grant;
+CREATE PROCEDURE read_grants_organization_by_grant(
     IN p_grant_id   CHAR(36)
 )
 BEGIN

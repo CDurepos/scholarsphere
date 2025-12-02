@@ -14,7 +14,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-CREATE PROCEDURE read_faculty_keyword(
+DROP PROCEDURE IF EXISTS read_faculty_researches_keyword_by_faculty;
+CREATE PROCEDURE read_faculty_researches_keyword_by_faculty(
     IN p_faculty_id CHAR(36)
 )
 BEGIN

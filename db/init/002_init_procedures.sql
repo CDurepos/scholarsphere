@@ -342,6 +342,52 @@ END $$
 DELIMITER ;
 
 
+-- Source: create/create_faculty_generates_keyword.sql
+
+DELIMITER $$
+
+/**
+ * Creates a new faculty keyword generation record.
+ * 
+ * Inserts a record tracking when a faculty member requested keyword generation
+ * using an LLM. This is used to enforce rate limiting on LLM usage.
+ * 
+ * @param p_generation_id  Required UUID for the generation record
+ * @param p_faculty_id     Required UUID of the faculty member making the request
+ *                         Must reference an existing faculty record
+ * @param p_generated_at   Optional timestamp of when the request was made
+ *                         If NULL, uses current timestamp
+ * 
+ * @returns No result set. Use read procedures to verify the insert.
+ * 
+* @throws SQLSTATE '45000' if generation_id or faculty_id is NULL
+ */
+CREATE PROCEDURE create_faculty_generates_keyword(
+    IN p_generation_id CHAR(36),
+    IN p_faculty_id CHAR(36),
+    IN p_generated_at DATETIME
+)
+BEGIN
+    -- Validate required parameters
+    IF p_generation_id IS NULL OR TRIM(p_generation_id) = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'generation_id is required for create_faculty_generates_keyword';
+    END IF;
+
+    IF p_faculty_id IS NULL OR TRIM(p_faculty_id) = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required for create_faculty_generates_keyword';
+    END IF;
+
+    -- Insert record, using current timestamp if p_generated_at is NULL
+    INSERT INTO faculty_generates_keyword (generation_id, faculty_id, generated_at)
+    VALUES (p_generation_id, p_faculty_id, COALESCE(p_generated_at, NOW()));
+END $$
+
+DELIMITER ;
+
+
+
 -- Source: create/create_faculty_phone.sql
 
 DELIMITER $$
@@ -720,7 +766,7 @@ DELIMITER $$
  * @param p_year       Optional publication year (INT)
  * @param p_doi        Optional Digital Object Identifier (max 64 characters)
  * @param p_abstract   Optional abstract text (TEXT field)
- * @param p_generated_id OUT parameter that receives a generated UUID (currently unused)
+ * @param p_citation_count Optional citation count (INT)
  * 
  * @returns No result set. Use read procedures to verify the insert.
  * 
@@ -733,11 +779,15 @@ CREATE PROCEDURE create_publication(
     IN p_year INT,
     IN p_doi VARCHAR(64),
     IN p_abstract TEXT,
-    IN p_citation_count INT,
-    OUT p_generated_id CHAR(36)
+    IN p_citation_count INT
 )
 BEGIN
-    SET p_generated_id = UUID();
+    -- Validate input: publication_id must be provided
+    IF p_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'publication_id is required.';
+    END IF;
+
     INSERT INTO publication (publication_id, title, publisher, year, doi, abstract, citation_count)
     VALUES (p_id, p_title, p_publisher, p_year, p_doi, p_abstract, p_citation_count);
 END $$
@@ -825,6 +875,79 @@ END $$
 DELIMITER ;
 
 
+-- Source: create/create_session.sql
+
+DELIMITER $$
+
+/**
+ * Creates a new session record in the database.
+ * 
+ * Inserts a new session with a hashed refresh token for long-term authentication.
+ * Sessions are used to maintain user login state across browser sessions.
+ * The refresh token is hashed using SHA-256 before storage for security.
+ * 
+ * @param p_session_id    Required UUID for the session record
+ * @param p_faculty_id    Required UUID of the faculty member
+ * @param p_token_hash     Required SHA-256 hash of the refresh token (64 characters)
+ * @param p_expires_at     Required expiration datetime for the session
+ * 
+ * @returns No result set. Use read procedures to verify the insert.
+ * 
+ * @throws SQLSTATE '23000' if session_id or token_hash already exists (unique constraint)
+ * @throws SQLSTATE '23000' if faculty_id doesn't exist (foreign key constraint)
+ */
+DROP PROCEDURE IF EXISTS create_session;
+CREATE PROCEDURE create_session(
+    IN p_session_id CHAR(36),
+    IN p_faculty_id CHAR(36),
+    IN p_token_hash VARCHAR(64),
+    IN p_expires_at DATETIME
+)
+BEGIN
+    -- Validate required fields
+    IF p_session_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'session_id is required';
+    END IF;
+
+    IF p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required';
+    END IF;
+
+    IF p_token_hash IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'token_hash is required';
+    END IF;
+
+    IF p_expires_at IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'expires_at is required';
+    END IF;
+
+    -- Insert session record
+    INSERT INTO session (
+        session_id,
+        faculty_id,
+        token_hash,
+        created_at,
+        expires_at,
+        revoked
+    )
+    VALUES (
+        p_session_id,
+        p_faculty_id,
+        p_token_hash,
+        UTC_TIMESTAMP(),
+        p_expires_at,
+        FALSE
+    );
+END $$
+
+DELIMITER ;
+
+
+
 -- ============================================================
 -- read procedures
 -- ============================================================
@@ -910,6 +1033,33 @@ DELIMITER ;
 DELIMITER $$
 
 /**
+ * Retrieves all department records from the database.
+ * 
+ * Returns all records from the faculty_department table.
+ * 
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - department_name: Department name
+ * 
+ * Results are ordered by faculty_id, then department_name.
+ */
+DROP PROCEDURE IF EXISTS read_faculty_department;
+CREATE PROCEDURE read_faculty_department()
+BEGIN
+    SELECT faculty_id, department_name
+    FROM faculty_department
+    ORDER BY faculty_id, department_name;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_department_by_faculty.sql
+
+DELIMITER $$
+
+/**
  * Retrieves all departments associated with a faculty member.
  * 
  * Returns all department records for the specified faculty member. Since
@@ -924,7 +1074,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-CREATE PROCEDURE read_faculty_department (
+DROP PROCEDURE IF EXISTS read_faculty_department_by_faculty;
+CREATE PROCEDURE read_faculty_department_by_faculty (
     IN p_faculty_id CHAR(36)
 )
 BEGIN
@@ -950,6 +1101,33 @@ DELIMITER ;
 DELIMITER $$
 
 /**
+ * Retrieves all email records from the database.
+ * 
+ * Returns all records from the faculty_email table.
+ * 
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - email: Email address
+ * 
+ * Results are ordered by faculty_id, then email.
+ */
+DROP PROCEDURE IF EXISTS read_faculty_email;
+CREATE PROCEDURE read_faculty_email()
+BEGIN
+    SELECT faculty_id, email
+    FROM faculty_email
+    ORDER BY faculty_id, email;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_email_by_faculty.sql
+
+DELIMITER $$
+
+/**
  * Retrieves all email addresses associated with a faculty member.
  * 
  * Returns all email records for the specified faculty member. Since
@@ -963,7 +1141,8 @@ DELIMITER $$
  *   - email: One email address associated with the faculty member
  *   (Multiple rows if the faculty member has multiple email addresses)
  */
-CREATE PROCEDURE read_faculty_email (
+DROP PROCEDURE IF EXISTS read_faculty_email_by_faculty;
+CREATE PROCEDURE read_faculty_email_by_faculty (
     IN p_faculty_id CHAR(36)
 )
 BEGIN
@@ -982,6 +1161,77 @@ DELIMITER ;
 DELIMITER $$
 
 /**
+ * Retrieves all follow relationships from the database.
+ * 
+ * Returns all records from the faculty_follows_faculty table, showing
+ * all follow relationships between faculty members.
+ * 
+ * @returns Result set containing:
+ *   - follower_id: UUID of the faculty member who is following
+ *   - followee_id: UUID of the faculty member being followed
+ * 
+ * Results are ordered by follower_id, then followee_id.
+ */
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty;
+CREATE PROCEDURE read_faculty_follows_faculty()
+BEGIN
+    SELECT 
+        follower_id,
+        followee_id
+    FROM faculty_follows_faculty
+    ORDER BY follower_id, followee_id;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_follows_faculty_by_followee.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all faculty members who follow a given faculty member.
+ * 
+ * Returns all follow relationships where the specified faculty member
+ * is the followee. This shows who is following the faculty member.
+ * 
+ * @param p_faculty_id  Required UUID of the faculty member (followee)
+ * 
+ * @returns Result set containing:
+ *   - follower_id: UUID of the faculty member who is following
+ *   - followee_id: UUID of the faculty member being followed
+ *   (Multiple rows if multiple people follow the faculty member)
+ * 
+ * @throws SQLSTATE '45000' if faculty_id is NULL
+ */
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_followee;
+CREATE PROCEDURE read_faculty_follows_faculty_by_followee (
+    IN p_faculty_id CHAR(36)
+)
+BEGIN
+    -- Validate that faculty_id is provided
+    IF p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required.';
+    END IF;
+
+    -- Retrieve all follow relationships where the specified faculty member is the followee
+    -- Returns multiple rows if multiple people follow the faculty member
+    -- Each row represents one follow relationship
+    SELECT follower_id, followee_id
+    FROM faculty_follows_faculty
+    WHERE followee_id = p_faculty_id;
+END $$
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_follows_faculty_by_follower.sql
+
+DELIMITER $$
+
+/**
  * Retrieves all faculty members that a given faculty member follows.
  * 
  * Returns all follow relationships where the specified faculty member
@@ -996,7 +1246,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-CREATE PROCEDURE read_faculty_follows_faculty (
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_follower;
+CREATE PROCEDURE read_faculty_follows_faculty_by_follower (
     IN p_faculty_id CHAR(36)
 )
 BEGIN
@@ -1017,54 +1268,246 @@ END $$
 DELIMITER ;
 
 
--- Source: read/read_faculty_grants.sql
+-- Source: read/read_faculty_generates_keyword.sql
 
 DELIMITER $$
 
 /**
- * Retrieves all grants granted to a specific faculty member.
+ * Retrieves faculty keyword generation records.
  * 
- * Returns all grant records associated with the specified faculty member
- * through the grants_granted_to_faculty join table. Includes a derived
- * status field indicating whether the grant is active, expired, or upcoming.
+ * Fetches records of when faculty members requested keyword generation.
+ * Can filter by faculty_id and optionally by time range for rate limiting checks.
+ * 
+ * @param p_generation_id  Optional UUID of a specific generation record to retrieve
+ *                         If provided, returns only that record
+ * @param p_faculty_id     Optional UUID of the faculty member
+ *                         If provided, returns all generation records for that faculty
+ * @param p_start_date     Optional start date for filtering by time range
+ *                         If provided with p_end_date, returns records within range
+ * @param p_end_date       Optional end date for filtering by time range
+ *                         If provided with p_start_date, returns records within range
+ * 
+ * @returns Result set containing:
+ *   - generation_id: UUID of the generation record
+ *   - faculty_id: UUID of the faculty member
+ *   - generated_at: Timestamp when the request was made
+ * 
+ * If both p_generation_id and p_faculty_id are NULL, returns an error.
+ * Results are ordered by generated_at descending (most recent first).
+ */
+CREATE PROCEDURE read_faculty_generates_keyword(
+    IN p_generation_id CHAR(36),
+    IN p_faculty_id CHAR(36),
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+
+    IF p_generation_id IS NULL AND p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Either generation_id or faculty_id must be provided for read_faculty_generates_keyword';
+    END IF;
+
+    SELECT 
+        generation_id,
+        faculty_id,
+        generated_at
+    FROM faculty_generates_keyword
+    WHERE 
+        (p_generation_id IS NULL OR generation_id = p_generation_id)
+        AND (p_faculty_id IS NULL OR faculty_id = p_faculty_id)
+        AND (p_start_date IS NULL OR generated_at >= p_start_date)
+        AND (p_end_date IS NULL OR generated_at <= p_end_date)
+    ORDER BY generated_at DESC;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_phone.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all phone number records from the database.
+ * 
+ * Returns all records from the faculty_phone table.
+ * 
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - phone_num: Phone number
+ * 
+ * Results are ordered by faculty_id, then phone_num.
+ */
+DROP PROCEDURE IF EXISTS read_faculty_phone;
+CREATE PROCEDURE read_faculty_phone()
+BEGIN
+    SELECT faculty_id, phone_num
+    FROM faculty_phone
+    ORDER BY faculty_id, phone_num;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_phone_by_faculty.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all phone numbers associated with a faculty member.
+ * 
+ * Returns all phone number records for the specified faculty member.
+ * Since faculty members can have multiple phone numbers, this may return
+ * multiple rows.
  * 
  * @param p_faculty_id  Required UUID of the faculty member
  * 
- * @returns Result set containing all columns from the grants table plus:
- *   - grant_id
- *   - description
- *   - amount
- *   - start_date
- *   - end_date
- *   - derived_status: Computed status ('Active', 'Expired', or 'Upcoming')
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - phone_num: One phone number associated with the faculty member
+ *   (Multiple rows if the faculty member has multiple phone numbers)
+ */
+DROP PROCEDURE IF EXISTS read_faculty_phone_by_faculty;
+CREATE PROCEDURE read_faculty_phone_by_faculty (
+    IN p_faculty_id CHAR(36)
+)
+BEGIN
+    -- Retrieve all phone numbers for the specified faculty member
+    -- Returns multiple rows if the faculty member has multiple phone numbers
+    -- Each row represents one phone number association
+    SELECT faculty_id, phone_num
+    FROM faculty_phone
+    WHERE faculty_id = p_faculty_id;
+END$$
+
+DELIMITER ;
+
+-- Source: read/read_faculty_researches_keyword_by_faculty.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all research keywords associated with a faculty member.
  * 
- * Results are ordered by start_date (oldest first).
+ * Returns all keyword names that the specified faculty member researches.
+ * This shows the research interests/areas for the faculty member.
+ * 
+ * @param p_faculty_id  Required UUID of the faculty member
+ * 
+ * @returns Result set containing:
+ *   - name: Keyword name (max 64 characters)
+ *   (Multiple rows if the faculty member researches multiple keywords)
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty;
-CREATE PROCEDURE read_grants_granted_to_faculty(
-    IN p_faculty_id     CHAR(36)
+DROP PROCEDURE IF EXISTS read_faculty_researches_keyword_by_faculty;
+CREATE PROCEDURE read_faculty_researches_keyword_by_faculty(
+    IN p_faculty_id CHAR(36)
 )
 BEGIN
-    -- Validate that faculty_id is provided
     IF p_faculty_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'faculty_id is required';
     END IF;
-    SELECT  g.*,
-            grants_status(g.start_date, g.end_date) AS derived_status
-    FROM    grants AS g
-    JOIN    grants_granted_to_faculty AS ggf
-            ON g.grant_id = ggf.grant_id
-    WHERE
-            ggf.faculty_id = p_faculty_id
-    ORDER BY g.start_date;
+
+    SELECT name
+    FROM faculty_researches_keyword
+    WHERE faculty_id = p_faculty_id;
 END $$
 DELIMITER ;
 
 
--- Source: read/read_faculty_institution.sql
+-- Source: read/read_faculty_title.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all title records from the database.
+ * 
+ * Returns all records from the faculty_title table.
+ * 
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - title: Title
+ * 
+ * Results are ordered by faculty_id, then title.
+ */
+DROP PROCEDURE IF EXISTS read_faculty_title;
+CREATE PROCEDURE read_faculty_title()
+BEGIN
+    SELECT faculty_id, title
+    FROM faculty_title
+    ORDER BY faculty_id, title;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_title_by_faculty.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all titles associated with a faculty member.
+ * 
+ * Returns all title records for the specified faculty member. Since faculty
+ * members can have multiple titles, this may return multiple rows.
+ * 
+ * @param p_faculty_id  Required UUID of the faculty member
+ * 
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - title: One title associated with the faculty member
+ *   (Multiple rows if the faculty member has multiple titles)
+ */
+DROP PROCEDURE IF EXISTS read_faculty_title_by_faculty;
+CREATE PROCEDURE read_faculty_title_by_faculty (
+    IN p_faculty_id CHAR(36)
+)
+BEGIN
+    -- Retrieve all titles for the specified faculty member
+    -- Returns multiple rows if the faculty member has multiple titles
+    -- Each row represents one title association
+    SELECT faculty_id, title
+    FROM faculty_title
+    WHERE faculty_id = p_faculty_id;
+END$$
+
+DELIMITER ;
+
+-- Source: read/read_faculty_works_at_institution.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all faculty-institution relationship records from the database.
+ * 
+ * Returns all records from the faculty_works_at_institution table.
+ * Results are ordered by faculty_id, institution_id, and start_date (descending).
+ * 
+ * @returns Result set containing all columns from the faculty_works_at_institution table:
+ *   - faculty_id
+ *   - institution_id
+ *   - start_date
+ *   - end_date
+ */
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution;
+CREATE PROCEDURE read_faculty_works_at_institution()
+BEGIN
+    SELECT fwi.*
+    FROM faculty_works_at_institution fwi
+    ORDER BY fwi.faculty_id, fwi.institution_id, fwi.start_date DESC;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_faculty_works_at_institution_by_faculty.sql
 
 DELIMITER $$
 
@@ -1089,7 +1532,8 @@ DELIMITER $$
  * 
  * If both parameters are NULL, returns all relationship records.
  */
-CREATE PROCEDURE read_faculty_institution (
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_faculty;
+CREATE PROCEDURE read_faculty_works_at_institution_by_faculty (
     IN p_faculty_id      CHAR(36),
     IN p_institution_id  CHAR(36)
 )
@@ -1104,147 +1548,151 @@ END $$
 DELIMITER ;
 
 
--- Source: read/read_faculty_keyword.sql
+-- Source: read/read_faculty_works_at_institution_by_institution.sql
 
 DELIMITER $$
 
 /**
- * Retrieves all research keywords associated with a faculty member.
+ * Retrieves all faculty members who work at a given institution.
  * 
- * Returns all keyword names that the specified faculty member researches.
- * This shows the research interests/areas for the faculty member.
+ * Returns all faculty records associated with the specified institution.
+ * This includes faculty members who currently work at the institution or
+ * have worked there in the past (based on the faculty_works_at_institution
+ * relationship table).
  * 
- * @param p_faculty_id  Required UUID of the faculty member
+ * @param p_institution_id  Required UUID of the institution
  * 
- * @returns Result set containing:
- *   - name: Keyword name (max 64 characters)
- *   (Multiple rows if the faculty member researches multiple keywords)
+ * @returns Result set containing all columns from the faculty table:
+ *   - faculty_id
+ *   - first_name
+ *   - last_name
+ *   - biography
+ *   - orcid
+ *   - google_scholar_url
+ *   - research_gate_url
+ *   - scraped_from
  * 
- * @throws SQLSTATE '45000' if faculty_id is NULL
+ * @throws SQLSTATE '45000' if institution_id is NULL
  */
-CREATE PROCEDURE read_faculty_keyword(
-    IN p_faculty_id CHAR(36)
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_institution;
+CREATE PROCEDURE read_faculty_works_at_institution_by_institution (
+    IN p_institution_id CHAR(36)
 )
 BEGIN
-    IF p_faculty_id IS NULL THEN
+    -- Validate that institution_id is provided
+    IF p_institution_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'faculty_id is required';
+            SET MESSAGE_TEXT = 'institution_id is required';
     END IF;
 
-    SELECT name
-    FROM faculty_researches_keyword
-    WHERE faculty_id = p_faculty_id;
+    -- Retrieve all faculty members associated with the specified institution
+    -- Joins faculty_works_at_institution to find all faculty at this institution
+    -- Returns all faculty information for those who work or have worked at the institution
+    SELECT f.*
+    FROM faculty f
+    INNER JOIN faculty_works_at_institution fwi
+        ON f.faculty_id = fwi.faculty_id
+    WHERE fwi.institution_id = p_institution_id
+    ORDER BY f.last_name, f.first_name;
+END $$
+
+DELIMITER ;
+
+
+-- Source: read/read_grants_by_organization.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all grants associated with a specific organization.
+ * 
+ * Returns all grant records associated with the specified organization
+ * through the grants_organization join table. Includes a derived status
+ * field indicating whether each grant is active, expired, or upcoming.
+ * 
+ * @param p_name  Required organization name (max 256 characters)
+ * 
+ * @returns Result set containing all columns from the grants table plus:
+ *   - grant_id
+ *   - description
+ *   - amount
+ *   - start_date
+ *   - end_date
+ *   - derived_status: Computed status ('Active', 'Expired', or 'Upcoming')
+ * 
+ * Results are ordered by start_date (newest first).
+ * 
+ * @throws SQLSTATE '45000' if organization name is NULL
+ */
+DROP PROCEDURE IF EXISTS read_grants_by_organization;
+CREATE PROCEDURE read_grants_by_organization(
+    IN  p_name  VARCHAR(256)
+)
+BEGIN
+    IF p_name IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'organization name is required';
+    END IF;
+   
+    SELECT  g.*,
+            grants_status(g.start_date, g.end_date) AS derived_status
+    FROM    grants AS g
+    JOIN    grants_organization AS go
+            ON g.grant_id = go.grant_id
+    WHERE go.name = p_name
+    ORDER BY g.start_date DESC;
 END $$
 DELIMITER ;
 
 
--- Source: read/read_faculty_phone.sql
+-- Source: read/read_grants_granted_to_faculty_by_faculty.sql
 
 DELIMITER $$
 
 /**
- * Retrieves all phone numbers associated with a faculty member.
+ * Retrieves all grants granted to a specific faculty member.
  * 
- * Returns all phone number records for the specified faculty member.
- * Since faculty members can have multiple phone numbers, this may return
- * multiple rows.
- * 
- * @param p_faculty_id  Required UUID of the faculty member
- * 
- * @returns Result set containing:
- *   - faculty_id: UUID of the faculty member
- *   - phone_num: One phone number associated with the faculty member
- *   (Multiple rows if the faculty member has multiple phone numbers)
- */
-CREATE PROCEDURE read_faculty_phone (
-    IN p_faculty_id CHAR(36)
-)
-BEGIN
-    -- Retrieve all phone numbers for the specified faculty member
-    -- Returns multiple rows if the faculty member has multiple phone numbers
-    -- Each row represents one phone number association
-    SELECT faculty_id, phone_num
-    FROM faculty_phone
-    WHERE faculty_id = p_faculty_id;
-END$$
-
-DELIMITER ;
-
--- Source: read/read_faculty_publications.sql
-
-DELIMITER $$
-
-/**
- * Retrieves all publications authored by a specific faculty member.
- * 
- * Returns all publication records where the specified faculty member
- * is listed as an author. This shows the faculty member's publication
- * history and scholarly output.
+ * Returns all grant records associated with the specified faculty member
+ * through the grants_granted_to_faculty join table. Includes a derived
+ * status field indicating whether the grant is active, expired, or upcoming.
  * 
  * @param p_faculty_id  Required UUID of the faculty member
  * 
- * @returns Result set containing all columns from the publication table:
- *   - publication_id
- *   - title
- *   - publisher
- *   - year
- *   - doi
- *   - abstract
- *   - citation_count
- *   (Multiple rows if the faculty member has authored multiple publications)
+ * @returns Result set containing all columns from the grants table plus:
+ *   - grant_id
+ *   - description
+ *   - amount
+ *   - start_date
+ *   - end_date
+ *   - derived_status: Computed status ('Active', 'Expired', or 'Upcoming')
+ * 
+ * Results are ordered by start_date (oldest first).
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-CREATE PROCEDURE read_faculty_publications(
-    IN p_faculty_id CHAR(36)
+DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty_by_faculty;
+CREATE PROCEDURE read_grants_granted_to_faculty_by_faculty(
+    IN p_faculty_id     CHAR(36)
 )
 BEGIN
+    -- Validate that faculty_id is provided
     IF p_faculty_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'faculty_id is required';
     END IF;
-
-    SELECT p.*
-    FROM publication p
-    JOIN publication_authored_by_faculty pa
-        ON p.publication_id = pa.publication_id
-    WHERE pa.faculty_id = p_faculty_id;
+    SELECT  g.*,
+            grants_status(g.start_date, g.end_date) AS derived_status
+    FROM    grants AS g
+    JOIN    grants_granted_to_faculty AS ggf
+            ON g.grant_id = ggf.grant_id
+    WHERE
+            ggf.faculty_id = p_faculty_id
+    ORDER BY g.start_date;
 END $$
 DELIMITER ;
 
 
--- Source: read/read_faculty_title.sql
-
-DELIMITER $$
-
-/**
- * Retrieves all titles associated with a faculty member.
- * 
- * Returns all title records for the specified faculty member. Since faculty
- * members can have multiple titles, this may return multiple rows.
- * 
- * @param p_faculty_id  Required UUID of the faculty member
- * 
- * @returns Result set containing:
- *   - faculty_id: UUID of the faculty member
- *   - title: One title associated with the faculty member
- *   (Multiple rows if the faculty member has multiple titles)
- */
-CREATE PROCEDURE read_faculty_title (
-    IN p_faculty_id CHAR(36)
-)
-BEGIN
-    -- Retrieve all titles for the specified faculty member
-    -- Returns multiple rows if the faculty member has multiple titles
-    -- Each row represents one title association
-    SELECT faculty_id, title
-    FROM faculty_title
-    WHERE faculty_id = p_faculty_id;
-END$$
-
-DELIMITER ;
-
--- Source: read/read_grants_organization.sql
+-- Source: read/read_grants_organization_by_grant.sql
 
 DELIMITER $$
 
@@ -1262,8 +1710,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if grant_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_organization;
-CREATE PROCEDURE read_grants_organization(
+DROP PROCEDURE IF EXISTS read_grants_organization_by_grant;
+CREATE PROCEDURE read_grants_organization_by_grant(
     IN p_grant_id   CHAR(36)
 )
 BEGIN
@@ -1317,103 +1765,51 @@ END $$
 DELIMITER ;
 
 
--- Source: read/read_institution_faculty.sql
+-- Source: read/read_publication_authored_by_faculty_by_faculty.sql
 
 DELIMITER $$
 
 /**
- * Retrieves all faculty members who work at a given institution.
+ * Retrieves all publications authored by a specific faculty member.
  * 
- * Returns all faculty records associated with the specified institution.
- * This includes faculty members who currently work at the institution or
- * have worked there in the past (based on the faculty_works_at_institution
- * relationship table).
+ * Returns all publication records where the specified faculty member
+ * is listed as an author. This shows the faculty member's publication
+ * history and scholarly output.
  * 
- * @param p_institution_id  Required UUID of the institution
+ * @param p_faculty_id  Required UUID of the faculty member
  * 
- * @returns Result set containing all columns from the faculty table:
- *   - faculty_id
- *   - first_name
- *   - last_name
- *   - biography
- *   - orcid
- *   - google_scholar_url
- *   - research_gate_url
- *   - scraped_from
+ * @returns Result set containing all columns from the publication table:
+ *   - publication_id
+ *   - title
+ *   - publisher
+ *   - year
+ *   - doi
+ *   - abstract
+ *   - citation_count
+ *   (Multiple rows if the faculty member has authored multiple publications)
  * 
- * @throws SQLSTATE '45000' if institution_id is NULL
+ * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-CREATE PROCEDURE read_institution_faculty (
-    IN p_institution_id CHAR(36)
+DROP PROCEDURE IF EXISTS read_publication_authored_by_faculty_by_faculty;
+CREATE PROCEDURE read_publication_authored_by_faculty_by_faculty(
+    IN p_faculty_id CHAR(36)
 )
 BEGIN
-    -- Validate that institution_id is provided
-    IF p_institution_id IS NULL THEN
+    IF p_faculty_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'institution_id is required';
+            SET MESSAGE_TEXT = 'faculty_id is required';
     END IF;
 
-    -- Retrieve all faculty members associated with the specified institution
-    -- Joins faculty_works_at_institution to find all faculty at this institution
-    -- Returns all faculty information for those who work or have worked at the institution
-    SELECT f.*
-    FROM faculty f
-    INNER JOIN faculty_works_at_institution fwi
-        ON f.faculty_id = fwi.faculty_id
-    WHERE fwi.institution_id = p_institution_id
-    ORDER BY f.last_name, f.first_name;
-END $$
-
-DELIMITER ;
-
-
--- Source: read/read_organization_grants.sql
-
-DELIMITER $$
-
-/**
- * Retrieves all grants associated with a specific organization.
- * 
- * Returns all grant records associated with the specified organization
- * through the grants_organization join table. Includes a derived status
- * field indicating whether each grant is active, expired, or upcoming.
- * 
- * @param p_name  Required organization name (max 256 characters)
- * 
- * @returns Result set containing all columns from the grants table plus:
- *   - grant_id
- *   - description
- *   - amount
- *   - start_date
- *   - end_date
- *   - derived_status: Computed status ('Active', 'Expired', or 'Upcoming')
- * 
- * Results are ordered by start_date (newest first).
- * 
- * @throws SQLSTATE '45000' if organization name is NULL
- */
-DROP PROCEDURE IF EXISTS read_organization_grants;
-CREATE PROCEDURE read_organization_grants(
-    IN  p_name  VARCHAR(256)
-)
-BEGIN
-    IF p_name IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'organization name is required';
-    END IF;
-   
-    SELECT  g.*,
-            grants_status(g.start_date, g.end_date) AS derived_status
-    FROM    grants AS g
-    JOIN    grants_organization AS go
-            ON g.grant_id = go.grant_id
-    WHERE go.name = p_name
-    ORDER BY g.start_date DESC;
+    SELECT p.*
+    FROM publication p
+    JOIN publication_authored_by_faculty pa
+        ON p.publication_id = pa.publication_id
+    WHERE pa.faculty_id = p_faculty_id;
 END $$
 DELIMITER ;
 
 
--- Source: read/read_publication_keyword.sql
+-- Source: read/read_publication_explores_keyword_by_publication.sql
 
 DELIMITER $$
 
@@ -1431,7 +1827,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if publication_id is NULL
  */
-CREATE PROCEDURE read_publication_keyword(
+DROP PROCEDURE IF EXISTS read_publication_explores_keyword_by_publication;
+CREATE PROCEDURE read_publication_explores_keyword_by_publication(
     IN p_publication_id CHAR(36)
 )
 BEGIN
@@ -1445,6 +1842,139 @@ BEGIN
     WHERE publication_id = p_publication_id;
 END $$
 DELIMITER ;
+
+
+-- Source: read/read_session.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all session records from the database.
+ * 
+ * Returns all records from the session table.
+ * 
+ * @returns Result set containing:
+ *   - session_id: UUID of the session
+ *   - faculty_id: UUID of the faculty member
+ *   - token_hash: SHA-256 hash of the refresh token
+ *   - created_at: When the session was created
+ *   - expires_at: When the session expires
+ *   - revoked: Whether the session has been revoked
+ * 
+ * Results are ordered by created_at descending (most recent first).
+ */
+DROP PROCEDURE IF EXISTS read_session;
+CREATE PROCEDURE read_session()
+BEGIN
+    SELECT 
+        session_id,
+        faculty_id,
+        token_hash,
+        created_at,
+        expires_at,
+        revoked
+    FROM session
+    ORDER BY created_at DESC;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_session_by_faculty.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves all active sessions for a given faculty member.
+ * 
+ * Returns all non-revoked, non-expired sessions for the specified faculty member.
+ * 
+ * @param p_faculty_id  Required UUID of the faculty member
+ * 
+ * @returns Result set containing:
+ *   - session_id: UUID of the session
+ *   - faculty_id: UUID of the faculty member
+ *   - created_at: When the session was created
+ *   - expires_at: When the session expires
+ *   - revoked: Whether the session has been revoked
+ * 
+ * Results are ordered by created_at descending (most recent first).
+ * 
+ * @throws SQLSTATE '45000' if faculty_id is NULL
+ */
+DROP PROCEDURE IF EXISTS read_session_by_faculty;
+CREATE PROCEDURE read_session_by_faculty(
+    IN p_faculty_id CHAR(36)
+)
+BEGIN
+    IF p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required';
+    END IF;
+
+    SELECT 
+        session_id,
+        faculty_id,
+        created_at,
+        expires_at,
+        revoked
+    FROM session
+    WHERE faculty_id = p_faculty_id
+        AND revoked = FALSE
+        AND expires_at > UTC_TIMESTAMP()
+    ORDER BY created_at DESC;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: read/read_session_by_token_hash.sql
+
+DELIMITER $$
+
+/**
+ * Retrieves a session record by its token hash.
+ * 
+ * Returns the session record for a given refresh token hash.
+ * Only returns active (non-revoked, non-expired) sessions.
+ * 
+ * @param p_token_hash  Required SHA-256 hash of the refresh token (64 characters)
+ * 
+ * @returns Result set containing:
+ *   - session_id: UUID of the session
+ *   - faculty_id: UUID of the faculty member
+ *   - created_at: When the session was created
+ *   - expires_at: When the session expires
+ *   - revoked: Whether the session has been revoked
+ * 
+ * @throws SQLSTATE '45000' if token_hash is NULL
+ */
+DROP PROCEDURE IF EXISTS read_session_by_token_hash;
+CREATE PROCEDURE read_session_by_token_hash(
+    IN p_token_hash VARCHAR(64)
+)
+BEGIN
+    IF p_token_hash IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'token_hash is required';
+    END IF;
+
+    SELECT 
+        session_id,
+        faculty_id,
+        created_at,
+        expires_at,
+        revoked
+    FROM session
+    WHERE token_hash = p_token_hash
+        AND revoked = FALSE
+        AND expires_at > UTC_TIMESTAMP();
+END $$
+
+DELIMITER ;
+
 
 
 -- ============================================================
@@ -1716,6 +2246,63 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- Source: update/update_faculty_generates_keyword.sql
+
+DELIMITER $$
+
+/**
+ * Updates an existing faculty keyword generation record.
+ * 
+ * Allows updating the timestamp of a generation record. This is useful
+ * if you need to correct or adjust when a generation request was recorded.
+ * 
+ * @param p_generation_id  Required UUID of the generation record to update
+ * @param p_generated_at   Optional new timestamp (NULL to keep existing)
+ * 
+ * @returns Result set containing:
+ *   - generation_id: UUID of the updated generation record
+ *   - action: Status message ('updated')
+ * 
+ * @throws SQLSTATE '45000' if generation_id is NULL or doesn't exist
+ */
+CREATE PROCEDURE update_faculty_generates_keyword(
+    IN p_generation_id CHAR(36),
+    IN p_generated_at DATETIME
+)
+BEGIN
+    -- Variable to check if the generation record exists
+    DECLARE existing_count INT;
+
+    -- Validate that generation_id is provided and not empty
+    IF p_generation_id IS NULL OR TRIM(p_generation_id) = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'generation_id is required for update_faculty_generates_keyword';
+    END IF;
+
+    -- Verify that the generation record exists before attempting update
+    SELECT COUNT(*) INTO existing_count
+    FROM faculty_generates_keyword
+    WHERE generation_id = p_generation_id;
+
+    IF existing_count = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'generation_id does not exist';
+    END IF;
+
+    -- Perform partial update using COALESCE
+    -- If p_generated_at is NULL, keep existing value
+    UPDATE faculty_generates_keyword
+    SET generated_at = COALESCE(p_generated_at, generated_at)
+    WHERE generation_id = p_generation_id;
+
+    -- Return confirmation of the update
+    SELECT p_generation_id AS generation_id, 'updated' AS action;
+END $$
+
+DELIMITER ;
+
+
 
 -- Source: update/update_faculty_phone.sql
 
@@ -2250,6 +2837,65 @@ END $$
 DELIMITER ;
 
 
+-- Source: update/update_session.sql
+
+DELIMITER $$
+
+/**
+ * Updates session records based on identifier and optional fields.
+ * 
+ * This unified procedure allows updating any session field(s) by identifying
+ * the session(s) using one of: session_id, token_hash, or faculty_id.
+ * 
+ * At least one identifier must be provided. If multiple identifiers are provided,
+ * they are combined with AND logic (most specific match).
+ * 
+ * @param p_session_id    Optional UUID of the specific session to update
+ * @param p_token_hash    Optional SHA-256 hash of the refresh token (64 characters)
+ * @param p_faculty_id    Optional UUID of the faculty member (updates all their sessions)
+ * @param p_revoked       Optional boolean value for the revoked flag
+ * @param p_expires_at    Optional datetime value for the expiration time
+ * 
+ * @returns No result set. Use read procedures to verify the update.
+ * 
+ * @throws SQLSTATE '45000' if no identifier is provided
+ * @throws SQLSTATE '45000' if no fields to update are provided
+ */
+DROP PROCEDURE IF EXISTS update_session;
+CREATE PROCEDURE update_session(
+    IN p_session_id CHAR(36),
+    IN p_token_hash VARCHAR(64),
+    IN p_faculty_id CHAR(36),
+    IN p_revoked BOOLEAN,
+    IN p_expires_at DATETIME
+)
+BEGIN
+    -- Validate that at least one identifier is provided
+    IF p_session_id IS NULL AND p_token_hash IS NULL AND p_faculty_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'At least one identifier (session_id, token_hash, or faculty_id) is required';
+    END IF;
+
+    -- Validate that at least one field to update is provided
+    IF p_revoked IS NULL AND p_expires_at IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'At least one field to update (revoked or expires_at) is required';
+    END IF;
+
+    -- Update session(s) based on provided identifiers and fields
+    UPDATE session
+    SET 
+        revoked = IF(p_revoked IS NOT NULL, p_revoked, revoked),
+        expires_at = IF(p_expires_at IS NOT NULL, p_expires_at, expires_at)
+    WHERE 
+        (p_session_id IS NULL OR session_id = p_session_id)
+        AND (p_token_hash IS NULL OR token_hash = p_token_hash)
+        AND (p_faculty_id IS NULL OR faculty_id = p_faculty_id);
+END $$
+
+DELIMITER ;
+
+
 -- ============================================================
 -- delete procedures
 -- ============================================================
@@ -2462,6 +3108,39 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+
+-- Source: delete/delete_faculty_generates_keyword.sql
+
+DELIMITER $$
+
+/**
+ * Deletes a faculty keyword generation record from the database.
+ * 
+ * Removes a specific generation record. This can be used to clean up old records
+ * or remove specific entries for administrative purposes.
+ * 
+ * @param p_generation_id  Required UUID of the generation record to delete
+ * 
+ * @returns No result set. Use read procedures to verify the deletion.
+ * 
+ * @throws SQLSTATE '45000' if generation_id is NULL or empty
+ */
+CREATE PROCEDURE delete_faculty_generates_keyword(
+    IN p_generation_id CHAR(36)
+)
+BEGIN
+    IF p_generation_id IS NULL OR TRIM(p_generation_id) = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'generation_id is required for delete_faculty_generates_keyword';
+    END IF;
+
+    DELETE FROM faculty_generates_keyword
+    WHERE generation_id = p_generation_id;
+END $$
+
+DELIMITER ;
+
 
 
 -- Source: delete/delete_faculty_phone.sql
@@ -2840,6 +3519,55 @@ DELIMITER ;
 -- workflow procedures
 -- ============================================================
 
+-- Source: workflow/add_keyword_for_faculty.sql
+
+DELIMITER $$
+
+/**
+ * Adds a new keyword and associates it with a faculty member.
+ * 
+ * This workflow procedure combines two operations:
+ * 1. Creates a new keyword record
+ * 2. Links the keyword to the specified faculty member via the join table
+ * 
+ * This is a convenience procedure that handles the complete workflow of
+ * adding a keyword for a faculty member in a single call.
+ * 
+ * @param p_faculty_id    Required UUID of the faculty member
+ * @param p_name          Required keyword name (max 64 characters)
+ * 
+ * @returns Result set containing:
+ *   - keyword_id: UUID of the newly created keyword
+ *   - faculty_id: UUID of the associated faculty member
+ *   - action: Status message ('inserted')
+ * 
+ * @throws SQLSTATE '45000' if faculty_id is NULL
+ */
+DROP PROCEDURE IF EXISTS add_keyword_for_faculty;
+CREATE PROCEDURE add_keyword_for_faculty(
+    IN p_faculty_id CHAR(36),
+    IN p_name VARCHAR(64)
+)
+BEGIN
+    -- Validate input: faculty_id must be provided
+    IF p_faculty_id IS NULL OR p_name IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id and keyword name are required.';
+    END IF;
+
+    -- Step 1: Create the keyword record
+    CALL create_keyword(p_name);
+
+    -- Step 2: Link the keyword to the faculty member
+    CALL create_faculty_researches_keyword(p_faculty_id, p_name);
+
+    -- Step 3: Return confirmation with both IDs for reference
+    SELECT p_faculty_id AS faculty_id,
+           p_name AS keyword_id,
+           'inserted' AS action;
+END $$
+DELIMITER ;
+
 -- Source: workflow/add_publication_for_faculty.sql
 
 DELIMITER $$
@@ -2854,19 +3582,21 @@ DELIMITER $$
  * This is a convenience procedure that handles the complete workflow of
  * adding a publication for a faculty member in a single call.
  * 
- * @param p_faculty_id    Required UUID of the faculty member
- * @param p_title         Publication title
- * @param p_publisher     Publisher name
- * @param p_year          Publication year
- * @param p_doi           Digital Object Identifier (DOI)
- * @param p_abstract      Publication abstract text
+ * @param p_faculty_id     Required UUID of the faculty member
+ * @param p_publication_id Required UUID of the publication
+ * @param p_title          Publication title
+ * @param p_publisher      Publisher name
+ * @param p_year           Publication year
+ * @param p_doi            Digital Object Identifier (DOI)
+ * @param p_abstract       Publication abstract text
+ * @param p_citation_count Citation count
  * 
  * @returns Result set containing:
- *   - publication_id: UUID of the newly created publication
  *   - faculty_id: UUID of the associated faculty member
+ *   - publication_id: UUID of the newly created publication
  *   - action: Status message ('inserted')
  * 
- * @throws SQLSTATE '45000' if faculty_id is NULL
+ * @throws SQLSTATE '45000' if faculty_id or publication_id is NULL
  */
 CREATE PROCEDURE add_publication_for_faculty (
     IN p_faculty_id CHAR(36),
@@ -2879,11 +3609,7 @@ CREATE PROCEDURE add_publication_for_faculty (
     IN p_citation_count INT
 )
 BEGIN
-    -- Variable to store the generated publication ID
-    DECLARE v_publication_id CHAR(36);
-    DECLARE v_generated_id CHAR(36);
-
-    -- Validate input: faculty_id must be provided
+    -- Validate input: faculty_id and publication_id must be provided
     IF p_faculty_id IS NULL OR p_publication_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'faculty_id and publication_id are required.';
@@ -2891,30 +3617,179 @@ BEGIN
 
     -- Step 1: Create the publication record
     CALL create_publication(
-        v_publication_id,
+        p_publication_id,
         p_title,
         p_publisher,
         p_year,
         p_doi,
         p_abstract,
-        p_citation_count,
-        v_generated_id
+        p_citation_count
     );
 
     -- Step 2: Link the publication to the faculty member
     -- This creates the many-to-many relationship in the join table
     CALL create_publication_authored_by_faculty(
         p_faculty_id,
-        v_publication_id
+        p_publication_id
     );
 
     -- Step 3: Return confirmation with both IDs for reference
-    SELECT v_publication_id AS publication_id,
-           p_faculty_id AS faculty_id,
+    SELECT p_faculty_id AS faculty_id,
+           p_publication_id AS publication_id,
            'inserted' AS action;
 
 END $$
 DELIMITER ;
+
+
+-- Source: workflow/cleanup_expired_sessions.sql
+
+DELIMITER $$
+
+/**
+ * Deletes expired sessions from the database.
+ * 
+ * Removes all sessions that have passed their expiration date.
+ * This is a maintenance procedure that should be run periodically.
+ * 
+ * @returns Result set containing:
+ *   - deleted_count: Number of sessions deleted
+ */
+DROP PROCEDURE IF EXISTS cleanup_expired_sessions;
+CREATE PROCEDURE cleanup_expired_sessions()
+BEGIN
+    DELETE FROM session
+    WHERE expires_at < UTC_TIMESTAMP();
+    
+    SELECT ROW_COUNT() AS deleted_count;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: workflow/cleanup_old_keyword_generations.sql
+
+DELIMITER $$
+
+/**
+ * Deletes old faculty keyword generation records.
+ * 
+ * This workflow procedure removes generation records that are older than
+ * a specified datetime threshold. This is useful for maintaining the
+ * database by removing records that are no longer relevant for rate limiting
+ * purposes (e.g., records older than 1 hour, 1 day, etc.).
+ * 
+ * @param p_cutoff_datetime  Required datetime threshold
+ *                           All records with generated_at older than this
+ *                           datetime will be deleted
+ * 
+ * @returns Result set containing:
+ *   - deleted_count: Number of records that were deleted
+ *   - cutoff_datetime: The datetime threshold that was used
+ *   - action: Status message ('cleaned')
+ * 
+ * @throws SQLSTATE '45000' if p_cutoff_datetime is NULL
+ * 
+ * Example usage:
+ *   -- Delete all records older than 1 hour
+ *   CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 HOUR));
+ *   
+ *   -- Delete all records older than 1 year
+ *   CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 DAY));
+ *   
+ *   -- Delete all records before a specific date
+ *   CALL cleanup_old_keyword_generations('2024-01-01 00:00:00');
+ */
+CREATE PROCEDURE cleanup_old_keyword_generations(
+    IN p_cutoff_datetime DATETIME
+)
+BEGIN
+    DECLARE v_deleted_count INT DEFAULT 0;
+
+    -- Validate that cutoff datetime is provided
+    IF p_cutoff_datetime IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'cutoff_datetime is required for cleanup_old_keyword_generations';
+    END IF;
+
+    -- Delete records older than the cutoff datetime
+    DELETE FROM faculty_generates_keyword
+    WHERE generated_at < p_cutoff_datetime;
+
+    -- Get the count of deleted records
+    SET v_deleted_count = ROW_COUNT();
+
+    -- Return summary of the cleanup operation
+    SELECT 
+        v_deleted_count AS deleted_count,
+        p_cutoff_datetime AS cutoff_datetime,
+        'cleaned' AS action;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: workflow/count_faculty_keyword_generations.sql
+
+DELIMITER $$
+
+/**
+ * Counts keyword generation records for a faculty member after a specified datetime.
+ * 
+ * This workflow procedure is used for rate limiting by checking how many times
+ * a faculty member has requested keyword generation within a specific time period.
+ * Returns the count of records where generated_at is greater than or equal to
+ * the provided datetime threshold.
+ * 
+ * @param p_faculty_id      Required UUID of the faculty member to check
+ * @param p_since_datetime  Required datetime threshold
+ *                          Counts all records with generated_at >= this datetime
+ * 
+ * @returns Result set containing:
+ *   - faculty_id: UUID of the faculty member
+ *   - generation_count: Number of generation records since the datetime
+ *   - since_datetime: The datetime threshold that was used
+ * 
+ * @throws SQLSTATE '45000' if p_faculty_id or p_since_datetime is NULL
+ * 
+ * Example usage:
+ *   -- Count generations in the last hour
+ *   CALL count_faculty_keyword_generations('faculty-uuid', DATE_SUB(NOW(), INTERVAL 1 HOUR));
+ *   
+ *   -- Count generations in the last 24 hours
+ *   CALL count_faculty_keyword_generations('faculty-uuid', DATE_SUB(NOW(), INTERVAL 24 HOUR));
+ *   
+ *   -- Count generations since a specific date
+ *   CALL count_faculty_keyword_generations('faculty-uuid', '2024-01-01 00:00:00');
+ */
+CREATE PROCEDURE count_faculty_keyword_generations(
+    IN p_faculty_id CHAR(36),
+    IN p_since_datetime DATETIME,
+    OUT p_generation_count INT
+)
+BEGIN
+    -- Validate required parameters
+    IF p_faculty_id IS NULL OR TRIM(p_faculty_id) = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'faculty_id is required for count_faculty_keyword_generations';
+    END IF;
+
+    IF p_since_datetime IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'since_datetime is required for count_faculty_keyword_generations';
+    END IF;
+
+    -- Count records for this faculty member generated at or after the datetime threshold
+    SELECT COUNT(*) INTO p_generation_count
+    FROM faculty_generates_keyword
+    WHERE faculty_id = p_faculty_id
+      AND generated_at >= p_since_datetime;
+END $$
+
+DELIMITER ;
+
 
 
 -- Source: workflow/recommend_faculty_by_department.sql

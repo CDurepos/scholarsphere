@@ -21,8 +21,8 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if organization name is NULL
  */
-DROP PROCEDURE IF EXISTS read_organization_grants;
-CREATE PROCEDURE read_organization_grants(
+DROP PROCEDURE IF EXISTS read_grants_by_organization;
+CREATE PROCEDURE read_grants_by_organization(
     IN  p_name  VARCHAR(256)
 )
 BEGIN

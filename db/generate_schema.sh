@@ -29,6 +29,7 @@ BASE_TABLES=(
     "keyword.sql"
     "publication.sql"
     "grants.sql"
+    "session.sql"
 )
 
 # Tables that reference only one base table

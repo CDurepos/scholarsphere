@@ -87,6 +87,48 @@ CREATE TABLE IF NOT EXISTS grants (
 );
 
 
+-- Source: session.sql
+
+-- SESSION SCHEMA
+-- Stores hashed refresh tokens for long-term authentication sessions
+CREATE TABLE IF NOT EXISTS session (
+    -- Primary key
+    session_id              CHAR(36)        PRIMARY KEY,
+    
+    -- Associated faculty member
+    faculty_id           CHAR(36)         NOT NULL,
+    
+    -- Hash of the refresh token (SHA-256)
+    -- Never store the raw token, only the hash
+    token_hash           VARCHAR(64)      NOT NULL UNIQUE,
+    
+    -- When this session was created
+    created_at           DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    -- When this token expires (typically 7-30 days)
+    expires_at           DATETIME         NOT NULL,
+
+    -- Whether this session has been revoked
+    revoked              BOOLEAN          NOT NULL DEFAULT FALSE,
+    
+    -- Foreign key constraint
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty (faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    
+    -- Index for lookups by faculty_id
+    INDEX idx_faculty_id (faculty_id),
+    
+    -- Index for lookups by token_hash
+    INDEX idx_token_hash (token_hash),
+    
+    -- Index for cleanup of expired tokens
+    INDEX idx_expires_at (expires_at)
+);
+
+
+
 -- Source: credentials.sql
 
 -- USER CREDENTIALS SCHEMA
@@ -169,6 +211,21 @@ CREATE TABLE IF NOT EXISTS faculty_email (
     -- RegEx to check that email is indeed an email
     CHECK (email IS NULL OR email LIKE '%_@__%.__%')
 );
+
+-- Source: faculty_generates_keyword.sql
+
+CREATE TABLE IF NOT EXISTS faculty_generates_keyword (
+    generation_id    CHAR(36)        PRIMARY KEY,
+    faculty_id       CHAR(36)        NOT NULL,
+    generated_at     DATETIME        NOT NULL,
+
+    FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
 
 -- Source: faculty_phone.sql
 
