@@ -13,8 +13,10 @@ from flask import Flask, Blueprint
 def create_app():
     app = Flask(__name__)
     CORS(
-        app
-    )  # This allows any origin to see backend response. It's a good idea to restrict this to just the frontend once the servers are hosted.
+        app,
+        supports_credentials=True,
+        origins=["http://localhost:5173", "http://127.0.0.1:5173"]
+    )
 
     app.config.from_object(Config)
     app.url_map.strict_slashes = app.config.get(
@@ -22,7 +24,6 @@ def create_app():
     )  # If False, the trailing slash in routes and requests do not matter
 
     api_bp = Blueprint("api", __name__)
-    # Register api blueprints
     api_bp.register_blueprint(auth_bp, url_prefix="/auth")
     api_bp.register_blueprint(search_bp, url_prefix="/search")
     api_bp.register_blueprint(faculty_bp, url_prefix="/faculty")

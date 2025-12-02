@@ -55,10 +55,7 @@ def create_faculty():
         return jsonify(result), 201
         
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error creating faculty: {error_details}")
-        return jsonify({"error": str(e), "details": error_details}), 500
+        return jsonify({"error": str(e)}), 500
 
 # GET by faculty_id
 @faculty_bp.route("/<string:faculty_id>", methods=["GET"])
@@ -83,15 +80,11 @@ def get_faculty(faculty_id):
         return jsonify(faculty_data), 200
         
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error fetching faculty: {error_details}")
-        
         error_msg = str(e).lower()
         if "not found" in error_msg:
             return jsonify({"error": f"Faculty member with id {faculty_id} not found"}), 404
         
-        return jsonify({"error": str(e), "details": error_details}), 500
+        return jsonify({"error": str(e)}), 500
 
 # UPDATE by faculty_id
 @faculty_bp.route("/<string:faculty_id>", methods=["PUT"])
@@ -134,16 +127,11 @@ def update_faculty(faculty_id):
         return jsonify(result), 200
         
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error updating faculty: {error_details}")
-        
-        # Check if it's a database error about faculty not existing
         error_msg = str(e).lower()
         if "does not exist" in error_msg or "not found" in error_msg:
             return jsonify({"error": f"Faculty member with id {faculty_id} not found"}), 404
         
-        return jsonify({"error": str(e), "details": error_details}), 500
+        return jsonify({"error": str(e)}), 500
     
 
 # DELETE faculty with faculty_id

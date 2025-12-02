@@ -8,8 +8,15 @@ from backend.app.services.auth import (
     validate_login,
     check_credentials_exist,
 )
-
-from flask import Blueprint, request, jsonify
+from backend.app.services.session import (
+    create_session,
+    get_session_by_token_hash,
+    hash_token,
+    revoke_session,
+    revoke_all_sessions,
+)
+from backend.app.utils.jwt import generate_access_token
+from flask import Blueprint, request, jsonify, make_response
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -58,9 +65,6 @@ def register():
         elif "faculty_id doesn't exist" in error_msg or "foreign key constraint" in error_msg.lower():
             return jsonify({"error": "Invalid faculty_id"}), 404
         
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error registering credentials: {error_details}")
         return jsonify({"error": error_msg}), 500
 
 # Login verification
@@ -92,25 +96,45 @@ def login():
             return jsonify({"error": "password is required"}), 400
         
         result = validate_login(data)
+        faculty_id = result["faculty_id"]
         
-        return jsonify({
-            "faculty_id": result["faculty_id"],
+        # Generate access token (JWT)
+        access_token = generate_access_token(faculty_id)
+        
+        # Create session and generate refresh token
+        refresh_token, session_id = create_session(faculty_id)
+        
+        # Create response with access token in JSON body
+        response = make_response(jsonify({
+            "access_token": access_token,
+            "faculty_id": faculty_id,
             "faculty": result["faculty"]
-        }), 200
+        }), 200)
+        
+        response.set_cookie(
+            "refresh_token",
+            refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+            max_age=7 * 24 * 60 * 60,
+            path="/"
+        )
+        
+        return response
         
     except Exception as e:
         error_msg = str(e)
-        # Check for specific login errors and return appropriate messages
+        
         if "Invalid password" in error_msg:
             return jsonify({"error": "Invalid password"}), 401
         elif "Username not found" in error_msg:
             return jsonify({"error": "Username not found"}), 401
         elif "Login failed" in error_msg:
             return jsonify({"error": "Login failed. Please try again."}), 401
+        elif "hash_password" in error_msg or "function" in error_msg.lower():
+            return jsonify({"error": "Database configuration error. Please contact support."}), 500
         
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error during login: {error_details}")
         return jsonify({"error": error_msg}), 500
 
 
@@ -136,9 +160,6 @@ def check_username():
         return jsonify(result), 200
         
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error checking username: {error_details}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -158,7 +179,75 @@ def check_credentials(faculty_id):
         return jsonify(result), 200
         
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error checking credentials: {error_details}")
         return jsonify({"error": str(e)}), 500
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+def refresh():
+    """
+    Refresh access token using refresh token from cookie.
+    
+    Returns:
+        JSON response with new access_token, or error message
+    """
+    try:
+        refresh_token = request.cookies.get("refresh_token")
+        
+        if not refresh_token:
+            return jsonify({"error": "Refresh token not found"}), 401
+        
+        token_hash = hash_token(refresh_token)
+        session = get_session_by_token_hash(token_hash)
+        
+        if not session:
+            return jsonify({"error": "Invalid or expired refresh token"}), 401
+        
+        faculty_id = session["faculty_id"]
+        access_token = generate_access_token(faculty_id)
+        
+        return jsonify({
+            "access_token": access_token
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": "Failed to refresh token"}), 500
+
+
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    """
+    Logout by revoking the current session.
+    
+    Revokes the session associated with the refresh token in the cookie.
+    
+    Returns:
+        JSON response with success message
+    """
+    try:
+        # Get refresh token from cookie
+        refresh_token = request.cookies.get("refresh_token")
+        
+        if refresh_token:
+            # Hash and revoke the session
+            token_hash = hash_token(refresh_token)
+            revoke_session(token_hash)
+        
+        # Create response that clears the cookie
+        response = make_response(jsonify({
+            "message": "Logged out successfully"
+        }), 200)
+        
+        # Clear the refresh token cookie
+        response.set_cookie(
+            "refresh_token",
+            "",
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+            max_age=0  # Expire immediately
+        )
+        
+        return response
+        
+    except Exception as e:
+        return jsonify({"error": "Failed to logout"}), 500

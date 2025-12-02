@@ -35,10 +35,8 @@ def get_institutions_from_json():
             _institutions_cache = json.load(f)
         return _institutions_cache
     except FileNotFoundError:
-        print(f"Warning: institutions.json not found at {json_path}")
         return []
-    except json.JSONDecodeError as e:
-        print(f"Error parsing institutions.json: {e}")
+    except json.JSONDecodeError:
         return []
 
 
@@ -93,8 +91,6 @@ def get_institution_id_by_name(institution_name: str, cursor=None):
                 break
         
         if not institution_data:
-            # Institution not found in JSON either
-            print(f"Warning: Institution '{institution_name}' not found in institutions.json")
             return None
         
         # Create the institution in the database
@@ -131,9 +127,6 @@ def get_institution_id_by_name(institution_name: str, cursor=None):
     except Exception as e:
         if conn:
             conn.rollback()
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f"Error in get_institution_id_by_name: {error_trace}")
         raise e
     finally:
         if should_close_conn:

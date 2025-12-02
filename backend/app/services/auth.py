@@ -1,4 +1,19 @@
-from backend.app.db.connection import get_connection
+"""
+Authentication service layer
+Handles business logic for user authentication and credential management
+"""
+from backend.app.db.transaction_context import start_transaction
+from backend.app.db.procedures import (
+    sql_register_credentials,
+    sql_validate_login,
+    sql_check_username_exists,
+    sql_check_credentials_exist,
+    sql_read_faculty,
+    sql_read_faculty_email_by_faculty,
+    sql_read_faculty_phone_by_faculty,
+    sql_read_faculty_department_by_faculty,
+    sql_read_faculty_title_by_faculty,
+)
 
 
 def register_credentials(data: dict):
@@ -21,50 +36,22 @@ def register_credentials(data: dict):
         Exception: If username already exists, credentials already exist for faculty,
                   or faculty_id doesn't exist
     """
-    conn = None
-    cursor = None
-    
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        # Call the register_credentials stored procedure
-        # The procedure handles password hashing internally
-        cursor.callproc(
-            "register_credentials",
-            (
+        with start_transaction() as transaction_context:
+            sql_register_credentials(
+                transaction_context,
                 data.get("faculty_id"),
                 data.get("username"),
                 data.get("password"),
-            ),
-        )
-        
-        # Consume any result set to clear cursor
-        try:
-            stored_results = list(cursor.stored_results())
-            if stored_results:
-                stored_results[0].fetchall()
-        except:
-            pass
-        
-        conn.commit()
+            )
+            # Transaction commits automatically on success
         
         return {
             "message": "Credentials registered successfully"
         }
-        
     except Exception as e:
-        if conn:
-            conn.rollback()
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f"Error in register_credentials service: {error_trace}")
+        # Transaction already rolled back by context manager
         raise e
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 
 def validate_login(data: dict):
@@ -85,123 +72,60 @@ def validate_login(data: dict):
     Raises:
         Exception: If username or password is invalid
     """
-    conn = None
-    cursor = None
-    
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        username = data.get("username")
-        password = data.get("password")
-        
-        # Call validate_login procedure with OUT parameters
-        result_args = cursor.callproc(
-            "validate_login",
-            (
-                username,
-                password,
-                '',  # OUT p_faculty_id (filled by procedure)
-                0,   # OUT p_status_code (filled by procedure)
-            ),
-        )
-        
-        # Consume any result sets first
-        try:
-            stored_results = list(cursor.stored_results())
-            for result in stored_results:
-                result.fetchall()
-        except:
-            pass
-        
-        # When using dictionary=True cursor, callproc returns a dict with keys like 'procedure_name_argN'
-        # For validate_login: arg1=username, arg2=password, arg3=faculty_id (OUT), arg4=status_code (OUT)
-        if isinstance(result_args, dict):
-            faculty_id = result_args.get('validate_login_arg3') or None
-            status_code = result_args.get('validate_login_arg4')
-            if status_code is None:
-                status_code = -1
-        elif isinstance(result_args, (tuple, list)) and len(result_args) >= 4:
-            # Fallback for tuple/list return (if dictionary=False)
-            faculty_id = result_args[2] if result_args[2] else None
-            status_code = result_args[3] if result_args[3] is not None else -1
-        else:
-            faculty_id = None
-            status_code = -1
-        
-        # Check status code
-        if status_code == 0:
-            # Login successful - fetch complete faculty data
-            # Get basic faculty info
-            cursor.callproc("read_faculty", (faculty_id,))
-            stored_results = list(cursor.stored_results())
-            if not stored_results:
-                raise Exception("Failed to retrieve faculty data")
+        with start_transaction() as transaction_context:
+            # Validate login credentials
+            faculty_id, status_code = sql_validate_login(
+                transaction_context,
+                data.get("username"),
+                data.get("password"),
+            )
             
-            faculty_result = stored_results[0].fetchone()
-            if not faculty_result:
-                raise Exception("Faculty data not found after successful login")
-            
-            # Fetch emails
-            cursor.callproc("read_faculty_email", (faculty_id,))
-            email_results = list(cursor.stored_results())
-            emails = []
-            if email_results:
-                email_rows = email_results[0].fetchall()
+            # Check status code
+            if status_code == 0:
+                # Login successful - fetch complete faculty data
+                faculty_result = sql_read_faculty(transaction_context, faculty_id)
+                if not faculty_result:
+                    raise Exception("Faculty data not found after successful login")
+                
+                # Fetch emails
+                email_rows = sql_read_faculty_email_by_faculty(transaction_context, faculty_id)
                 emails = [row.get('email') for row in email_rows if row.get('email')]
-            
-            # Fetch phones
-            cursor.callproc("read_faculty_phone", (faculty_id,))
-            phone_results = list(cursor.stored_results())
-            phones = []
-            if phone_results:
-                phone_rows = phone_results[0].fetchall()
+                
+                # Fetch phones
+                phone_rows = sql_read_faculty_phone_by_faculty(transaction_context, faculty_id)
                 phones = [row.get('phone_num') for row in phone_rows if row.get('phone_num')]
-            
-            # Fetch departments
-            cursor.callproc("read_faculty_department", (faculty_id,))
-            dept_results = list(cursor.stored_results())
-            departments = []
-            if dept_results:
-                dept_rows = dept_results[0].fetchall()
+                
+                # Fetch departments
+                dept_rows = sql_read_faculty_department_by_faculty(transaction_context, faculty_id)
                 departments = [row.get('department_name') for row in dept_rows if row.get('department_name')]
-            
-            # Fetch titles
-            cursor.callproc("read_faculty_title", (faculty_id,))
-            title_results = list(cursor.stored_results())
-            titles = []
-            if title_results:
-                title_rows = title_results[0].fetchall()
+                
+                # Fetch titles
+                title_rows = sql_read_faculty_title_by_faculty(transaction_context, faculty_id)
                 titles = [row.get('title') for row in title_rows if row.get('title')]
-            
-            # Combine all faculty data
-            complete_faculty = {
-                **faculty_result,
-                "emails": emails,
-                "phones": phones,
-                "departments": departments,
-                "titles": titles,
-            }
-            
-            return {
-                "faculty_id": faculty_id,
-                "faculty": complete_faculty
-            }
-        elif status_code == 1:
-            raise Exception("Invalid password")
-        elif status_code == 2:
-            raise Exception("Username not found")
-        else:
-            raise Exception("Login failed")
-        
+                
+                # Combine all faculty data
+                complete_faculty = {
+                    **faculty_result,
+                    "emails": emails,
+                    "phones": phones,
+                    "departments": departments,
+                    "titles": titles,
+                }
+                
+                return {
+                    "faculty_id": faculty_id,
+                    "faculty": complete_faculty
+                }
+            elif status_code == 1:
+                raise Exception("Invalid password")
+            elif status_code == 2:
+                raise Exception("Username not found")
+            else:
+                raise Exception("Login failed")
     except Exception as e:
         # Re-raise with original message
         raise e
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 
 def check_username_available(username: str):
@@ -214,36 +138,19 @@ def check_username_available(username: str):
     Returns:
         dict: Contains "available" (bool) and "username" (str)
     """
-    conn = None
-    cursor = None
-    
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        # Check if username exists
-        cursor.execute(
-            "SELECT username FROM credentials WHERE username = %s",
-            (username,)
-        )
-        result = cursor.fetchone()
-        
-        return {
-            "username": username,
-            "available": result is None
-        }
-        
+        with start_transaction() as transaction_context:
+            exists = sql_check_username_exists(transaction_context, username)
+            return {
+                "username": username,
+                "available": not exists
+            }
     except Exception as e:
         # On error, assume username is not available to be safe
         return {
             "username": username,
             "available": False
         }
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 
 def check_credentials_exist(faculty_id: str):
@@ -256,33 +163,16 @@ def check_credentials_exist(faculty_id: str):
     Returns:
         dict: Contains "has_credentials" (bool) and "faculty_id" (str)
     """
-    conn = None
-    cursor = None
-    
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        # Check if credentials exist for this faculty_id
-        cursor.execute(
-            "SELECT faculty_id FROM credentials WHERE faculty_id = %s",
-            (faculty_id,)
-        )
-        result = cursor.fetchone()
-        
-        return {
-            "faculty_id": faculty_id,
-            "has_credentials": result is not None
-        }
-        
+        with start_transaction() as transaction_context:
+            exists = sql_check_credentials_exist(transaction_context, faculty_id)
+            return {
+                "faculty_id": faculty_id,
+                "has_credentials": exists
+            }
     except Exception as e:
         # On error, assume credentials exist to be safe
         return {
             "faculty_id": faculty_id,
             "has_credentials": True
         }
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()

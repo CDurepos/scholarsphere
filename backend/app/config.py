@@ -22,6 +22,11 @@ class Config:
     DB_PASS = os.getenv("DB_PASS")
     DB_NAME = os.getenv("DB_NAME")
 
+    # === JWT Settings ===
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
+    JWT_ACCESS_TOKEN_EXPIRATION_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRATION_MINUTES", "30"))
+    JWT_REFRESH_TOKEN_EXPIRATION_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRATION_DAYS", "7"))
+
     # === Other project settings ===
 
     # === Validation ===

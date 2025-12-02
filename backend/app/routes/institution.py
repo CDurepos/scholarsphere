@@ -18,13 +18,8 @@ def institution():
     """
     try:
         institutions = get_institutions_from_json()
-        # Return only name for the frontend (they don't need all the details)
-        # JSON file is already sorted alphabetically, but sort again as safety measure
         institution_list = [{"name": inst.get("name")} for inst in institutions]
         return jsonify(sorted(institution_list, key=lambda x: x["name"]))
         
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error fetching institutions: {error_details}")
         return jsonify({"error": str(e)}), 500
