@@ -15,9 +15,9 @@ DELIMITER $$
  * To modify the cleanup threshold, edit the DATE_SUB interval below.
  * Current setting: 1 HOUR (deletes records older than 1 hour)
  */
-DROP EVENT IF EXISTS cleanup_old_keyword_generations_event;
+DROP EVENT IF EXISTS clean_faculty_generates_keyword_event;
 
-CREATE EVENT cleanup_old_keyword_generations_event
+CREATE EVENT clean_faculty_generates_keyword_event
 ON SCHEDULE EVERY 1 HOUR
 STARTS CURRENT_TIMESTAMP
 ON COMPLETION PRESERVE
@@ -26,7 +26,7 @@ COMMENT 'Automatically cleans up old keyword generation records hourly'
 DO
 BEGIN
     -- Call the cleanup procedure to delete records older than 1 hour
-    CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 HOUR));
+    CALL clean_faculty_generates_keyword(DATE_SUB(NOW(), INTERVAL 1 HOUR));
 END $$
 
 DELIMITER ;

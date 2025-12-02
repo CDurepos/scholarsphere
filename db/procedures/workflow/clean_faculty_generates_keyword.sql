@@ -21,15 +21,16 @@ DELIMITER $$
  * 
  * Example usage:
  *   -- Delete all records older than 1 hour
- *   CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 HOUR));
+ *   CALL clean_faculty_generates_keyword(DATE_SUB(NOW(), INTERVAL 1 HOUR));
  *   
- *   -- Delete all records older than 1 year
- *   CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 DAY));
+ *   -- Delete all records older than 1 day
+ *   CALL clean_faculty_generates_keyword(DATE_SUB(NOW(), INTERVAL 1 DAY));
  *   
  *   -- Delete all records before a specific date
- *   CALL cleanup_old_keyword_generations('2024-01-01 00:00:00');
+ *   CALL clean_faculty_generates_keyword('2024-01-01 00:00:00');
  */
-CREATE PROCEDURE cleanup_old_keyword_generations(
+DROP PROCEDURE IF EXISTS clean_faculty_generates_keyword;
+CREATE PROCEDURE clean_faculty_generates_keyword(
     IN p_cutoff_datetime DATETIME
 )
 BEGIN
@@ -38,7 +39,7 @@ BEGIN
     -- Validate that cutoff datetime is provided
     IF p_cutoff_datetime IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'cutoff_datetime is required for cleanup_old_keyword_generations';
+            SET MESSAGE_TEXT = 'cutoff_datetime is required for clean_faculty_generates_keyword';
     END IF;
 
     -- Delete records older than the cutoff datetime
