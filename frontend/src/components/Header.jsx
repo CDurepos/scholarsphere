@@ -28,7 +28,6 @@ function Header() {
   }, []);
 
   useEffect(() => {
-  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         dropdownRef.current &&

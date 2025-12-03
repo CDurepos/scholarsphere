@@ -18,7 +18,7 @@ function Dashboard() {
       const authenticated = await isAuthenticated();
       
       if (!authenticated) {
-        navigate('/');
+        navigate('/login', { replace: true });
         return;
       }
 
