@@ -69,6 +69,12 @@ To do this, add your user-set database password to the `scraping/insert.py` file
 
 Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
 
+## Keyword Generation
+
+If you would like any API routes involving calls to an LLM to work (just keyword generation at the time of writing this), or the insert.py script to automatically generate keywords, you must have a gpu with cuda and will have to install cuda compatible versions of
+pytorch and torchvision. That can be done through here: https://pytorch.org/get-started/locally/. The app will run fine without this, but some
+functionality will be limited.
+
 # COS457 Phase 2 Task Distribution
 
 ### GitHub Username to Student Map

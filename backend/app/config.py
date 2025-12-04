@@ -31,5 +31,5 @@ class Config:
     LLAMA_ACCESS_TOKEN = os.getenv("LLAMA_ACCESS_TOKEN")
 
     # === Validation ===
-    if not all([DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME, LLAMA_ACCESS_TOKEN]):
+    if not all([DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME]):
         raise ValueError(f"Missing necessary environment variables in {__file__}")

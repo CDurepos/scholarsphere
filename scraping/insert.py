@@ -12,12 +12,13 @@ Usage:
 
 import os
 import sys
+from tqdm import tqdm
 from pathlib import Path
 
 # Add parent directory to path for imports (must be before backend imports)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backend.app.utils.llama import generate_keywords_with_llama, unload_model
+from backend.models.qwen import generate_keywords_with_qwen, unload_qwen_model
 
 import json
 import uuid
@@ -26,24 +27,7 @@ from datetime import date
 
 import mysql.connector
 from mysql.connector import Error, pooling
-from dotenv import load_dotenv
-
-# Load .env file from project root
-project_root = Path(__file__).resolve().parent.parent
-env_path = project_root / ".env"
-load_dotenv(dotenv_path=env_path)
-
-# Database configuration from environment variables
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "127.0.0.1"),
-    "port": int(os.getenv("DB_PORT", "3306")),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASS", ""),
-    "database": os.getenv("DB_NAME", "scholarsphere"),
-    "charset": "utf8mb4",
-    "collation": "utf8mb4_unicode_ci",
-    "autocommit": False,
-}
+from scraping.scrape_config import ScrapeConfig
 
 
 class DatabaseConnection:
@@ -598,7 +582,7 @@ def insert_faculty_researches_keyword(
         if not isinstance(faculty_record.get("faculty_id"), str):
             raise ValueError(f"At keyword insertion time, faculty ID is not a string for faculty: {faculty_record}")
         biography = faculty_record.get("biography")
-        keywords = generate_keywords_with_llama(biography, num_keywords=5)
+        keywords = generate_keywords_with_qwen(biography, num_keywords=5)
 
     except Exception as e:
         print(f"[ERROR] Failed to generate keywords for faculty {faculty_record.get('first_name')} {faculty_record.get('last_name')}: {str(e)}")
@@ -635,7 +619,7 @@ def main():
     print("ScholarSphere Data Insertion")
     print("=" * 60)
 
-    db = DatabaseConnection(DB_CONFIG)
+    db = DatabaseConnection(ScrapeConfig.DB_CONFIG)
     institution_files, faculty_files, publication_files = find_scraped_files(output_dir)
 
     if not institution_files and not faculty_files:
@@ -699,7 +683,7 @@ def main():
             records = load_jsonl(faculty_file)
             total_stats["total_records"] += len(records)
 
-            for i, record in enumerate(records, start=1):
+            for i, record in tqdm(enumerate(records, start=1), total=len(records), desc="Inserting faculty records"):
                 success = insert_faculty_record(record, db, institution_name_map)
                 if success:
                     total_stats["successful"] += 1
@@ -729,7 +713,7 @@ def main():
     # Unload model and tokenizer from memory after all faculty keywords have been generated
     print("\n[INFO] Unloading model from memory...")
     try:
-        unload_model()
+        unload_qwen_model()
         print("[OK] Model unloaded successfully")
     except Exception as e:
         print(f"[WARN] Failed to unload model: {str(e)}")
@@ -758,7 +742,7 @@ def main():
             print(f"\n[INFO] Processing {pub_file}...")
             publications = load_jsonl(pub_file)
             
-            for publication in publications:
+            for publication in tqdm(publications, total=len(publications), desc="Inserting publication records"):
                 db_id = insert_publication_record(publication, db)
                 if db_id:
                     publications_inserted += 1
