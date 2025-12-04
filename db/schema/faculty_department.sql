@@ -7,5 +7,8 @@ CREATE TABLE IF NOT EXISTS faculty_department (
     FOREIGN KEY (faculty_id) 
         REFERENCES faculty(faculty_id) 
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on department name for faster search functionality
+    INDEX idx_faculty_department_dept_name (department_name)
 );

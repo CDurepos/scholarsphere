@@ -19,5 +19,14 @@ CREATE TABLE IF NOT EXISTS institution (
 
 
     -- Constraints
-    CHECK (zip IS NULL OR zip REGEXP '^[0-9]{5}$')
+    CHECK (zip IS NULL OR zip REGEXP '^[0-9]{5}$'),
+
+    -- Index on institution name for faster lookup
+    INDEX idx_institution_name (name),
+
+    -- Index on city and state for regional searches
+    INDEX idx_institution_city_state (city, state),
+
+    -- Index on zip code for a more specific location lookup
+    INDEX idx_institution_zip (zip)
 );

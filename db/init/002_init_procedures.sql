@@ -3642,33 +3642,7 @@ END $$
 DELIMITER ;
 
 
--- Source: workflow/cleanup_expired_sessions.sql
-
-DELIMITER $$
-
-/**
- * Deletes expired sessions from the database.
- * 
- * Removes all sessions that have passed their expiration date.
- * This is a maintenance procedure that should be run periodically.
- * 
- * @returns Result set containing:
- *   - deleted_count: Number of sessions deleted
- */
-DROP PROCEDURE IF EXISTS cleanup_expired_sessions;
-CREATE PROCEDURE cleanup_expired_sessions()
-BEGIN
-    DELETE FROM session
-    WHERE expires_at < UTC_TIMESTAMP();
-    
-    SELECT ROW_COUNT() AS deleted_count;
-END $$
-
-DELIMITER ;
-
-
-
--- Source: workflow/cleanup_old_keyword_generations.sql
+-- Source: workflow/clean_faculty_generates_keyword.sql
 
 DELIMITER $$
 
@@ -3693,15 +3667,16 @@ DELIMITER $$
  * 
  * Example usage:
  *   -- Delete all records older than 1 hour
- *   CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 HOUR));
+ *   CALL clean_faculty_generates_keyword(DATE_SUB(NOW(), INTERVAL 1 HOUR));
  *   
- *   -- Delete all records older than 1 year
- *   CALL cleanup_old_keyword_generations(DATE_SUB(NOW(), INTERVAL 1 DAY));
+ *   -- Delete all records older than 1 day
+ *   CALL clean_faculty_generates_keyword(DATE_SUB(NOW(), INTERVAL 1 DAY));
  *   
  *   -- Delete all records before a specific date
- *   CALL cleanup_old_keyword_generations('2024-01-01 00:00:00');
+ *   CALL clean_faculty_generates_keyword('2024-01-01 00:00:00');
  */
-CREATE PROCEDURE cleanup_old_keyword_generations(
+DROP PROCEDURE IF EXISTS clean_faculty_generates_keyword;
+CREATE PROCEDURE clean_faculty_generates_keyword(
     IN p_cutoff_datetime DATETIME
 )
 BEGIN
@@ -3710,7 +3685,7 @@ BEGIN
     -- Validate that cutoff datetime is provided
     IF p_cutoff_datetime IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'cutoff_datetime is required for cleanup_old_keyword_generations';
+            SET MESSAGE_TEXT = 'cutoff_datetime is required for clean_faculty_generates_keyword';
     END IF;
 
     -- Delete records older than the cutoff datetime
@@ -3725,6 +3700,36 @@ BEGIN
         v_deleted_count AS deleted_count,
         p_cutoff_datetime AS cutoff_datetime,
         'cleaned' AS action;
+END $$
+
+DELIMITER ;
+
+
+
+-- Source: workflow/clean_session.sql
+
+DELIMITER $$
+
+/**
+ * Deletes expired and old revoked sessions from the database.
+ * 
+ * Removes:
+ *   - All sessions that have passed their expiration date
+ *   - All revoked sessions older than 30 days (for audit trail retention)
+ * 
+ * This is a maintenance procedure that should be run periodically.
+ * 
+ * @returns Result set containing:
+ *   - deleted_count: Number of sessions deleted
+ */
+DROP PROCEDURE IF EXISTS clean_session;
+CREATE PROCEDURE clean_session()
+BEGIN
+    DELETE FROM session
+    WHERE expires_at < UTC_TIMESTAMP()
+       OR (revoked = TRUE AND created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY));
+    
+    SELECT ROW_COUNT() AS deleted_count;
 END $$
 
 DELIMITER ;

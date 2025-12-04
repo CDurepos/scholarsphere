@@ -17,5 +17,14 @@ CREATE TABLE IF NOT EXISTS equipment (
     FOREIGN KEY (institution_id)
         REFERENCES institution(institution_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on institution_id for faster lookup related to institution
+    INDEX idx_equipment_institution_id (institution_id),
+
+    -- Index on equipment name
+    INDEX idx_equipment_name (name),
+
+    -- Quickly check availability
+    INDEX idx_equipment_availability (availability)
 );
