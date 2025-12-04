@@ -17,7 +17,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if faculty_id doesn't exist or has no credentials
  * @throws SQLSTATE '45000' if old_password is incorrect
  */
-DROP PROCEDURE IF EXISTS update_password;
+DROP PROCEDURE IF EXISTS update_password$$
 CREATE PROCEDURE update_password(
     IN p_faculty_id     CHAR(36),
     IN p_old_password   VARCHAR(255),

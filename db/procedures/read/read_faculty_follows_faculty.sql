@@ -12,7 +12,7 @@ DELIMITER $$
  * 
  * Results are ordered by follower_id, then followee_id.
  */
-DROP PROCEDURE IF EXISTS read_faculty_follows_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty$$
 CREATE PROCEDURE read_faculty_follows_faculty()
 BEGIN
     SELECT 

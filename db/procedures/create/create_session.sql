@@ -17,7 +17,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if session_id or token_hash already exists (unique constraint)
  * @throws SQLSTATE '23000' if faculty_id doesn't exist (foreign key constraint)
  */
-DROP PROCEDURE IF EXISTS create_session;
+DROP PROCEDURE IF EXISTS create_session$$
 CREATE PROCEDURE create_session(
     IN p_session_id CHAR(36),
     IN p_faculty_id CHAR(36),

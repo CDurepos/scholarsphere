@@ -18,7 +18,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if grant_id doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if the faculty-grant association already exists (unique constraint)
  */
-DROP PROCEDURE IF EXISTS create_grants_granted_to_faculty;
+DROP PROCEDURE IF EXISTS create_grants_granted_to_faculty$$
 CREATE PROCEDURE create_grants_granted_to_faculty(
     IN p_faculty_id    CHAR(36),
     IN p_grant_id      CHAR(36)

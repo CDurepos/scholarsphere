@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS is_grant_active;
+DROP FUNCTION IF EXISTS is_grant_active$$
 
 CREATE FUNCTION is_grant_active(
     p_start_date DATE,

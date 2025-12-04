@@ -20,7 +20,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS add_keyword_for_faculty;
+DROP PROCEDURE IF EXISTS add_keyword_for_faculty$$
 CREATE PROCEDURE add_keyword_for_faculty(
     IN p_faculty_id CHAR(36),
     IN p_name VARCHAR(64)

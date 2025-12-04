@@ -23,7 +23,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if institution_id doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if a record with the same (faculty_id, institution_id, start_date) already exists
  */
-DROP PROCEDURE IF EXISTS create_faculty_works_at_institution;
+DROP PROCEDURE IF EXISTS create_faculty_works_at_institution$$
 CREATE PROCEDURE create_faculty_works_at_institution(
     IN p_faculty_id CHAR(36),
     IN p_institution_id CHAR(36),

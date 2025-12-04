@@ -12,7 +12,7 @@ DELIMITER $$
  *   - start_date
  *   - end_date
  */
-DROP PROCEDURE IF EXISTS read_faculty_works_at_institution;
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution$$
 CREATE PROCEDURE read_faculty_works_at_institution()
 BEGIN
     SELECT fwi.*

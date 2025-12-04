@@ -18,7 +18,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if keyword name doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if the grant-keyword association already exists (unique constraint)
  */
-DROP PROCEDURE IF EXISTS create_grants_for_keyword;
+DROP PROCEDURE IF EXISTS create_grants_for_keyword$$
 CREATE PROCEDURE create_grants_for_keyword(
     IN p_grant_id  CHAR(36),
     IN p_name      VARCHAR(64)

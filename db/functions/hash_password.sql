@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS hash_password;
+DROP FUNCTION IF EXISTS hash_password$$
 CREATE FUNCTION hash_password(
     p_plain_text     VARCHAR(255),
     p_salt          VARCHAR(255)

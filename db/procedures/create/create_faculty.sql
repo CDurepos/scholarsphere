@@ -20,7 +20,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if first_name is NULL
  */
-DROP PROCEDURE IF EXISTS create_faculty;
+DROP PROCEDURE IF EXISTS create_faculty$$
 CREATE PROCEDURE create_faculty (
     IN p_faculty_id          CHAR(36),
     IN p_first_name          VARCHAR(128),

@@ -12,7 +12,7 @@ DELIMITER $$
  * @returns Result set containing:
  *   - deleted_count: Number of sessions deleted
  */
-DROP PROCEDURE IF EXISTS clean_session;
+DROP PROCEDURE IF EXISTS clean_session$$
 CREATE PROCEDURE clean_session()
 BEGIN
     DELETE FROM session

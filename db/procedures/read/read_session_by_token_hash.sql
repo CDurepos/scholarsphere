@@ -17,7 +17,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if token_hash is NULL
  */
-DROP PROCEDURE IF EXISTS read_session_by_token_hash;
+DROP PROCEDURE IF EXISTS read_session_by_token_hash$$
 CREATE PROCEDURE read_session_by_token_hash(
     IN p_token_hash VARCHAR(64)
 )

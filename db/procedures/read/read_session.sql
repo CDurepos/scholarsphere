@@ -15,7 +15,7 @@ DELIMITER $$
  * 
  * Results are ordered by created_at descending (most recent first).
  */
-DROP PROCEDURE IF EXISTS read_session;
+DROP PROCEDURE IF EXISTS read_session$$
 CREATE PROCEDURE read_session()
 BEGIN
     SELECT 

@@ -18,7 +18,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if institution_id doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if equipment_id already exists (primary key constraint)
  */
-DROP PROCEDURE IF EXISTS create_equipment;
+DROP PROCEDURE IF EXISTS create_equipment$$
 CREATE PROCEDURE create_equipment(
     IN p_equipment_id CHAR(36),
     IN p_name VARCHAR(64),

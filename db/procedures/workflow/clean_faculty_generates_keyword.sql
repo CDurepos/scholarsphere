@@ -29,7 +29,7 @@ DELIMITER $$
  *   -- Delete all records before a specific date
  *   CALL clean_faculty_generates_keyword('2024-01-01 00:00:00');
  */
-DROP PROCEDURE IF EXISTS clean_faculty_generates_keyword;
+DROP PROCEDURE IF EXISTS clean_faculty_generates_keyword$$
 CREATE PROCEDURE clean_faculty_generates_keyword(
     IN p_cutoff_datetime DATETIME
 )

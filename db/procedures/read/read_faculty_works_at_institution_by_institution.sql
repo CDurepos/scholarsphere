@@ -22,7 +22,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if institution_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_institution;
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_institution$$
 CREATE PROCEDURE read_faculty_works_at_institution_by_institution (
     IN p_institution_id CHAR(36)
 )

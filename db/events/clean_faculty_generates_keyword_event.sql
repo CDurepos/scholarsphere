@@ -15,7 +15,7 @@ DELIMITER $$
  * To modify the cleanup threshold, edit the DATE_SUB interval below.
  * Current setting: 1 HOUR (deletes records older than 1 hour)
  */
-DROP EVENT IF EXISTS clean_faculty_generates_keyword_event;
+DROP EVENT IF EXISTS clean_faculty_generates_keyword_event$$
 
 CREATE EVENT clean_faculty_generates_keyword_event
 ON SCHEDULE EVERY 1 HOUR

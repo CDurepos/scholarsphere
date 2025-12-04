@@ -21,7 +21,7 @@ DELIMITER $$
  * duplicate recommendations. Running this multiple times will update existing
  * records rather than creating duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_institution;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_institution$$
 CREATE PROCEDURE recommend_faculty_by_institution()
 BEGIN
     -- INSERT directional recommendations

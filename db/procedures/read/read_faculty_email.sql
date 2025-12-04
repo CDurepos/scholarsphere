@@ -11,7 +11,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then email.
  */
-DROP PROCEDURE IF EXISTS read_faculty_email;
+DROP PROCEDURE IF EXISTS read_faculty_email$$
 CREATE PROCEDURE read_faculty_email()
 BEGIN
     SELECT faculty_id, email

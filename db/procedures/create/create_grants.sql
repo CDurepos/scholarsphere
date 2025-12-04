@@ -16,7 +16,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '23000' if grant_id already exists (primary key constraint)
  */
-DROP PROCEDURE IF EXISTS create_grants;
+DROP PROCEDURE IF EXISTS create_grants$$
 CREATE PROCEDURE create_grants(
     IN      p_grant_id      CHAR(36),
     IN      p_description   TEXT,

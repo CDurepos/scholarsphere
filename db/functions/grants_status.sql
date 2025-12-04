@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS grant_status;
+DROP FUNCTION IF EXISTS grant_status$$
 
 CREATE FUNCTION grant_status(
     p_start_date  DATE,

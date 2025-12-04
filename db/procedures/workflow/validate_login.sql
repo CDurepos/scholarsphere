@@ -22,7 +22,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if username or password is NULL
  */
-DROP PROCEDURE IF EXISTS validate_login;
+DROP PROCEDURE IF EXISTS validate_login$$
 CREATE PROCEDURE validate_login(
     IN  p_username      VARCHAR(255),
     IN  p_password      VARCHAR(255),

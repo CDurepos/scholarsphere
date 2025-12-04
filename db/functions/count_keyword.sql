@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS count_keywords;
+DROP FUNCTION IF EXISTS count_keywords$$
 CREATE FUNCTION count_keywords()
 RETURNS INT
 READS SQL DATA

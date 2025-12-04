@@ -14,7 +14,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '23000' if grant_id doesn't exist (foreign key constraint)
  */
-DROP PROCEDURE IF EXISTS update_grants_organization;
+DROP PROCEDURE IF EXISTS update_grants_organization$$
 CREATE PROCEDURE update_grants_organization(
     IN  p_grant_id  CHAR(36),
     IN  p_name      VARCHAR(255)

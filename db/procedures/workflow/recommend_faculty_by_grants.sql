@@ -19,7 +19,7 @@ DELIMITER $$
  * Consider clearing existing recommendations before running, or use a unique
  * constraint to prevent duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_grants;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_grants$$
 CREATE PROCEDURE recommend_faculty_by_grants()
 BEGIN
     -- INSERT directional recommendations

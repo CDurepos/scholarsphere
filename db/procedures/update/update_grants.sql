@@ -18,7 +18,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if grant_id, amount, or start_date is NULL
  * @throws SQLSTATE '45000' if grant_id doesn't exist
  */
-DROP PROCEDURE IF EXISTS update_grants;
+DROP PROCEDURE IF EXISTS update_grants$$
 CREATE PROCEDURE update_grants(
     IN p_grant_id       CHAR(36),
     IN p_description    VARCHAR(2048),

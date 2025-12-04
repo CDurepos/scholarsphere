@@ -22,7 +22,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if institution_id already exists (primary key constraint)
  * @throws SQLSTATE 'HY000' if zip code format is invalid (must be 5 digits)
  */
-DROP PROCEDURE IF EXISTS create_institution;
+DROP PROCEDURE IF EXISTS create_institution$$
 CREATE PROCEDURE create_institution(
     IN p_institution_id CHAR(36),
     IN p_name VARCHAR(256),

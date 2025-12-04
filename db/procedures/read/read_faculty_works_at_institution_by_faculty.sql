@@ -21,7 +21,7 @@ DELIMITER $$
  * 
  * If both parameters are NULL, returns all relationship records.
  */
-DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_faculty$$
 CREATE PROCEDURE read_faculty_works_at_institution_by_faculty (
     IN p_faculty_id      CHAR(36),
     IN p_institution_id  CHAR(36)

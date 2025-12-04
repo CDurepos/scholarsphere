@@ -15,7 +15,7 @@ DELIMITER $$
  * Note: Events require the MySQL event scheduler to be enabled.
  * Enable with: SET GLOBAL event_scheduler = ON;
  */
-DROP EVENT IF EXISTS clean_session_event;
+DROP EVENT IF EXISTS clean_session_event$$
 
 CREATE EVENT clean_session_event
 ON SCHEDULE EVERY 1 DAY

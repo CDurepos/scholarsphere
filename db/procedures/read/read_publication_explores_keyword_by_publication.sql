@@ -14,7 +14,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if publication_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_publication_explores_keyword_by_publication;
+DROP PROCEDURE IF EXISTS read_publication_explores_keyword_by_publication$$
 CREATE PROCEDURE read_publication_explores_keyword_by_publication(
     IN p_publication_id CHAR(36)
 )

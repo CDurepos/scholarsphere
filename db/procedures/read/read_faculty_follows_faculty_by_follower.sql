@@ -15,7 +15,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_follower;
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_follower$$
 CREATE PROCEDURE read_faculty_follows_faculty_by_follower (
     IN p_faculty_id CHAR(36)
 )

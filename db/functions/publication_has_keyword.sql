@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS publication_has_keyword;
+DROP FUNCTION IF EXISTS publication_has_keyword$$
 CREATE FUNCTION publication_has_keyword(
     p_publication_id CHAR(36),
     p_name VARCHAR(64)

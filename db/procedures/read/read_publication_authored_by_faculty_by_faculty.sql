@@ -21,7 +21,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_publication_authored_by_faculty_by_faculty;
+DROP PROCEDURE IF EXISTS read_publication_authored_by_faculty_by_faculty$$
 CREATE PROCEDURE read_publication_authored_by_faculty_by_faculty(
     IN p_faculty_id CHAR(36)
 )

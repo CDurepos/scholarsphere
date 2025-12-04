@@ -20,7 +20,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if no identifier is provided
  * @throws SQLSTATE '45000' if no fields to update are provided
  */
-DROP PROCEDURE IF EXISTS update_session;
+DROP PROCEDURE IF EXISTS update_session$$
 CREATE PROCEDURE update_session(
     IN p_session_id CHAR(36),
     IN p_token_hash VARCHAR(64),

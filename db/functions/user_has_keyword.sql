@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS user_has_keyword;
+DROP FUNCTION IF EXISTS user_has_keyword$$
 CREATE FUNCTION user_has_keyword(
     p_faculty_id CHAR(36),
     p_name VARCHAR(64)

@@ -18,7 +18,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if credentials already exist for this faculty_id
  * @throws SQLSTATE '23000' if faculty_id doesn't exist (foreign key constraint)
  */
-DROP PROCEDURE IF EXISTS register_credentials;
+DROP PROCEDURE IF EXISTS register_credentials$$
 CREATE PROCEDURE register_credentials(
     IN p_faculty_id CHAR(36),
     IN p_username VARCHAR(255),

@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS count_keywords_publication;
+DROP FUNCTION IF EXISTS count_keywords_publication$$
 CREATE FUNCTION count_keywords_publication(
     p_publication_id CHAR(36)
 )

@@ -11,7 +11,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then phone_num.
  */
-DROP PROCEDURE IF EXISTS read_faculty_phone;
+DROP PROCEDURE IF EXISTS read_faculty_phone$$
 CREATE PROCEDURE read_faculty_phone()
 BEGIN
     SELECT faculty_id, phone_num

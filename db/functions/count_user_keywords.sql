@@ -1,6 +1,6 @@
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS count_user_keywords;
+DROP FUNCTION IF EXISTS count_user_keywords$$
 CREATE FUNCTION count_user_keywords(
     p_faculty_id CHAR(36)
 )

@@ -11,7 +11,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then title.
  */
-DROP PROCEDURE IF EXISTS read_faculty_title;
+DROP PROCEDURE IF EXISTS read_faculty_title$$
 CREATE PROCEDURE read_faculty_title()
 BEGIN
     SELECT faculty_id, title

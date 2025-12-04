@@ -13,7 +13,7 @@ DELIMITER $$
  *   - title: One title associated with the faculty member
  *   (Multiple rows if the faculty member has multiple titles)
  */
-DROP PROCEDURE IF EXISTS read_faculty_title_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_title_by_faculty$$
 CREATE PROCEDURE read_faculty_title_by_faculty (
     IN p_faculty_id CHAR(36)
 )
