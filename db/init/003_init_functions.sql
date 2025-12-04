@@ -6,7 +6,7 @@
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS count_keywords;
+DROP FUNCTION IF EXISTS count_keywords$$
 CREATE FUNCTION count_keywords()
 RETURNS INT
 READS SQL DATA
@@ -26,7 +26,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS count_keywords_publication;
+DROP FUNCTION IF EXISTS count_keywords_publication$$
 CREATE FUNCTION count_keywords_publication(
     p_publication_id CHAR(36)
 )
@@ -49,7 +49,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS count_user_keywords;
+DROP FUNCTION IF EXISTS count_user_keywords$$
 CREATE FUNCTION count_user_keywords(
     p_faculty_id CHAR(36)
 )
@@ -68,29 +68,11 @@ END $$
 DELIMITER ;
 
 
--- Source: get_DOI.sql
-
-DELIMITER $$
-
-DROP FUNCTION IF EXISTS get_DOI;
-CREATE FUNCTION get_DOI(p_id CHAR(36))
-RETURNS VARCHAR(64)
-READS SQL DATA
-BEGIN
-    DECLARE v_pub_doi VARCHAR(64);
-    SELECT doi INTO v_pub_doi
-    FROM publications
-    WHERE publication_id = p_id;
-    RETURN v_pub_doi;
-END $$
-DELIMITER ;
-
-
 -- Source: get_citation_count.sql
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS get_citation_count;
+DROP FUNCTION IF EXISTS get_citation_count$$
 CREATE FUNCTION get_citation_count(p_publication_id CHAR(36))
 RETURNS INT
 READS SQL DATA
@@ -107,11 +89,29 @@ END $$
 DELIMITER ;
 
 
+-- Source: get_DOI.sql
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS get_DOI$$
+CREATE FUNCTION get_DOI(p_id CHAR(36))
+RETURNS VARCHAR(64)
+READS SQL DATA
+BEGIN
+    DECLARE v_pub_doi VARCHAR(64);
+    SELECT doi INTO v_pub_doi
+    FROM publications
+    WHERE publication_id = p_id;
+    RETURN v_pub_doi;
+END $$
+DELIMITER ;
+
+
 -- Source: get_publication_title.sql
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS get_publication_title;
+DROP FUNCTION IF EXISTS get_publication_title$$
 CREATE FUNCTION get_publication_title(p_publication_id CHAR(36))
 RETURNS VARCHAR(64)
 READS SQL DATA
@@ -132,7 +132,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS get_publication_year;
+DROP FUNCTION IF EXISTS get_publication_year$$
 CREATE FUNCTION get_publication_year(p_publication_id CHAR(36))
 RETURNS INT
 READS SQL DATA
@@ -152,7 +152,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS grant_status;
+DROP FUNCTION IF EXISTS grant_status$$
 
 CREATE FUNCTION grant_status(
     p_start_date  DATE,
@@ -182,7 +182,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS hash_password;
+DROP FUNCTION IF EXISTS hash_password$$
 CREATE FUNCTION hash_password(
     p_plain_text     VARCHAR(255),
     p_salt          VARCHAR(255)
@@ -200,7 +200,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS is_grant_active;
+DROP FUNCTION IF EXISTS is_grant_active$$
 
 CREATE FUNCTION is_grant_active(
     p_start_date DATE,
@@ -217,7 +217,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS keyword_exists;
+DROP FUNCTION IF EXISTS keyword_exists$$
 CREATE FUNCTION keyword_exists(p_name VARCHAR(64))
 RETURNS BOOLEAN
 READS SQL DATA
@@ -236,7 +236,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS publication_has_keyword;
+DROP FUNCTION IF EXISTS publication_has_keyword$$
 CREATE FUNCTION publication_has_keyword(
     p_publication_id CHAR(36),
     p_name VARCHAR(64)
@@ -259,7 +259,7 @@ DELIMITER ;
 
 DELIMITER $$
 
-DROP FUNCTION IF EXISTS user_has_keyword;
+DROP FUNCTION IF EXISTS user_has_keyword$$
 CREATE FUNCTION user_has_keyword(
     p_faculty_id CHAR(36),
     p_name VARCHAR(64)

@@ -28,7 +28,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if credentials already exist for this faculty_id
  * @throws SQLSTATE '23000' if faculty_id doesn't exist (foreign key constraint)
  */
-DROP PROCEDURE IF EXISTS register_credentials;
+DROP PROCEDURE IF EXISTS register_credentials$$
 CREATE PROCEDURE register_credentials(
     IN p_faculty_id CHAR(36),
     IN p_username VARCHAR(255),
@@ -85,7 +85,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if institution_id doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if equipment_id already exists (primary key constraint)
  */
-DROP PROCEDURE IF EXISTS create_equipment;
+DROP PROCEDURE IF EXISTS create_equipment$$
 CREATE PROCEDURE create_equipment(
     IN p_equipment_id CHAR(36),
     IN p_name VARCHAR(64),
@@ -135,7 +135,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if first_name is NULL
  */
-DROP PROCEDURE IF EXISTS create_faculty;
+DROP PROCEDURE IF EXISTS create_faculty$$
 CREATE PROCEDURE create_faculty (
     IN p_faculty_id          CHAR(36),
     IN p_first_name          VARCHAR(128),
@@ -526,7 +526,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if institution_id doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if a record with the same (faculty_id, institution_id, start_date) already exists
  */
-DROP PROCEDURE IF EXISTS create_faculty_works_at_institution;
+DROP PROCEDURE IF EXISTS create_faculty_works_at_institution$$
 CREATE PROCEDURE create_faculty_works_at_institution(
     IN p_faculty_id CHAR(36),
     IN p_institution_id CHAR(36),
@@ -569,7 +569,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '23000' if grant_id already exists (primary key constraint)
  */
-DROP PROCEDURE IF EXISTS create_grants;
+DROP PROCEDURE IF EXISTS create_grants$$
 CREATE PROCEDURE create_grants(
     IN      p_grant_id      CHAR(36),
     IN      p_description   TEXT,
@@ -611,7 +611,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if keyword name doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if the grant-keyword association already exists (unique constraint)
  */
-DROP PROCEDURE IF EXISTS create_grants_for_keyword;
+DROP PROCEDURE IF EXISTS create_grants_for_keyword$$
 CREATE PROCEDURE create_grants_for_keyword(
     IN p_grant_id  CHAR(36),
     IN p_name      VARCHAR(64)
@@ -645,7 +645,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if grant_id doesn't exist (foreign key constraint)
  * @throws SQLSTATE '23000' if the faculty-grant association already exists (unique constraint)
  */
-DROP PROCEDURE IF EXISTS create_grants_granted_to_faculty;
+DROP PROCEDURE IF EXISTS create_grants_granted_to_faculty$$
 CREATE PROCEDURE create_grants_granted_to_faculty(
     IN p_faculty_id    CHAR(36),
     IN p_grant_id      CHAR(36)
@@ -683,7 +683,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if institution_id already exists (primary key constraint)
  * @throws SQLSTATE 'HY000' if zip code format is invalid (must be 5 digits)
  */
-DROP PROCEDURE IF EXISTS create_institution;
+DROP PROCEDURE IF EXISTS create_institution$$
 CREATE PROCEDURE create_institution(
     IN p_institution_id CHAR(36),
     IN p_name VARCHAR(256),
@@ -896,7 +896,7 @@ DELIMITER $$
  * @throws SQLSTATE '23000' if session_id or token_hash already exists (unique constraint)
  * @throws SQLSTATE '23000' if faculty_id doesn't exist (foreign key constraint)
  */
-DROP PROCEDURE IF EXISTS create_session;
+DROP PROCEDURE IF EXISTS create_session$$
 CREATE PROCEDURE create_session(
     IN p_session_id CHAR(36),
     IN p_faculty_id CHAR(36),
@@ -1043,7 +1043,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then department_name.
  */
-DROP PROCEDURE IF EXISTS read_faculty_department;
+DROP PROCEDURE IF EXISTS read_faculty_department$$
 CREATE PROCEDURE read_faculty_department()
 BEGIN
     SELECT faculty_id, department_name
@@ -1074,7 +1074,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_department_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_department_by_faculty$$
 CREATE PROCEDURE read_faculty_department_by_faculty (
     IN p_faculty_id CHAR(36)
 )
@@ -1111,7 +1111,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then email.
  */
-DROP PROCEDURE IF EXISTS read_faculty_email;
+DROP PROCEDURE IF EXISTS read_faculty_email$$
 CREATE PROCEDURE read_faculty_email()
 BEGIN
     SELECT faculty_id, email
@@ -1141,7 +1141,7 @@ DELIMITER $$
  *   - email: One email address associated with the faculty member
  *   (Multiple rows if the faculty member has multiple email addresses)
  */
-DROP PROCEDURE IF EXISTS read_faculty_email_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_email_by_faculty$$
 CREATE PROCEDURE read_faculty_email_by_faculty (
     IN p_faculty_id CHAR(36)
 )
@@ -1172,7 +1172,7 @@ DELIMITER $$
  * 
  * Results are ordered by follower_id, then followee_id.
  */
-DROP PROCEDURE IF EXISTS read_faculty_follows_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty$$
 CREATE PROCEDURE read_faculty_follows_faculty()
 BEGIN
     SELECT 
@@ -1205,7 +1205,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_followee;
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_followee$$
 CREATE PROCEDURE read_faculty_follows_faculty_by_followee (
     IN p_faculty_id CHAR(36)
 )
@@ -1246,7 +1246,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_follower;
+DROP PROCEDURE IF EXISTS read_faculty_follows_faculty_by_follower$$
 CREATE PROCEDURE read_faculty_follows_faculty_by_follower (
     IN p_faculty_id CHAR(36)
 )
@@ -1340,7 +1340,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then phone_num.
  */
-DROP PROCEDURE IF EXISTS read_faculty_phone;
+DROP PROCEDURE IF EXISTS read_faculty_phone$$
 CREATE PROCEDURE read_faculty_phone()
 BEGIN
     SELECT faculty_id, phone_num
@@ -1370,7 +1370,7 @@ DELIMITER $$
  *   - phone_num: One phone number associated with the faculty member
  *   (Multiple rows if the faculty member has multiple phone numbers)
  */
-DROP PROCEDURE IF EXISTS read_faculty_phone_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_phone_by_faculty$$
 CREATE PROCEDURE read_faculty_phone_by_faculty (
     IN p_faculty_id CHAR(36)
 )
@@ -1403,7 +1403,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_researches_keyword_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_researches_keyword_by_faculty$$
 CREATE PROCEDURE read_faculty_researches_keyword_by_faculty(
     IN p_faculty_id CHAR(36)
 )
@@ -1435,7 +1435,7 @@ DELIMITER $$
  * 
  * Results are ordered by faculty_id, then title.
  */
-DROP PROCEDURE IF EXISTS read_faculty_title;
+DROP PROCEDURE IF EXISTS read_faculty_title$$
 CREATE PROCEDURE read_faculty_title()
 BEGIN
     SELECT faculty_id, title
@@ -1464,7 +1464,7 @@ DELIMITER $$
  *   - title: One title associated with the faculty member
  *   (Multiple rows if the faculty member has multiple titles)
  */
-DROP PROCEDURE IF EXISTS read_faculty_title_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_title_by_faculty$$
 CREATE PROCEDURE read_faculty_title_by_faculty (
     IN p_faculty_id CHAR(36)
 )
@@ -1495,7 +1495,7 @@ DELIMITER $$
  *   - start_date
  *   - end_date
  */
-DROP PROCEDURE IF EXISTS read_faculty_works_at_institution;
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution$$
 CREATE PROCEDURE read_faculty_works_at_institution()
 BEGIN
     SELECT fwi.*
@@ -1532,7 +1532,7 @@ DELIMITER $$
  * 
  * If both parameters are NULL, returns all relationship records.
  */
-DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_faculty;
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_faculty$$
 CREATE PROCEDURE read_faculty_works_at_institution_by_faculty (
     IN p_faculty_id      CHAR(36),
     IN p_institution_id  CHAR(36)
@@ -1574,7 +1574,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if institution_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_institution;
+DROP PROCEDURE IF EXISTS read_faculty_works_at_institution_by_institution$$
 CREATE PROCEDURE read_faculty_works_at_institution_by_institution (
     IN p_institution_id CHAR(36)
 )
@@ -1624,7 +1624,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if organization name is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_by_organization;
+DROP PROCEDURE IF EXISTS read_grants_by_organization$$
 CREATE PROCEDURE read_grants_by_organization(
     IN  p_name  VARCHAR(256)
 )
@@ -1670,7 +1670,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty_by_faculty;
+DROP PROCEDURE IF EXISTS read_grants_granted_to_faculty_by_faculty$$
 CREATE PROCEDURE read_grants_granted_to_faculty_by_faculty(
     IN p_faculty_id     CHAR(36)
 )
@@ -1710,7 +1710,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if grant_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_grants_organization_by_grant;
+DROP PROCEDURE IF EXISTS read_grants_organization_by_grant$$
 CREATE PROCEDURE read_grants_organization_by_grant(
     IN p_grant_id   CHAR(36)
 )
@@ -1790,7 +1790,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_publication_authored_by_faculty_by_faculty;
+DROP PROCEDURE IF EXISTS read_publication_authored_by_faculty_by_faculty$$
 CREATE PROCEDURE read_publication_authored_by_faculty_by_faculty(
     IN p_faculty_id CHAR(36)
 )
@@ -1827,7 +1827,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if publication_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_publication_explores_keyword_by_publication;
+DROP PROCEDURE IF EXISTS read_publication_explores_keyword_by_publication$$
 CREATE PROCEDURE read_publication_explores_keyword_by_publication(
     IN p_publication_id CHAR(36)
 )
@@ -1863,7 +1863,7 @@ DELIMITER $$
  * 
  * Results are ordered by created_at descending (most recent first).
  */
-DROP PROCEDURE IF EXISTS read_session;
+DROP PROCEDURE IF EXISTS read_session$$
 CREATE PROCEDURE read_session()
 BEGIN
     SELECT 
@@ -1903,7 +1903,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS read_session_by_faculty;
+DROP PROCEDURE IF EXISTS read_session_by_faculty$$
 CREATE PROCEDURE read_session_by_faculty(
     IN p_faculty_id CHAR(36)
 )
@@ -1951,7 +1951,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if token_hash is NULL
  */
-DROP PROCEDURE IF EXISTS read_session_by_token_hash;
+DROP PROCEDURE IF EXISTS read_session_by_token_hash$$
 CREATE PROCEDURE read_session_by_token_hash(
     IN p_token_hash VARCHAR(64)
 )
@@ -2510,7 +2510,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if grant_id, amount, or start_date is NULL
  * @throws SQLSTATE '45000' if grant_id doesn't exist
  */
-DROP PROCEDURE IF EXISTS update_grants;
+DROP PROCEDURE IF EXISTS update_grants$$
 CREATE PROCEDURE update_grants(
     IN p_grant_id       CHAR(36),
     IN p_description    VARCHAR(2048),
@@ -2553,7 +2553,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '23000' if grant_id doesn't exist (foreign key constraint)
  */
-DROP PROCEDURE IF EXISTS update_grants_organization;
+DROP PROCEDURE IF EXISTS update_grants_organization$$
 CREATE PROCEDURE update_grants_organization(
     IN  p_grant_id  CHAR(36),
     IN  p_name      VARCHAR(255)
@@ -2711,7 +2711,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if faculty_id doesn't exist or has no credentials
  * @throws SQLSTATE '45000' if old_password is incorrect
  */
-DROP PROCEDURE IF EXISTS update_password;
+DROP PROCEDURE IF EXISTS update_password$$
 CREATE PROCEDURE update_password(
     IN p_faculty_id     CHAR(36),
     IN p_old_password   VARCHAR(255),
@@ -2861,7 +2861,7 @@ DELIMITER $$
  * @throws SQLSTATE '45000' if no identifier is provided
  * @throws SQLSTATE '45000' if no fields to update are provided
  */
-DROP PROCEDURE IF EXISTS update_session;
+DROP PROCEDURE IF EXISTS update_session$$
 CREATE PROCEDURE update_session(
     IN p_session_id CHAR(36),
     IN p_token_hash VARCHAR(64),
@@ -3543,7 +3543,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if faculty_id is NULL
  */
-DROP PROCEDURE IF EXISTS add_keyword_for_faculty;
+DROP PROCEDURE IF EXISTS add_keyword_for_faculty$$
 CREATE PROCEDURE add_keyword_for_faculty(
     IN p_faculty_id CHAR(36),
     IN p_name VARCHAR(64)
@@ -3675,7 +3675,7 @@ DELIMITER $$
  *   -- Delete all records before a specific date
  *   CALL clean_faculty_generates_keyword('2024-01-01 00:00:00');
  */
-DROP PROCEDURE IF EXISTS clean_faculty_generates_keyword;
+DROP PROCEDURE IF EXISTS clean_faculty_generates_keyword$$
 CREATE PROCEDURE clean_faculty_generates_keyword(
     IN p_cutoff_datetime DATETIME
 )
@@ -3722,7 +3722,7 @@ DELIMITER $$
  * @returns Result set containing:
  *   - deleted_count: Number of sessions deleted
  */
-DROP PROCEDURE IF EXISTS clean_session;
+DROP PROCEDURE IF EXISTS clean_session$$
 CREATE PROCEDURE clean_session()
 BEGIN
     DELETE FROM session
@@ -3823,7 +3823,7 @@ DELIMITER $$
  * duplicate recommendations. Running this multiple times will update existing
  * records rather than creating duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_department;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_department$$
 CREATE PROCEDURE recommend_faculty_by_department()
 BEGIN
     -- INSERT directional recommendations
@@ -3880,7 +3880,7 @@ DELIMITER $$
  * duplicate recommendations. Running this multiple times will update existing
  * records rather than creating duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_grant_keyword;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_grant_keyword$$
 CREATE PROCEDURE recommend_faculty_by_grant_keyword()
 BEGIN
     -- INSERT directional recommendations
@@ -3935,7 +3935,7 @@ DELIMITER $$
  * Consider clearing existing recommendations before running, or use a unique
  * constraint to prevent duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_grants;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_grants$$
 CREATE PROCEDURE recommend_faculty_by_grants()
 BEGIN
     -- INSERT directional recommendations
@@ -3988,7 +3988,7 @@ DELIMITER $$
  * duplicate recommendations. Running this multiple times will update existing
  * records rather than creating duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_institution;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_institution$$
 CREATE PROCEDURE recommend_faculty_by_institution()
 BEGIN
     -- INSERT directional recommendations
@@ -4046,7 +4046,7 @@ DELIMITER $$
  * duplicate recommendations. Running this multiple times will update existing
  * records rather than creating duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_publication_keyword;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_publication_keyword$$
 CREATE PROCEDURE recommend_faculty_by_publication_keyword()
 BEGIN
     -- INSERT directional recommendations
@@ -4106,7 +4106,7 @@ DELIMITER $$
  * duplicate recommendations. Running this multiple times will update existing
  * records rather than creating duplicates.
  */
-DROP PROCEDURE IF EXISTS recommend_faculty_by_shared_keyword;
+DROP PROCEDURE IF EXISTS recommend_faculty_by_shared_keyword$$
 CREATE PROCEDURE recommend_faculty_by_shared_keyword()
 BEGIN
     -- INSERT directional recommendations
@@ -4223,7 +4223,7 @@ DELIMITER $$
  * 
  * @throws SQLSTATE '45000' if username or password is NULL
  */
-DROP PROCEDURE IF EXISTS validate_login;
+DROP PROCEDURE IF EXISTS validate_login$$
 CREATE PROCEDURE validate_login(
     IN  p_username      VARCHAR(255),
     IN  p_password      VARCHAR(255),
