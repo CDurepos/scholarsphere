@@ -21,5 +21,8 @@ CREATE TABLE IF NOT EXISTS faculty (
         (research_gate_url IS NULL
             OR research_gate_url LIKE 'https://www.researchgate.net/%'
             OR research_gate_url LIKE 'http://www.researchgate.net/%')
-    )
+    ),
+
+    -- Index on last name and first name for faster search functionality
+    INDEX idx_faculty_last_first_name (last_name, first_name)
 );

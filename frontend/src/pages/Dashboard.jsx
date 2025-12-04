@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 import Header from '../components/Header';
+import ConnectionParticles from '../components/ConnectionParticles';
 import './Dashboard.css';
 
+const DASHBOARD_PARTICLE_COLORS = ['#0b264f', '#1a4a7a', '#2d5a8a'];
+const DASHBOARD_PARTICLE_LINK_COLOR = '#4a6fa5';
+const DASHBOARD_PARTICLE_QUANTITY = 60;
+
 /**
- * Main dashboard/index page - shown after successful login
+ * Main dashboard/homepage - shown after successful login
+ * Displays user recommendations and provides navigation to search
  */
 function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [faculty, setFaculty] = useState(null);
   const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,12 +47,62 @@ function Dashboard() {
     checkAuth();
   }, [navigate, location]);
 
+  useEffect(() => {
+    // TODO: Fetch actual recommendations from API
+    // For now, use placeholder data
+    const placeholderRecommendations = [
+      {
+        faculty_id: '1',
+        first_name: 'Sarah',
+        last_name: 'Johnson',
+        institution_name: 'University of Maine',
+        department: 'Computer Science',
+        match_reason: 'Shared research interests in machine learning',
+        match_score: 0.92
+      },
+      {
+        faculty_id: '2',
+        first_name: 'Michael',
+        last_name: 'Chen',
+        institution_name: 'University of Southern Maine',
+        department: 'Data Science',
+        match_reason: 'Similar grant funding history',
+        match_score: 0.87
+      },
+      {
+        faculty_id: '3',
+        first_name: 'Emily',
+        last_name: 'Rodriguez',
+        institution_name: 'University of Maine',
+        department: 'Computer Science',
+        match_reason: 'Common publications and keywords',
+        match_score: 0.85
+      },
+      {
+        faculty_id: '4',
+        first_name: 'David',
+        last_name: 'Thompson',
+        institution_name: 'University of Southern Maine',
+        department: 'Information Systems',
+        match_reason: 'Same institution and department',
+        match_score: 0.78
+      }
+    ];
+    setRecommendations(placeholderRecommendations);
+  }, []);
+
   if (!faculty) {
     return <div className="dashboard-loading">Loading...</div>;
   }
 
   return (
     <div className="dashboard-container">
+      <ConnectionParticles
+        className="dashboard-particles"
+        colors={DASHBOARD_PARTICLE_COLORS}
+        linkColor={DASHBOARD_PARTICLE_LINK_COLOR}
+        quantity={DASHBOARD_PARTICLE_QUANTITY}
+      />
       <Header />
 
       <main className="dashboard-main">
@@ -62,36 +119,68 @@ function Dashboard() {
           </div>
         )}
         
-        <div className="dashboard-welcome">
-          <h2>Welcome to ScholarSphere</h2>
-          <p>Connect with Maine Faculty for Research Collaboration</p>
+        <div className="dashboard-welcome-tile">
+          <h1 className="dashboard-welcome-title">
+            Welcome back, {faculty.first_name}
+          </h1>
+          <p className="dashboard-welcome-subtitle">
+            Here's what's new for you today
+          </p>
         </div>
 
-        <div className="dashboard-content">
-          <div className="dashboard-card">
-            <h3>Your Profile</h3>
-            <div className="profile-info">
-              <p><strong>Name:</strong> {faculty.first_name} {faculty.last_name}</p>
-              {faculty.emails && faculty.emails.length > 0 && (
-                <p><strong>Email:</strong> {faculty.emails[0]}</p>
-              )}
-              {faculty.departments && faculty.departments.length > 0 && (
-                <p><strong>Department:</strong> {faculty.departments.join(', ')}</p>
-              )}
-              {faculty.titles && faculty.titles.length > 0 && (
-                <p><strong>Title:</strong> {faculty.titles.join(', ')}</p>
-              )}
-            </div>
+        <div className="dashboard-recommendations-tile">
+          <div className="dashboard-section-header">
+            <h2 className="dashboard-section-title">Recommended Collaborators</h2>
+            <p className="dashboard-section-description">
+              Faculty members with similar research interests and collaboration potential
+            </p>
           </div>
 
-          <div className="dashboard-card">
-            <h3>Quick Actions</h3>
-            <div className="quick-actions">
-              <button className="action-button" onClick={() => navigate('/search')}>Browse Faculty</button>
-              <button className="action-button">View Recommendations</button>
-              <button className="action-button">Edit Profile</button>
+          {recommendations.length > 0 ? (
+            <div className="dashboard-recommendations-grid">
+              {recommendations.map((rec) => (
+                <div 
+                  key={rec.faculty_id} 
+                  className="dashboard-recommendation-card"
+                >
+                  <div className="recommendation-card-header">
+                    <div className="recommendation-avatar">
+                      {rec.first_name[0]}{rec.last_name[0]}
+                    </div>
+                    <div className="recommendation-info">
+                      <h3 className="recommendation-name">
+                        {rec.first_name} {rec.last_name}
+                      </h3>
+                      <p className="recommendation-institution">{rec.institution_name}</p>
+                      <p className="recommendation-department">{rec.department}</p>
+                    </div>
+                  </div>
+                  <div className="recommendation-card-body">
+                    <p className="recommendation-reason">{rec.match_reason}</p>
+                    <div className="recommendation-match-score">
+                      <span className="match-score-label">Match</span>
+                      <span className="match-score-value">{Math.round(rec.match_score * 100)}%</span>
+                    </div>
+                  </div>
+                  <div className="recommendation-card-footer">
+                    <button 
+                      className="recommendation-view-button"
+                      onClick={() => navigate(`/faculty/${rec.faculty_id}`)}
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="dashboard-empty-recommendations">
+              <p>No recommendations available at this time.</p>
+              <Link to="/search/faculty" className="dashboard-search-link">
+                Browse all faculty instead
+              </Link>
+            </div>
+          )}
         </div>
       </main>
     </div>

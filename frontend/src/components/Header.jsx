@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout as logoutApi } from '../services/api';
 import defaultSilhouette from '../assets/default_silhouette.png';
+import logo from '../assets/logo.png';
 import './Header.css';
 
 /**
@@ -9,10 +10,14 @@ import './Header.css';
  */
 function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [faculty, setFaculty] = useState(null);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
+  const searchDropdownRef = useRef(null);
+  const searchButtonRef = useRef(null);
 
   useEffect(() => {
     const facultyData = localStorage.getItem('faculty');
@@ -37,16 +42,24 @@ function Header() {
       ) {
         setIsDropdownOpen(false);
       }
+      if (
+        searchDropdownRef.current &&
+        searchButtonRef.current &&
+        !searchDropdownRef.current.contains(event.target) &&
+        !searchButtonRef.current.contains(event.target)
+      ) {
+        setIsSearchDropdownOpen(false);
+      }
     };
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isSearchDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isSearchDropdownOpen]);
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
@@ -86,9 +99,77 @@ function Header() {
 
   return (
     <header className="header">
-      <Link to="/dashboard" className="header-home">
-        <h1>ScholarSphere</h1>
-      </Link>
+      <div className="header-left">
+        <Link to="/dashboard" className="header-logo">
+          <img src={logo} alt="ScholarSphere" className="header-logo-img" />
+        </Link>
+        {faculty && (
+          <nav className="header-nav">
+            <Link 
+              to="/dashboard" 
+              className={`header-nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+            >
+              Dashboard
+            </Link>
+            <div className="header-search-dropdown-container">
+              <button
+                ref={searchButtonRef}
+                className={`header-nav-link header-search-dropdown-button ${location.pathname.startsWith('/search') ? 'active' : ''}`}
+                onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}
+              >
+                Search
+                <svg 
+                  className={`header-search-arrow ${isSearchDropdownOpen ? 'open' : ''}`}
+                  width="12" 
+                  height="12" 
+                  viewBox="0 0 12 12" 
+                  fill="none"
+                >
+                  <path 
+                    d="M3 4.5L6 7.5L9 4.5" 
+                    stroke="currentColor" 
+                    strokeWidth="1.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              {isSearchDropdownOpen && (
+                <div ref={searchDropdownRef} className="header-search-dropdown">
+                  <Link 
+                    to="/search/faculty" 
+                    className={`header-search-dropdown-link ${location.pathname === '/search/faculty' ? 'active' : ''}`}
+                    onClick={() => setIsSearchDropdownOpen(false)}
+                  >
+                    Faculty
+                  </Link>
+                  <Link 
+                    to="/search/equipment" 
+                    className={`header-search-dropdown-link ${location.pathname === '/search/equipment' ? 'active' : ''}`}
+                    onClick={() => setIsSearchDropdownOpen(false)}
+                  >
+                    Equipment
+                  </Link>
+                  <Link 
+                    to="/search/grants" 
+                    className={`header-search-dropdown-link ${location.pathname === '/search/grants' ? 'active' : ''}`}
+                    onClick={() => setIsSearchDropdownOpen(false)}
+                  >
+                    Grants
+                  </Link>
+                  <Link 
+                    to="/search/institutions" 
+                    className={`header-search-dropdown-link ${location.pathname === '/search/institutions' ? 'active' : ''}`}
+                    onClick={() => setIsSearchDropdownOpen(false)}
+                  >
+                    Institutions
+                  </Link>
+                </div>
+              )}
+            </div>
+          </nav>
+        )}
+      </div>
       
       {faculty && (
         <div className="header-profile-container">
@@ -99,12 +180,19 @@ function Header() {
             aria-expanded={isDropdownOpen}
             aria-haspopup="true"
           >
-            <img 
-              src={defaultSilhouette} 
-              alt="Profile" 
-              className="header-profile-icon"
-            />
-            <span className="header-profile-text">Me</span>
+            <div className="header-profile-avatar-wrapper">
+              <img 
+                src={defaultSilhouette} 
+                alt="Profile" 
+                className="header-profile-icon"
+              />
+            </div>
+            <div className="header-profile-info">
+              <span className="header-profile-name">
+                {truncatedFirstName} {truncatedLastName}
+              </span>
+              <span className="header-profile-institution">{truncatedInstitutionName}</span>
+            </div>
             <svg 
               className={`header-dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}
               width="16" 

@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
-import Header from '../components/Header';
-import { searchFaculty } from '../services/api';
-import './Search.css';
+import Header from '../../components/Header';
+import { searchFaculty } from '../../services/api';
+import './Faculty.css';
 
 /**
- * Search page component - allows users to search for faculty members
+ * Faculty search page component - allows users to search for faculty members
  */
-function Search() {
+function Faculty() {
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,11 +25,8 @@ function Search() {
     setError('');
 
     try {
-      // Pass the query string as a search parameter
-      // The backend handles parsing it appropriately
       const response = await searchFaculty({ query: searchQuery.trim() });
       
-      // Limit results to MAX_RESULTS
       const limitedResults = Array.isArray(response) 
         ? response.slice(0, MAX_RESULTS)
         : [];
@@ -52,7 +49,6 @@ function Search() {
     // TODO: Navigate to profile page when implemented
   };
 
-  // Helper function to truncate text with ellipsis
   const truncateText = (text, maxLength) => {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -133,5 +129,5 @@ function Search() {
   );
 }
 
-export default Search;
+export default Faculty;
 

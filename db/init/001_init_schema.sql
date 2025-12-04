@@ -27,7 +27,10 @@ CREATE TABLE IF NOT EXISTS faculty (
         (research_gate_url IS NULL
             OR research_gate_url LIKE 'https://www.researchgate.net/%'
             OR research_gate_url LIKE 'http://www.researchgate.net/%')
-    )
+    ),
+
+    -- Index on last name and first name for faster search functionality
+    INDEX idx_faculty_last_first_name (last_name, first_name)
 );
 
 -- Source: institution.sql
@@ -53,7 +56,16 @@ CREATE TABLE IF NOT EXISTS institution (
 
 
     -- Constraints
-    CHECK (zip IS NULL OR zip REGEXP '^[0-9]{5}$')
+    CHECK (zip IS NULL OR zip REGEXP '^[0-9]{5}$'),
+
+    -- Index on institution name for faster lookup
+    INDEX idx_institution_name (name),
+
+    -- Index on city and state for regional searches
+    INDEX idx_institution_city_state (city, state),
+
+    -- Index on zip code for a more specific location lookup
+    INDEX idx_institution_zip (zip)
 );
 
 
@@ -177,7 +189,16 @@ CREATE TABLE IF NOT EXISTS equipment (
     FOREIGN KEY (institution_id)
         REFERENCES institution(institution_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on institution_id for faster lookup related to institution
+    INDEX idx_equipment_institution_id (institution_id),
+
+    -- Index on equipment name
+    INDEX idx_equipment_name (name),
+
+    -- Quickly check availability
+    INDEX idx_equipment_availability (availability)
 );
 
 
@@ -192,7 +213,10 @@ CREATE TABLE IF NOT EXISTS faculty_department (
     FOREIGN KEY (faculty_id) 
         REFERENCES faculty(faculty_id) 
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on department name for faster search functionality
+    INDEX idx_faculty_department_dept_name (department_name)
 );
 
 -- Source: faculty_email.sql
@@ -271,7 +295,10 @@ CREATE TABLE grants_organization (
     FOREIGN KEY (grant_id)
         REFERENCES grants (grant_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on grant_id to optimize lookup for organizations associated with a given grant
+    INDEX idx_grant_id (grant_id)
 );
 
 

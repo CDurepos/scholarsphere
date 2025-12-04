@@ -4,7 +4,10 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import Search from './pages/Search';
+import Faculty from './pages/Search/Faculty';
+import Equipment from './pages/Search/Equipment';
+import Grants from './pages/Search/Grants';
+import Institutions from './pages/Search/Institutions';
 import { isAuthenticated as checkAuth } from './services/api';
 import './App.css';
 
@@ -70,10 +73,34 @@ function App() {
           }
         />
         <Route
-          path="/search"
+          path="/search/faculty"
           element={
             <ProtectedRoute>
-              <Search />
+              <Faculty />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search/equipment"
+          element={
+            <ProtectedRoute>
+              <Equipment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search/grants"
+          element={
+            <ProtectedRoute>
+              <Grants />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search/institutions"
+          element={
+            <ProtectedRoute>
+              <Institutions />
             </ProtectedRoute>
           }
         />

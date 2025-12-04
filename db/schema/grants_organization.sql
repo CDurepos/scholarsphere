@@ -11,5 +11,8 @@ CREATE TABLE grants_organization (
     FOREIGN KEY (grant_id)
         REFERENCES grants (grant_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on grant_id to optimize lookup for organizations associated with a given grant
+    INDEX idx_grant_id (grant_id)
 );

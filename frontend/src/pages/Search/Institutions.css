@@ -1,0 +1,38 @@
+.search-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(11, 38, 79, 0.04) 0%, #ffffff 45%);
+}
+
+.search-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.search-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.search-title {
+  font-size: 2rem;
+  color: var(--color-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.search-placeholder {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-muted);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-placeholder p {
+  margin: 0;
+  font-size: 1.2rem;
+  font-style: italic;
+}
+
