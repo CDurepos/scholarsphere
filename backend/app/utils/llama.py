@@ -1,6 +1,7 @@
 import os
 import re
 import torch
+from backend.app.config import Config
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 _model = None
@@ -14,13 +15,14 @@ def _load_model():
     if _model is None or _tokenizer is None:
         try:
             model_name = os.getenv(
-                "LLAMA_MODEL_NAME", "meta-llama/Meta-Llama-3-8B-Instruct"
+                "LLAMA_MODEL_NAME", "meta-llama/Meta-Llama-3.1-8B-Instruct"
             )
-            _tokenizer = AutoTokenizer.from_pretrained(model_name)
+            _tokenizer = AutoTokenizer.from_pretrained(model_name, token=Config.LLAMA_ACCESS_TOKEN)
             _model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 torch_dtype=torch.bfloat16,
                 device_map="auto",
+                token=Config.LLAMA_ACCESS_TOKEN,
             )
 
         except Exception as e:
@@ -79,11 +81,18 @@ def generate_keywords_with_llama(biography: str, num_keywords: int = 5, biograph
         messages = [
             {
                 "role": "system",
-                "content": "You are a helpful assistant that generates only research keywords separated by commas and no extra text based on a faculty member's biography.",
+                "content": (
+                    "You are a helpful assistant that generates only research keywords "
+                    "separated by commas and no extra text based on a faculty member's biography."
+                ),
             },
             {
                 "role": "user",
-                "content": f"Based on the following biography, generate exactly {num_keywords} research keywords that best describe this faculty member's work and expertise. Return only the keywords, separated by commas, with no additional text.\n\nBiography:\n{biography}\n\nKeywords:",
+                "content": (
+                    f"Based on the following biography, generate exactly {num_keywords} research keywords "
+                    f"that best describe this faculty member's work and expertise. "
+                    f"Return only the keywords, separated by commas.\n\nBiography:\n{biography}\n\nKeywords:"
+                ),
             },
         ]
 
@@ -91,16 +100,11 @@ def generate_keywords_with_llama(biography: str, num_keywords: int = 5, biograph
             messages, add_generation_prompt=True, return_tensors="pt"
         ).to(model.device)
 
-        terminators = [
-            tokenizer.eos_token_id,
-            tokenizer.convert_tokens_to_ids("<|eot_id|>"),
-        ]
-
         # Generate keywords
         with torch.no_grad():
             outputs = model.generate(
                 input_ids,
-                eos_token_ids=terminators,
+                eos_token_id=tokenizer.eos_token_id,
                 max_new_tokens=100,
                 temperature=0.6,
                 do_sample=True,

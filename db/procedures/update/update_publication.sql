@@ -22,7 +22,7 @@ DELIMITER $$
  */
 CREATE PROCEDURE update_publication(
     IN p_publication_id CHAR(36),
-    IN p_title VARCHAR(64),
+    IN p_title VARCHAR(128),
     IN p_publisher VARCHAR(255),
     IN p_year INT,
     IN p_doi VARCHAR(64),

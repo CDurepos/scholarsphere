@@ -27,7 +27,7 @@ def run_umf_scraper(output_dir: str) -> Tuple[str, str, None]:
     print("Running UMF Scraper")
     print("="*60)
     from scraping.umf.scraper import main as umf_main
-    return umf_main(output_dir), None
+    return umf_main(output_dir)
 
 
 def run_uma_scraper(output_dir: str) -> Tuple[str, str, None]:
@@ -36,7 +36,7 @@ def run_uma_scraper(output_dir: str) -> Tuple[str, str, None]:
     print("Running UMA Scraper")
     print("="*60)
     from scraping.uma.scraper import main as uma_main
-    return uma_main(output_dir), None
+    return uma_main(output_dir)
 
 
 def run_umo_scraper(output_dir: str) -> Tuple[str, str, str]:
@@ -54,7 +54,7 @@ def run_usm_scraper(output_dir: str) -> Tuple[str, str, None]:
     print("Running USM Scraper")
     print("="*60)
     from scraping.usm.scraper import main as usm_main
-    return usm_main(output_dir), None
+    return usm_main(output_dir)
 
 
 def count_jsonl_records(file_path: str) -> int:
@@ -108,7 +108,16 @@ def main():
         
         try:
             print(f"\n[INFO] Running {name} scraper...")
-            faculty_file, institution_file, publications_file = scraper_func(output_dir)
+            result = scraper_func(output_dir)
+            
+            # Handle scrapers that return 2 values (faculty, institution) or 3 values (faculty, institution, publications)
+            if len(result) == 2:
+                faculty_file, institution_file = result
+                publications_file = None
+            elif len(result) == 3:
+                faculty_file, institution_file, publications_file = result
+            else:
+                raise ValueError(f"Unexpected return value from {name} scraper: expected 2 or 3 values, got {len(result)}")
             
             if faculty_file and os.path.exists(faculty_file):
                 all_faculty_files.append(faculty_file)

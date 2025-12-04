@@ -9,13 +9,18 @@ institutions, faculty, and publications using UUID v4.
 Usage:
     python scraping/insert.py
 """
-from backend.app.utils.llama import generate_keywords_with_llama, unload_model
 
 import os
 import sys
+from pathlib import Path
+
+# Add parent directory to path for imports (must be before backend imports)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from backend.app.utils.llama import generate_keywords_with_llama, unload_model
+
 import json
 import uuid
-from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import date
 
@@ -535,6 +540,9 @@ def insert_publication_record(
         author_uuid = record["written_by"]
         publication_id = generate_publication_id()
         title = record.get("title", "")
+        # Crop title to 128 characters if it exceeds the limit
+        if title and len(title) > 128:
+            title = title[:128]
 
         db.call_procedure(
             cursor,
@@ -558,7 +566,7 @@ def insert_publication_record(
     except Exception as e:
         if conn and conn.in_transaction:
             conn.rollback()
-        print(f"[ERROR] Failed to insert institution {record.get('name')}: {str(e)}")
+        print(f"[ERROR] Failed to insert publication {record.get('title')}: {str(e)}")
         return None
 
     finally:
@@ -583,6 +591,7 @@ def insert_faculty_researches_keyword(
         True if insertion is successful, else False
     """
 
+    keywords = []
     try:
         if faculty_record.get("faculty_id") is None or faculty_record.get("faculty_id").strip() == "":
             raise ValueError(f"At keyword insertion time, faculty ID is None for faculty: {faculty_record}")

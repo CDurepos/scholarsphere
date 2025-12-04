@@ -8,7 +8,7 @@ DELIMITER $$
  * citation_count is automatically initialized to 0.
  * 
  * @param p_id         Required UUID for the publication record
- * @param p_title      Required publication title (max 64 characters)
+ * @param p_title      Required publication title (max 128 characters)
  * @param p_publisher  Optional publisher name (max 255 characters)
  * @param p_year       Optional publication year (INT)
  * @param p_doi        Optional Digital Object Identifier (max 64 characters)
@@ -21,7 +21,7 @@ DELIMITER $$
  */
 CREATE PROCEDURE create_publication(
     IN p_id CHAR(36),
-    IN p_title VARCHAR(64),
+    IN p_title VARCHAR(128),
     IN p_publisher VARCHAR(255),
     IN p_year INT,
     IN p_doi VARCHAR(64),
