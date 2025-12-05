@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
 import Header from '../../components/Header';
 import { searchFaculty } from '../../services/api';
-import './Faculty.css';
+import styles from './Faculty.module.css';
 
 /**
  * Faculty search page component - allows users to search for faculty members
  */
 function Faculty() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const MAX_RESULTS = 50;
@@ -34,7 +34,7 @@ function Faculty() {
       setResults(limitedResults);
     } catch (err) {
       setError('An error occurred while searching. Please try again.');
-      setResults([]);
+      setResults(null);
     } finally {
       setLoading(false);
     }
@@ -55,18 +55,18 @@ function Faculty() {
   };
 
   return (
-    <div className="search-container">
+    <div className={styles['search-container']}>
       <Header />
       
-      <main className="search-main">
-        <div className="search-content">
-          <h2 className="search-title">Search Faculty</h2>
+      <main className={styles['search-main']}>
+        <div className={styles['search-content']}>
+          <h2 className={styles['search-title']}>Search Faculty</h2>
           
-          <form onSubmit={handleSearch} className="search-form">
-            <div className="search-input-wrapper">
+          <form onSubmit={handleSearch} className={styles['search-form']}>
+            <div className={styles['search-input-wrapper']}>
               <input
                 type="text"
-                className="search-input"
+                className={styles['search-input']}
                 placeholder="Search by name, department, or institution..."
                 value={searchQuery}
                 onChange={handleInputChange}
@@ -74,7 +74,7 @@ function Faculty() {
               />
               <button 
                 type="submit" 
-                className="search-button"
+                className={styles['search-button']}
                 disabled={loading || !searchQuery.trim()}
               >
                 {loading ? 'Searching...' : 'Search'}
@@ -82,43 +82,43 @@ function Faculty() {
             </div>
           </form>
 
-          {error && <div className="search-error">{error}</div>}
+          {error && <div className={styles['search-error']}>{error}</div>}
 
-          <div className="search-results-container">
-            {results.length > 0 ? (
+          <div className={styles['search-results-container']}>
+            {results?.length > 0 ? (
               <>
-                <div className="search-results-header">
-                  <p className="search-results-count">
+                <div className={styles['search-results-header']}>
+                  <p className={styles['search-results-count']}>
                     Found {results.length} result{results.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-                <div className="search-results-list">
+                <div className={styles['search-results-list']}>
                   {results.map((faculty) => (
-                    <div key={faculty.faculty_id} onClick={() => handleResultClick(faculty.faculty_id)} className="search-result-card">
-                      <h3 className="result-name">
-                        {truncateText(faculty.first_name, 20)} {truncateText(faculty.last_name, 20)}
+                    <div key={faculty.faculty_id} onClick={() => handleResultClick(faculty.faculty_id)} className={styles['search-result-card']}>
+                      <h3 className={styles['result-name']}>
+                        {truncateText(faculty.first_name, 30)} {truncateText(faculty.last_name, 30)}
                       </h3>
                       {faculty.department_name && (
-                        <p className="result-info">
-                          <span className="result-label">Department:</span>{' '}
-                          {truncateText(faculty.department_name, 30)}
+                        <p className={styles['result-info']}>
+                          <span className={styles['result-label']}>Department:</span>{' '}
+                          {truncateText(faculty.department_name, 40)}
                         </p>
                       )}
                       {faculty.institution_name && (
-                        <p className="result-info">
-                          <span className="result-label">Institution:</span>{' '}
+                        <p className={styles['result-info']}>
+                          <span className={styles['result-label']}>Institution:</span>{' '}
                           {truncateText(faculty.institution_name, 40)}
                         </p>
                       )}
                       {faculty.biography && (
-                        <p className="result-biography">{truncateText(faculty.biography, 200)}</p>
+                        <p className={styles['result-biography']}>{truncateText(faculty.biography, 200)}</p>
                       )}
                     </div>
                   ))}
                 </div>
               </>
-            ) : searchQuery && !loading && !error ? (
-              <div className="search-empty">
+            ) : !loading && !error && results !== null && results.length === 0 ? (
+              <div className={styles['search-empty']}>
                 <p>No results found. Try a different search term.</p>
               </div>
             ) : null}
