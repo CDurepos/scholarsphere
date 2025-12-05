@@ -2,6 +2,7 @@ from scraping.utils import get_headers
 from scraping.schemas import Faculty
 from scraping.publications import CitationExtractor
 from scraping.umo.utils.parse_name import split_name
+from scraping.umo.utils.department_names import get_department_name
 from scraping.publications.publication_parser import citation_to_publication_instance
 
 import os
@@ -81,7 +82,7 @@ class B4Parser:
                 fac_inst.title = fac_title.split(", ")
 
                 # Set department
-                fac_inst.department = os.path.basename(path)[:-4]
+                fac_inst.department = get_department_name(os.path.basename(path))
 
                 # Set scraped from location
                 fac_inst.scraped_from = bio_url
