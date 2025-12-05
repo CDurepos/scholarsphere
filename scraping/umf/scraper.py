@@ -171,6 +171,44 @@ def clean_email(s: Optional[str]) -> Optional[str]:
     return m.group(0).lower() if m else None
 
 
+def is_boilerplate_text(text: str) -> bool:
+    """
+    Check if text appears to be website boilerplate rather than actual biography content.
+    Returns True if the text looks like cookie notices, footer text, etc.
+    """
+    if not text:
+        return True
+    
+    text_lower = text.lower()
+    
+    # Strong indicators of boilerplate - if any of these are present, it's likely not a bio
+    boilerplate_phrases = [
+        "cookie",
+        "we use cookies",
+        "cookie information is stored",
+        "best user experience",
+        "privacy policy",
+        "terms of service",
+        "gdpr",
+        "consent",
+        "third party",
+        "analytics",
+        "strictly necessary",
+        "browser and performs functions",
+        "recognising you when you return",
+        "help us understand",
+        "improve your experience",
+        "accept our use",
+        "cookie settings",
+    ]
+    
+    for phrase in boilerplate_phrases:
+        if phrase in text_lower:
+            return True
+    
+    return False
+
+
 def clean_biography(bio: Optional[str]) -> Optional[str]:
     """
     Clean biography text by filtering out unwanted content like cookie notices,
@@ -183,32 +221,13 @@ def clean_biography(bio: Optional[str]) -> Optional[str]:
     if not bio:
         return None
     
-    # Patterns to filter out unwanted text
-    unwanted_patterns = [
-        r"University of Maine.*?Farmington.*?This website uses cookies",
-        r"This website uses cookies.*?",
-        r"University of Maine.*?Farmington.*?cookie",
-        r"cookie.*?policy",
-        r"privacy.*?policy",
-        r"terms.*?of.*?service",
-        r"University of Maine.*?Farmington.*?website",
-        r"^\s*(University of Maine|UMF|Farmington).*?$",  # Lines that are just university name
-    ]
-    
-    # Remove unwanted patterns
-    for pattern in unwanted_patterns:
-        bio = re.sub(pattern, "", bio, flags=re.I | re.DOTALL)
-    
-    # Additional checks: if bio is too short or contains mostly boilerplate, return None
-    bio_words = bio.split()
-    if len(bio_words) < 10:  # Too short to be a real biography
+    # Check for boilerplate text first
+    if is_boilerplate_text(bio):
         return None
     
-    # Check if bio is mostly just university name variations
-    university_terms = ["university", "maine", "farmington", "umf", "campus", "college"]
-    bio_lower = bio.lower()
-    university_word_count = sum(1 for term in university_terms if term in bio_lower)
-    if university_word_count > len(bio_words) * 0.5:  # More than 50% university terms
+    # Additional checks: if bio is too short, return None
+    bio_words = bio.split()
+    if len(bio_words) < 10:  # Too short to be a real biography
         return None
     
     # Final normalization
@@ -577,21 +596,29 @@ def scrape_profile_page(url: str) -> Faculty:
         text_all = soup.get_text(" ")
         email = clean_email(text_all)
 
-    # Biography block
+    # Biography block - only use specific biography section, don't fall back to page content
     bio = None
     bio_block = soup.select_one("section._farUsersBiography ._farUsersBiography__text")
-    if not bio_block:
-        bio_block = (
-            soup.select_one(".entry-content")
-            or soup.select_one("article")
-            or soup
-        )
-
-    paras = [extract_text_or_none(p) for p in bio_block.select("p")]
-    paras = [p for p in paras if p and len(p.split()) > 6]
-    if paras:
-        bio = "\n\n".join(paras[:6]).strip()
-        bio = clean_biography(bio)  # Clean the biography to remove unwanted text
+    
+    if bio_block:
+        # Only extract paragraphs from the actual biography section
+        paras = [extract_text_or_none(p) for p in bio_block.select("p")]
+        paras = [p for p in paras if p and len(p.split()) > 6 and not is_boilerplate_text(p)]
+        if paras:
+            bio = "\n\n".join(paras[:6]).strip()
+            bio = clean_biography(bio)
+    
+    # If no dedicated biography section, check for a bio in a content area but be strict
+    if not bio:
+        # Try entry-content but be very careful to filter out boilerplate
+        content_block = soup.select_one(".entry-content")
+        if content_block:
+            paras = [extract_text_or_none(p) for p in content_block.select("p")]
+            # Filter more aggressively for fallback content
+            paras = [p for p in paras if p and len(p.split()) > 10 and not is_boilerplate_text(p)]
+            if paras:
+                bio = "\n\n".join(paras[:6]).strip()
+                bio = clean_biography(bio)
 
     # Scholarly links from page content
     orcid_url, gscholar_url, rgate_url = extract_scholarly_links(soup)
