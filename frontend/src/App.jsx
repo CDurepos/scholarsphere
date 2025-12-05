@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Faculty from './pages/Search/Faculty';
+import FacultyProfile from './pages/FacultyProfile';
 import Equipment from './pages/Search/Equipment';
 import Grants from './pages/Search/Grants';
 import Institutions from './pages/Search/Institutions';
@@ -77,6 +78,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Faculty />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/faculty/:facultyId"
+          element={
+            <ProtectedRoute>
+              <FacultyProfile />
             </ProtectedRoute>
           }
         />
