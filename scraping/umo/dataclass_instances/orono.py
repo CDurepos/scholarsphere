@@ -1,6 +1,7 @@
 from scraping.schemas.institution import Institution
 
 umaine = Institution(
+    institution_id="umo",
     name="University of Maine",
     website_url="https://umaine.edu/",
     institution_type="Public Research University",
