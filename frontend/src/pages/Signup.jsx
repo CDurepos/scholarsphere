@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { checkFacultyExists, saveFaculty, registerCredentials, login, checkCredentialsExist } from '../services/api';
+import { checkFacultyExists, saveFaculty, registerCredentials, login, checkCredentialsExist, isAuthenticated } from '../services/api';
 import ConnectionParticles from '../components/ConnectionParticles';
 import { BasicInfoForm, ConfirmationStep, CredentialsForm } from '../features/signup/SignupSteps';
 import styles from './Signup.module.css';
@@ -27,6 +27,7 @@ function Signup() {
   const [step, setStep] = useState(1);
   const [showConfirmation, setShowConfirmation] = useState(false); // Whether to show confirmation in step 2
   const [institutions, setInstitutions] = useState([]);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   
   // Helper functions for localStorage management
   const getStoredFacultyId = () => {
@@ -95,6 +96,19 @@ function Signup() {
   const [error, setError] = useState('');
   const [hasExistingCredentials, setHasExistingCredentials] = useState(false);
 
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const authenticated = await isAuthenticated();
+      if (authenticated) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
   // Load faculty_id from localStorage on mount
   useEffect(() => {
     const storedFacultyId = getStoredFacultyId();
@@ -112,13 +126,6 @@ function Signup() {
       setInstitutions(institutions);
     };
     fetchInstitutions();
-    
-    // Cleanup: Clear signup data if user navigates away (optional - you may want to keep it)
-    // Uncomment if you want to clear on unmount:
-    // return () => {
-    //   // Only clear if signup is incomplete (not on step 3)
-    //   // Actually, let's keep it so they can resume
-    // };
   }, []);
 
   const handleStep1Submit = async (data) => {
@@ -328,6 +335,20 @@ function Signup() {
       setLoading(false);
     }
   };
+
+  // Show nothing while checking auth to prevent flash
+  if (checkingAuth) {
+    return (
+      <div className={styles['signup-container']}>
+        <ConnectionParticles
+          className={styles['signup-particles']}
+          colors={SIGNUP_PARTICLE_COLORS}
+          linkColor={SIGNUP_PARTICLE_LINK_COLOR}
+          quantity={SIGNUP_PARTICLE_QUANTITY}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles['signup-container']}>

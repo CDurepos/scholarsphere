@@ -15,22 +15,12 @@ import './App.css';
  * Main App component with routing
  *
  * Routes:
- * - / : Landing page (Login/Signup choice) or redirect to dashboard if logged in
- * - /login : Login page
- * - /signup : Multi-step signup flow
+ * - / : Landing page (always accessible, even when logged in)
+ * - /login : Login page (redirects to dashboard if already logged in)
+ * - /signup : Multi-step signup flow (redirects to dashboard if already logged in)
  * - /dashboard : Main dashboard (protected route)
  */
 function App() {
-  const [authStatus, setAuthStatus] = useState(null);
-
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      const authenticated = await checkAuth();
-      setAuthStatus(authenticated);
-    };
-    checkAuthStatus();
-  }, []);
-
   const ProtectedRoute = ({ children }) => {
     const [isAuth, setIsAuth] = useState(null);
     
@@ -45,23 +35,14 @@ function App() {
     if (isAuth === null) {
       return <div>Loading...</div>;
     }
-    return isAuth ? children : <Navigate to="/" replace />;
+    return isAuth ? children : <Navigate to="/login" replace />;
   };
-
-  function RootRedirect() {
-    if (authStatus === null) {
-      return <div>Loading...</div>;
-    }
-    return authStatus ? <Navigate to="/dashboard" replace /> : <Landing />;
-  }
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={<RootRedirect />}
-        />
+        {/* Landing page - always accessible */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route

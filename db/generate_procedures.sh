@@ -3,6 +3,7 @@
 # Script to generate 002_add_procedures.sql from all files in the procedures subdirectories
 # Ignores *.md files
 # Processes subdirectories in order: create, read, update, delete, workflow
+# Recursively includes nested directories (e.g., workflow/recommend/)
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROCEDURES_DIR="$SCRIPT_DIR/procedures"
@@ -40,9 +41,12 @@ for subdir in "${SUBDIRS[@]}"; do
     echo "-- ============================================================" >> "$OUTPUT_FILE"
     echo "" >> "$OUTPUT_FILE"
     
-    # Find all .sql files in this subdirectory (excluding .md files), sort them, and concatenate
-    find "$subdir_path" -maxdepth 1 -name "*.sql" -type f | sort | while read -r file; do
-        echo "-- Source: $subdir/$(basename "$file")" >> "$OUTPUT_FILE"
+    # Find all .sql files recursively in this subdirectory, sort them, and concatenate
+    # This includes nested directories like workflow/recommend/
+    find "$subdir_path" -name "*.sql" -type f | sort | while read -r file; do
+        # Get relative path from procedures dir for cleaner source comments
+        relative_path="${file#$PROCEDURES_DIR/}"
+        echo "-- Source: $relative_path" >> "$OUTPUT_FILE"
         echo "" >> "$OUTPUT_FILE"
         cat "$file" >> "$OUTPUT_FILE"
         echo "" >> "$OUTPUT_FILE"
@@ -51,4 +55,3 @@ for subdir in "${SUBDIRS[@]}"; do
 done
 
 echo "[OK] Generated $OUTPUT_FILE"
-

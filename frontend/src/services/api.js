@@ -185,6 +185,39 @@ export const searchFaculty = async (params = {}) => {
 };
 
 /**
+ * Public faculty lookup for signup flow (no authentication required)
+ * 
+ * This endpoint does NOT require authentication, allowing new users
+ * to search for their existing faculty record before creating an account.
+ * 
+ * @param {Object} params - Search parameters
+ * @param {string} [params.query] - General search query
+ * @param {string} [params.first_name] - Filter by first name
+ * @param {string} [params.last_name] - Filter by last name
+ * @param {string} [params.department] - Filter by department
+ * @param {string} [params.institution] - Filter by institution
+ * 
+ * @returns {Promise<Array>} Array of matching faculty members
+ */
+export const lookupFacultyPublic = async (params = {}) => {
+  const queryParams = new URLSearchParams();
+  
+  if (params.query) queryParams.append('query', params.query.trim());
+  if (params.first_name) queryParams.append('first_name', params.first_name);
+  if (params.last_name) queryParams.append('last_name', params.last_name);
+  if (params.department) queryParams.append('department', params.department);
+  if (params.institution) queryParams.append('institution', params.institution);
+  
+  const response = await fetch(`${API_BASE_URL}/auth/lookup-faculty?${queryParams.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.json();
+};
+
+/**
  * Get complete faculty data by faculty_id
  * 
  * @param {string} faculty_id - UUID of the faculty member
@@ -306,7 +339,8 @@ export const checkFacultyExists = async (data) => {
   };
   
   // PRIORITY 1: Perfect match (first_name + last_name + institution_name)
-  const searchResultsWithInstitution = await searchFaculty({
+  // Uses public lookup endpoint (no auth required for signup flow)
+  const searchResultsWithInstitution = await lookupFacultyPublic({
     first_name: data.first_name,
     last_name: data.last_name,
     institution: data.institution_name,
@@ -324,7 +358,8 @@ export const checkFacultyExists = async (data) => {
   }
   
   // PRIORITY 2: Name match (first_name + last_name, wrong institution)
-  const searchResultsByNameOnly = await searchFaculty({
+  // Uses public lookup endpoint (no auth required for signup flow)
+  const searchResultsByNameOnly = await lookupFacultyPublic({
     first_name: data.first_name,
     last_name: data.last_name,
   });
@@ -661,6 +696,52 @@ export const checkCredentialsExist = async (faculty_id) => {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to check credentials');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Get personalized faculty recommendations for a user
+ * 
+ * @param {string} faculty_id - UUID of the faculty member to get recommendations for
+ * 
+ * @returns {Promise<Array>} Array of recommended faculty objects sorted by match_score
+ * 
+ * Example response:
+ * [
+ *   {
+ *     "faculty_id": "uuid",
+ *     "first_name": "Jane",
+ *     "last_name": "Smith",
+ *     "institution_name": "University of Maine",
+ *     "department_name": "Computer Science",
+ *     "match_score": 0.85,
+ *     "recommendation_type": "shared_keyword",
+ *     "recommendation_text": "Similar research interests"
+ *   },
+ *   ...
+ * ]
+ */
+export const getRecommendations = async (faculty_id) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add Authorization header if we have an access token
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/recommend/${faculty_id}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers,
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get recommendations');
   }
   
   return response.json();

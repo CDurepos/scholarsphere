@@ -9,10 +9,9 @@ from bs4 import BeautifulSoup
 import regex as re
 import os
 from datetime import date
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
-from scraping.schemas import Institution
-from scraping.utils.json_output import write_faculty_jsonl, write_institution_json
+from scraping.utils.json_output import write_faculty_jsonl
 
 # Use this Boolean to toggle on/off biography retrieval
 retrieve_biography = False
@@ -31,30 +30,18 @@ abbreviations = [
 
 base_url = "https://usm.maine.edu/directories/faculty-and-staff/"
 
-USM_NAME = "University of Southern Maine"
-USM_INSTITUTION_ID = "usm"
+# Institution name must match exactly what's in data/institutions.json
+INSTITUTION_NAME = "University of Southern Maine"
 
 
-def scrape_usm() -> Tuple[Institution, List[Dict]]:
+def scrape_usm() -> List[Dict]:
     """
-    Scrape USM faculty data and return institution and faculty records.
+    Scrape USM faculty data and return faculty records.
     
     Returns:
-        Tuple of (Institution, list) where list contains faculty dictionaries
-        with all attributes including MV attributes as arrays.
+        List of faculty dictionaries with all attributes including MV attributes as arrays.
+        Each record includes institution_name which references data/institutions.json.
     """
-    inst = Institution(
-        institution_id=USM_INSTITUTION_ID,
-        name=USM_NAME,
-        website_url="https://usm.maine.edu",
-        institution_type="Public University",
-        street_addr=None,
-        city="Portland",
-        state="ME",
-        country="USA",
-        zip_code=None,
-    )
-    
     faculty_records = []
     
     print("[INFO] Scraping alphabetically organized directories...")
@@ -178,7 +165,7 @@ def scrape_usm() -> Tuple[Institution, List[Dict]]:
                             'phones': phones,
                             'departments': departments,
                             'titles': titles,
-                            'institution_id': inst.institution_id,
+                            'institution_name': INSTITUTION_NAME,
                             'start_date': date.today().isoformat(),
                             'end_date': None,
                         }
@@ -191,7 +178,7 @@ def scrape_usm() -> Tuple[Institution, List[Dict]]:
             print(f"[WARN] Failed to scrape {current_url}: {e}")
             continue
     
-    return inst, faculty_records
+    return faculty_records
 
 
 def main(output_dir: str = "scraping/out"):
@@ -203,7 +190,7 @@ def main(output_dir: str = "scraping/out"):
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    inst, faculty_records = scrape_usm()
+    faculty_records = scrape_usm()
     print(f"[INFO] Scraped {len(faculty_records)} faculty records")
     
     # Write faculty JSONL file
@@ -211,23 +198,7 @@ def main(output_dir: str = "scraping/out"):
     write_faculty_jsonl(faculty_records, faculty_output)
     print(f"[INFO] Wrote: {faculty_output}")
     
-    # Write institution JSON file
-    institution_output = os.path.join(output_dir, "usm_institution.json")
-    institution_dict = {
-        'institution_id': inst.institution_id,
-        'name': inst.name,
-        'website_url': inst.website_url,
-        'type': inst.institution_type,
-        'street_addr': inst.street_addr,
-        'city': inst.city,
-        'state': inst.state,
-        'country': inst.country,
-        'zip': inst.zip_code,
-    }
-    write_institution_json(institution_dict, institution_output)
-    print(f"[INFO] Wrote: {institution_output}")
-    
-    return faculty_output, institution_output
+    return faculty_output
 
 
 if __name__ == "__main__":

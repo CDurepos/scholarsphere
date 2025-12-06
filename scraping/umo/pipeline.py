@@ -1,9 +1,7 @@
-from scraping.umo.dataclass_instances.orono import umaine
-from scraping.utils.json_output import write_faculty_jsonl, write_institution_json
+from scraping.utils.json_output import write_faculty_jsonl
 from scraping.schemas import (
     Faculty,
     Publication,
-    Institution,
     PublicationAuthoredByFaculty,
 )
 
@@ -24,7 +22,8 @@ COMPILER_OUTPUT_DIR = os.path.join(
 TOTAL_COMPILERS = 5
 TOTAL_PARSERS = 5
 
-UMO_INSTITUTION_ID = "umo"
+# Institution name must match exactly what's in data/institutions.json
+INSTITUTION_NAME = "University of Maine"
 
 
 def pipeline(steps: Union[int, list[int]] = None) -> None:
@@ -136,7 +135,7 @@ def convert_faculty_to_json_records(faculty_instances: List[Faculty]) -> List[Di
             "phones": phones,
             "departments": departments,
             "titles": titles,
-            "institution_id": UMO_INSTITUTION_ID,
+            "institution_name": INSTITUTION_NAME,
             "start_date": date.today().isoformat(),
             "end_date": None,
         }
@@ -203,19 +202,18 @@ def convert_publications_to_json_records(
 
 def scrape_umo(
     output_dir: str = os.path.join("scraping", "out"),
-) -> Tuple[Institution, List[Dict], List[Dict]]:
+) -> Tuple[List[Dict], List[Dict]]:
     """
-    Scrape UMO faculty data and return institution, faculty, and publication records.
+    Scrape UMO faculty data and return faculty and publication records.
 
     Args:
         output_dir: Directory to write output files (default: scraping/out)
 
     Returns:
-        Tuple of (Institution, faculty_records, publication_records)
+        Tuple of (faculty_records, publication_records)
+        Each faculty record includes institution_name which references data/institutions.json.
     """
     os.makedirs(output_dir, exist_ok=True)
-
-    inst = umaine
 
     print("[INFO] Step 1: Gathering biography links...")
     step_1()
@@ -252,7 +250,7 @@ def scrape_umo(
         unique_faculty, unique_pub_instances
     )
 
-    return inst, faculty_records, publication_records
+    return faculty_records, publication_records
 
 
 # Util function to identify possible junk names
@@ -299,9 +297,9 @@ def main(output_dir: str = "scraping/out"):
         output_dir: Directory to write output files (default: scraping/out)
 
     Returns:
-        Tuple of (faculty_output, institution_output, publications_output)
+        Tuple of (faculty_output, publications_output)
     """
-    inst, faculty_records, publication_records = scrape_umo(output_dir)
+    faculty_records, publication_records = scrape_umo(output_dir)
     print(f"[INFO] Scraped {len(faculty_records)} faculty records")
     print(f"[INFO] Scraped {len(publication_records)} publication records")
 
@@ -309,26 +307,11 @@ def main(output_dir: str = "scraping/out"):
     write_faculty_jsonl(faculty_records, faculty_output)
     print(f"[INFO] Wrote: {faculty_output}")
 
-    institution_output = os.path.join(output_dir, "umo_institution.json")
-    institution_dict = {
-        "institution_id": inst.institution_id,
-        "name": inst.name,
-        "website_url": inst.website_url,
-        "type": inst.institution_type,
-        "street_addr": inst.street_addr,
-        "city": inst.city,
-        "state": inst.state,
-        "country": inst.country,
-        "zip": inst.zip_code,
-    }
-    write_institution_json(institution_dict, institution_output)
-    print(f"[INFO] Wrote: {institution_output}")
-
     publications_output = os.path.join(output_dir, "umo_publications.jsonl")
     write_publications_jsonl(publication_records, publications_output)
     print(f"[INFO] Wrote: {publications_output}")
 
-    return faculty_output, institution_output, publications_output
+    return faculty_output, publications_output
 
 
 if __name__ == "__main__":

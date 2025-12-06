@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import ConnectionParticles from '../components/ConnectionParticles';
-import { login } from '../services/api';
+import { login, isAuthenticated } from '../services/api';
 import styles from './Login.module.css';
 
 // Stable particle config to prevent re-renders
@@ -23,10 +23,24 @@ function Login() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
     password: false,
   });
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const authenticated = await isAuthenticated();
+      if (authenticated) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   useEffect(() => {
     // Check for redirect message from signup
@@ -88,6 +102,20 @@ function Login() {
       setLoading(false);
     }
   };
+
+  // Show nothing while checking auth to prevent flash
+  if (checkingAuth) {
+    return (
+      <div className={styles['auth-container']}>
+        <ConnectionParticles
+          className={styles['auth-particles']}
+          colors={PARTICLE_COLORS}
+          linkColor={PARTICLE_LINK_COLOR}
+          quantity={PARTICLE_QUANTITY}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles['auth-container']}>
