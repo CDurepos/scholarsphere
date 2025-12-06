@@ -1,11 +1,17 @@
-from backend.app.db.procedures import sql_search_faculty
+from backend.app.db.procedures import (
+    sql_search_faculty,
+    sql_search_faculty_by_keyword,
+    sql_read_faculty_researches_keyword_by_faculty,
+    sql_read_publication_authored_by_faculty_by_faculty,
+    sql_read_publication_explores_keyword_by_publication,
+)
 from backend.app.db.transaction_context import start_transaction
 from backend.app.utils.search_filters import get_valid_search_filters
 
 from flask import jsonify
 
 
-def search_faculty_service(**filters: dict[str, str]):
+def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
     """
     Service layer for searching for faculty in the database based on search filters.
 
@@ -16,17 +22,24 @@ def search_faculty_service(**filters: dict[str, str]):
     and combine the results.
 
     Args:
+        result_limit: The maximum number of results to include in the response.
         **filters: Arbitrary keyword arguments representing the filters to use for searching.
                    Can include a "query" parameter for general searching across all fields.
+                   Can include a "keywords" parameter for searching by keywords / phrases.
 
     Returns:
         tuple: A tuple containing (jsonify response, status_code).
     """
     try:
         with start_transaction() as transaction_context:
-            # Handle generic "query" parameter by searching across all fields
-            if "query" in filters and filters["query"]:
-                query = filters["query"]
+            # Get keywords and ensure empty strings are treated as None
+            keywords = filters.get("keywords", "").strip() or None
+            
+            print(f"Keywords: {keywords}")
+            # Case 1: Handle generic "query" parameter by searching across all fields
+            query = filters.get("query", "").strip()
+            if query:
+                print("Case 1")
                 # Search across all fields and combine unique results
                 all_results = []
                 seen_ids = set()
@@ -43,19 +56,91 @@ def search_faculty_service(**filters: dict[str, str]):
                             seen_ids.add(faculty_id)
                             all_results.append(result)
 
-                return jsonify(all_results), 200
+                if keywords:
+                    all_results = rerank_by_keywords(all_results, keywords, transaction_context)
+                return jsonify(all_results[:result_limit]), 200
 
-            # Normal filtering with specific parameters
+            # Case 2: Normal filtering with specific parameters. NOTE: Frontend does not use this currently.
             valid_filters = {
-                key: filters.get(key) for key in get_valid_search_filters()
+                key: filters.get(key, "").strip() for key in get_valid_search_filters()
+                if filters.get(key, "").strip()  # Only include filters that have actual values
             }
-            results = sql_search_faculty(transaction_context, **valid_filters)
-            return jsonify(results), 200
+            if valid_filters:
+                print("Case 2")
+                results = sql_search_faculty(transaction_context, **valid_filters)
+                if keywords:
+                    results = rerank_by_keywords(results, keywords, transaction_context)
+                return jsonify(results[:result_limit]), 200
+
+            # Case 3: Search purely by keywords
+            if keywords:
+                print("Case 3")
+                #TODO: For any procedure that uses 'TEXT' type parameters, validate the input to ensure it is not too long.
+                results = sql_search_faculty_by_keyword(transaction_context, keywords, result_limit)
+                return jsonify(results[:result_limit]), 200
+            
+            # Case 4: No filters or keywords provided
+            print("Case 4")
+            return jsonify([]), 200
     except Exception as e:
         # Context manager already handled transaction cleanup
         # Convert exception to JSON error response for API layer
+        print(f"Error: {e}")
         error_message = str(e)
         return (
             jsonify({"error": f"Error searching for faculty: {error_message}"}),
             500,
         )
+
+
+def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):
+    """
+    Rerank the results by keywords.
+    
+    For each faculty, builds a set of all their keywords (from their research keywords
+    and from keywords explored in their publications), then scores by how many of the
+    search keywords match.
+    """
+    # Parse search keywords into a lowercase set
+    search_keywords = set(k.strip().lower() for k in keywords.split(",") if k.strip())
+    
+    if not search_keywords:
+        return results
+    
+    for result in results:
+        faculty_keywords = gather_keywords(result["faculty_id"], transaction_context)
+        # Score is the number of matching keywords (set intersection)
+        matching_keywords = search_keywords & faculty_keywords
+        result["keyword_score"] = len(matching_keywords)
+    
+    # Sort by keyword_score descending, keeping original order for ties
+    results.sort(key=lambda x: x.get("keyword_score", 0), reverse=True)
+    
+    return results
+
+def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
+    """
+    Gather the keywords for a faculty member.
+    """
+    faculty_keywords = set()
+    # Get keywords from faculty's direct research keywords
+    research_keywords = sql_read_faculty_researches_keyword_by_faculty(
+        transaction_context, faculty_id
+    )
+    for kw in research_keywords:
+        if kw.get("name"):
+            faculty_keywords.add(kw["name"].lower())
+    
+    # Get keywords from faculty's publications
+    publications = sql_read_publication_authored_by_faculty_by_faculty(
+        transaction_context, faculty_id
+    )
+    for publication in publications:
+        pub_keywords = sql_read_publication_explores_keyword_by_publication(
+            transaction_context, publication["publication_id"]
+        )
+        for kw in pub_keywords:
+            if kw.get("name"):
+                faculty_keywords.add(kw["name"].lower())
+
+    return faculty_keywords
