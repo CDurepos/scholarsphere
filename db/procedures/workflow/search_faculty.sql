@@ -46,9 +46,9 @@ BEGIN
     WHERE
         -- Each condition checks if the parameter is NULL (ignore) or matches with LIKE
         -- CONCAT(value, '%') creates a pattern for partial matching (starts with)
-        (p_first_name  IS NULL OR f.first_name      LIKE CONCAT(p_first_name, '%'))
-        AND (p_last_name IS NULL OR f.last_name      LIKE CONCAT(p_last_name, '%'))
-        AND (p_department IS NULL OR d.department_name LIKE CONCAT(p_department, '%'))
-        AND (p_institution IS NULL OR i.name            LIKE CONCAT(p_institution, '%'));
+        (p_first_name  IS NULL OR f.first_name      LIKE CONCAT('%', p_first_name, '%'))
+        AND (p_last_name IS NULL OR f.last_name      LIKE CONCAT('%', p_last_name, '%'))
+        AND (p_department IS NULL OR d.department_name LIKE CONCAT('%', p_department, '%'))
+        AND (p_institution IS NULL OR i.name            LIKE CONCAT('%', p_institution, '%'));
 END $$
 DELIMITER ;

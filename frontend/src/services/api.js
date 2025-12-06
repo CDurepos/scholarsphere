@@ -542,6 +542,7 @@ export const registerCredentials = async (data) => {
  * @param {Object} data - Request body
  * @param {string} data.username - Username
  * @param {string} data.password - Plain text password
+ * @param {boolean} [data.remember_me] - If true, extends session to 30 days (default: 7 days)
  * 
  * @returns {Promise<Object>} Response object
  * @returns {string} token - JWT token for authenticated sessions
@@ -572,7 +573,11 @@ export const login = async (data) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        username: data.username,
+        password: data.password,
+        remember_me: data.remember_me || false,
+      }),
     });
     
     const result = await response.json();

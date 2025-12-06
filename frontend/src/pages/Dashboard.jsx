@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 import Header from '../components/Header';
 import ConnectionParticles from '../components/ConnectionParticles';
-import './Dashboard.css';
+import styles from './Dashboard.module.css';
 
 const DASHBOARD_PARTICLE_COLORS = ['#0b264f', '#1a4a7a', '#2d5a8a'];
 const DASHBOARD_PARTICLE_LINK_COLOR = '#4a6fa5';
@@ -92,25 +92,25 @@ function Dashboard() {
   }, []);
 
   if (!faculty) {
-    return <div className="dashboard-loading">Loading...</div>;
+    return <div className={styles['dashboard-loading']}>Loading...</div>;
   }
 
   return (
-    <div className="dashboard-container">
+    <div className={styles['dashboard-container']}>
       <ConnectionParticles
-        className="dashboard-particles"
+        className={styles['dashboard-particles']}
         colors={DASHBOARD_PARTICLE_COLORS}
         linkColor={DASHBOARD_PARTICLE_LINK_COLOR}
         quantity={DASHBOARD_PARTICLE_QUANTITY}
       />
       <Header />
 
-      <main className="dashboard-main">
+      <main className={styles['dashboard-main']}>
         {welcomeMessage && (
-          <div className="dashboard-success-message">
+          <div className={styles['dashboard-success-message']}>
             <p>{welcomeMessage}</p>
             <button 
-              className="close-message-button" 
+              className={styles['close-message-button']} 
               onClick={() => setWelcomeMessage('')}
               aria-label="Close message"
             >
@@ -119,52 +119,52 @@ function Dashboard() {
           </div>
         )}
         
-        <div className="dashboard-welcome-tile">
-          <h1 className="dashboard-welcome-title">
+        <div className={styles['dashboard-welcome-tile']}>
+          <h1 className={styles['dashboard-welcome-title']}>
             Welcome back, {faculty.first_name}
           </h1>
-          <p className="dashboard-welcome-subtitle">
+          <p className={styles['dashboard-welcome-subtitle']}>
             Here's what's new for you today
           </p>
         </div>
 
-        <div className="dashboard-recommendations-tile">
-          <div className="dashboard-section-header">
-            <h2 className="dashboard-section-title">Recommended Collaborators</h2>
-            <p className="dashboard-section-description">
+        <div className={styles['dashboard-recommendations-tile']}>
+          <div className={styles['dashboard-section-header']}>
+            <h2 className={styles['dashboard-section-title']}>Recommended Collaborators</h2>
+            <p className={styles['dashboard-section-description']}>
               Faculty members with similar research interests and collaboration potential
             </p>
           </div>
 
           {recommendations.length > 0 ? (
-            <div className="dashboard-recommendations-grid">
+            <div className={styles['dashboard-recommendations-grid']}>
               {recommendations.map((rec) => (
                 <div 
                   key={rec.faculty_id} 
-                  className="dashboard-recommendation-card"
+                  className={styles['dashboard-recommendation-card']}
                 >
-                  <div className="recommendation-card-header">
-                    <div className="recommendation-avatar">
+                  <div className={styles['recommendation-card-header']}>
+                    <div className={styles['recommendation-avatar']}>
                       {rec.first_name[0]}{rec.last_name[0]}
                     </div>
-                    <div className="recommendation-info">
-                      <h3 className="recommendation-name">
+                    <div className={styles['recommendation-info']}>
+                      <h3 className={styles['recommendation-name']}>
                         {rec.first_name} {rec.last_name}
                       </h3>
-                      <p className="recommendation-institution">{rec.institution_name}</p>
-                      <p className="recommendation-department">{rec.department}</p>
+                      <p className={styles['recommendation-institution']}>{rec.institution_name}</p>
+                      <p className={styles['recommendation-department']}>{rec.department}</p>
                     </div>
                   </div>
-                  <div className="recommendation-card-body">
-                    <p className="recommendation-reason">{rec.match_reason}</p>
-                    <div className="recommendation-match-score">
-                      <span className="match-score-label">Match</span>
-                      <span className="match-score-value">{Math.round(rec.match_score * 100)}%</span>
+                  <div className={styles['recommendation-card-body']}>
+                    <p className={styles['recommendation-reason']}>{rec.match_reason}</p>
+                    <div className={styles['recommendation-match-score']}>
+                      <span className={styles['match-score-label']}>Match</span>
+                      <span className={styles['match-score-value']}>{Math.round(rec.match_score * 100)}%</span>
                     </div>
                   </div>
-                  <div className="recommendation-card-footer">
+                  <div className={styles['recommendation-card-footer']}>
                     <button 
-                      className="recommendation-view-button"
+                      className={styles['recommendation-view-button']}
                       onClick={() => navigate(`/faculty/${rec.faculty_id}`)}
                     >
                       View Profile
@@ -174,9 +174,9 @@ function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="dashboard-empty-recommendations">
+            <div className={styles['dashboard-empty-recommendations']}>
               <p>No recommendations available at this time.</p>
-              <Link to="/search/faculty" className="dashboard-search-link">
+              <Link to="/search/faculty" className={styles['dashboard-search-link']}>
                 Browse all faculty instead
               </Link>
             </div>
@@ -188,5 +188,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-
-

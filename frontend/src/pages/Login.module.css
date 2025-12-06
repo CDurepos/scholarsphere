@@ -125,6 +125,74 @@
   border-left: 4px solid var(--color-accent);
 }
 
+/* Remember Me Checkbox */
+.remember-me-group {
+  display: flex;
+  align-items: center;
+}
+
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.5rem;
+}
+
+.remember-me-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.remember-me-checkmark {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  min-width: 20px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.remember-me-label:hover .remember-me-checkmark {
+  border-color: var(--color-accent);
+}
+
+.remember-me-checkbox:checked ~ .remember-me-checkmark {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.remember-me-checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--color-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.remember-me-checkbox:checked ~ .remember-me-checkmark::after {
+  display: block;
+}
+
+.remember-me-checkbox:focus ~ .remember-me-checkmark {
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.remember-me-text {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
 .auth-button {
   padding: 0.875rem;
   background: var(--color-accent);

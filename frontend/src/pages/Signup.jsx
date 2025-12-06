@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { checkFacultyExists, saveFaculty, registerCredentials, login, checkCredentialsExist } from '../services/api';
 import ConnectionParticles from '../components/ConnectionParticles';
 import { BasicInfoForm, ConfirmationStep, CredentialsForm } from '../features/signup/SignupSteps';
-import './Signup.css';
+import styles from './Signup.module.css';
 import { getInstitutions } from '../services/api';
 
 // Stable particle config to prevent re-renders
@@ -330,24 +330,24 @@ function Signup() {
   };
 
   return (
-    <div className="signup-container">
+    <div className={styles['signup-container']}>
       <ConnectionParticles
-        className="signup-particles"
+        className={styles['signup-particles']}
         colors={SIGNUP_PARTICLE_COLORS}
         linkColor={SIGNUP_PARTICLE_LINK_COLOR}
         quantity={SIGNUP_PARTICLE_QUANTITY}
       />
-      <div className="signup-card">
-        <h1 className="signup-title">Sign Up for ScholarSphere</h1>
+      <div className={styles['signup-card']}>
+        <h1 className={styles['signup-title']}>Sign Up for ScholarSphere</h1>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className={styles['error-message']}>{error}</div>}
 
-        <div className="signup-progress">
-          <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>1</div>
-          <div className={`progress-line ${step >= 2 ? 'active' : ''}`}></div>
-          <div className={`progress-step ${step >= 2 ? 'active' : ''}`}>2</div>
-          <div className={`progress-line ${step >= 3 ? 'active' : ''}`}></div>
-          <div className={`progress-step ${step >= 3 ? 'active' : ''}`}>3</div>
+        <div className={styles['signup-progress']}>
+          <div className={`${styles['progress-step']} ${step >= 1 ? styles.active : ''}`}>1</div>
+          <div className={`${styles['progress-line']} ${step >= 2 ? styles.active : ''}`}></div>
+          <div className={`${styles['progress-step']} ${step >= 2 ? styles.active : ''}`}>2</div>
+          <div className={`${styles['progress-line']} ${step >= 3 ? styles.active : ''}`}></div>
+          <div className={`${styles['progress-step']} ${step >= 3 ? styles.active : ''}`}>3</div>
         </div>
 
         {step === 1 && (
@@ -361,17 +361,17 @@ function Signup() {
         {step === 2 && (
           <>
             {hasExistingCredentials ? (
-              <div className="signup-step">
-                <h2 className="step-title">Account Already Exists</h2>
-                <p className="step-description">
+              <div className={styles['signup-step']}>
+                <h2 className={styles['step-title']}>Account Already Exists</h2>
+                <p className={styles['step-description']}>
                   It looks like you already have an account with ScholarSphere. 
                   Please log in with your existing credentials.
                 </p>
-                <div className="confirmation-buttons">
+                <div className={styles['confirmation-buttons']}>
                   <button
                     type="button"
                     onClick={() => navigate('/login')}
-                    className="step-button step-button-primary"
+                    className={`${styles['step-button']} ${styles['step-button-primary']}`}
                   >
                     Go to Login
                   </button>
@@ -381,7 +381,7 @@ function Signup() {
                       setHasExistingCredentials(false);
                       setShowConfirmation(true);
                     }}
-                    className="step-button step-button-secondary"
+                    className={`${styles['step-button']} ${styles['step-button-secondary']}`}
                   >
                     Back
                   </button>
@@ -412,7 +412,7 @@ function Signup() {
           />
         )}
 
-        <p className="signup-footer">
+        <p className={styles['signup-footer']}>
           Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
@@ -421,4 +421,3 @@ function Signup() {
 }
 
 export default Signup;
-

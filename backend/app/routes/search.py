@@ -1,3 +1,4 @@
+from backend.app.utils.jwt import require_auth
 from backend.app.services.search import search_faculty_service
 from backend.app.utils.search_filters import get_valid_search_filters
 
@@ -8,6 +9,7 @@ search_bp = Blueprint("search", __name__)
 
 
 @search_bp.route("/faculty", methods=["GET"])
+@require_auth
 def search_faculty():
     """
     Search for faculty members based on query parameters.
