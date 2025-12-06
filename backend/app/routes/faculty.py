@@ -9,8 +9,9 @@ from backend.app.services.faculty import (
     update_faculty as update_faculty_service,
     get_faculty as get_faculty_service
 )
+from backend.app.utils.jwt import require_auth
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 
 faculty_bp = Blueprint("faculty", __name__)
 
@@ -88,15 +89,20 @@ def get_faculty(faculty_id):
 
 # UPDATE by faculty_id
 @faculty_bp.route("/<string:faculty_id>", methods=["PUT"])
+@require_auth
 def update_faculty(faculty_id):
     """
-    Update an existing faculty member.
+    Update faculty profile with transaction management.
+    
+    Developer: Owen Leitzell
+    
+    This endpoint updates faculty base info and all related tables
+    (emails, phones, departments, titles) in a single transaction.
     
     Expected request body:
     {
         "first_name": "John",
         "last_name": "Doe",
-        "institution_name": "University of Southern Maine",
         "emails": ["john.doe@example.com"],
         "phones": ["207-555-1234"],
         "departments": ["Computer Science"],
@@ -112,8 +118,13 @@ def update_faculty(faculty_id):
     Omit these fields to leave them unchanged.
     
     Returns:
-        JSON response with faculty_id and message
+        JSON response with message
     """
+    # Verify the user is updating their own profile
+    current_faculty_id = g.faculty_id
+    if current_faculty_id != faculty_id:
+        return jsonify({"error": "Unauthorized: You can only update your own profile"}), 403
+    
     try:
         data = request.get_json()
         
@@ -123,6 +134,7 @@ def update_faculty(faculty_id):
         if not faculty_id:
             return jsonify({"error": "faculty_id is required"}), 400
         
+        # Use service layer function which handles transaction management
         result = update_faculty_service(faculty_id, data)
         return jsonify(result), 200
         
@@ -131,7 +143,9 @@ def update_faculty(faculty_id):
         if "does not exist" in error_msg or "not found" in error_msg:
             return jsonify({"error": f"Faculty member with id {faculty_id} not found"}), 404
         
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": f"Failed to update profile: {str(e)}"
+        }), 500
     
 
 # DELETE faculty with faculty_id

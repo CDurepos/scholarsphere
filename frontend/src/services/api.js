@@ -469,7 +469,7 @@ export const updateFaculty = async (faculty_id, data) => {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
   
-  const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+  let response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
     method: 'PUT',
     credentials: 'include', // Include cookies
     headers,
@@ -481,14 +481,19 @@ export const updateFaculty = async (faculty_id, data) => {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;
-      const retryResponse = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+      response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
         method: 'PUT',
         credentials: 'include',
         headers,
         body: JSON.stringify(data),
       });
-      return retryResponse.json();
     }
+  }
+  
+  // Check if response was successful
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(errorData.error || `Failed to update faculty: ${response.status} ${response.statusText}`);
   }
   
   return response.json();
