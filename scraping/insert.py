@@ -378,16 +378,8 @@ def insert_faculty_record(
                     pass
 
         # Handle institution relationship
-        # Support both new format (institution_name) and legacy format (institution_id)
+        # Support both new format (institution_name)
         institution_name = record.get("institution_name")
-        
-        # Backward compatibility: map legacy institution_id to institution_name
-        if not institution_name:
-            legacy_id = record.get("institution_id")
-            if legacy_id:
-                institution_name = LEGACY_INSTITUTION_ID_MAP.get(legacy_id)
-                if not institution_name:
-                    print(f"[WARN] Unknown legacy institution_id: {legacy_id}")
         
         start_date = record.get("start_date")
         if institution_name:
