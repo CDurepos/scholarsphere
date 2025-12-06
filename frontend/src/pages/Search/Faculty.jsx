@@ -8,6 +8,8 @@ import styles from './Faculty.module.css';
  */
 function Faculty() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [keywordQuery, setKeywordQuery] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,8 +37,10 @@ function Faculty() {
     setLoading(true);
     setError('');
     setHasSearched(true);
+    setShowAdvanced(false);
 
     try {
+      // TODO: Include keywordQuery in search when backend supports it
       const response = await searchFaculty({ query: searchQuery.trim() });
       
       const limitedResults = Array.isArray(response) 
@@ -55,6 +59,14 @@ function Faculty() {
   const handleInputChange = (e) => {
     setSearchQuery(e.target.value);
     setError('');
+  };
+
+  const handleKeywordChange = (e) => {
+    setKeywordQuery(e.target.value);
+  };
+
+  const handleExpandHero = () => {
+    setHasSearched(false);
   };
 
   const handleResultClick = (facultyId) => {
@@ -78,49 +90,90 @@ function Faculty() {
       
       <main className={styles['search-main']}>
         <div className={styles['search-content']}>
-          {/* Hero Section with Search */}
-          <div className={`${styles['search-hero']} ${hasSearched ? styles['search-hero-compact'] : ''}`}>
-            <h2 className={`${styles['search-title']} ${hasSearched ? styles['search-title-hidden'] : ''}`}>
-              Search Faculty
-            </h2>
-            <p className={`${styles['search-subtitle']} ${hasSearched ? styles['search-subtitle-hidden'] : ''}`}>
-              Find researchers by name, department, or institution
-            </p>
-            
-            <form onSubmit={handleSearch} className={styles['search-form']}>
-              <div className={`${styles['search-input-wrapper']} ${hasSearched ? styles['search-input-wrapper-expanded'] : ''}`}>
-                <input
-                  type="text"
-                  className={styles['search-input']}
-                  placeholder="Search by name, department, or institution..."
-                  value={searchQuery}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                />
-                <button 
-                  type="submit" 
-                  className={styles['search-button']}
-                  disabled={loading || !searchQuery.trim()}
-                >
-                  {loading ? 'Searching...' : 'Search'}
-                </button>
-              </div>
-            </form>
+          {/* Compact Hero - Just an expand bar */}
+          {hasSearched && (
+            <button 
+              type="button"
+              className={styles['search-hero-compact']}
+              onClick={handleExpandHero}
+              aria-label="Expand search"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m18 15-6-6-6 6"/>
+              </svg>
+            </button>
+          )}
 
-            {/* Expand arrow - shows only when compact */}
-            {hasSearched && (
+          {/* Full Hero Section with Search */}
+          {!hasSearched && (
+            <div className={`${styles['search-hero']} ${showAdvanced ? styles['search-hero-advanced'] : ''}`}>
+              {/* Minimize button - top left */}
               <button 
                 type="button"
-                className={styles['search-hero-expand']}
-                onClick={() => setHasSearched(false)}
-                aria-label="Expand search"
+                className={styles['search-hero-minimize']}
+                onClick={() => setHasSearched(true)}
+                aria-label="Minimize search"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m18 15-6-6-6 6"/>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"/>
                 </svg>
               </button>
-            )}
-          </div>
+
+              <h2 className={styles['search-title']}>Search Faculty</h2>
+              <p className={styles['search-subtitle']}>
+                Find researchers by name, department, or institution
+              </p>
+              
+              <form onSubmit={handleSearch} className={styles['search-form']}>
+                <div className={styles['search-input-wrapper']}>
+                  <input
+                    type="text"
+                    className={styles['search-input']}
+                    placeholder="Search by name, department, or institution..."
+                    value={searchQuery}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                  />
+                  <button 
+                    type="submit" 
+                    className={styles['search-button']}
+                    disabled={loading || !searchQuery.trim()}
+                  >
+                    {loading ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
+
+                {/* Advanced Search Section */}
+                <div className={`${styles['search-advanced']} ${showAdvanced ? styles['search-advanced-visible'] : ''}`}>
+                  <div className={styles['search-advanced-content']}>
+                    <div className={styles['search-advanced-field']}>
+                      <label className={styles['search-advanced-label']}>Keywords / Phrases</label>
+                      <input
+                        type="text"
+                        className={styles['search-advanced-input']}
+                        placeholder="e.g., machine learning, climate research..."
+                        value={keywordQuery}
+                        onChange={handleKeywordChange}
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+              {/* Advanced toggle arrow - at bottom */}
+              <button 
+                type="button"
+                className={`${styles['search-hero-toggle']} ${showAdvanced ? styles['search-hero-toggle-active'] : ''}`}
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                aria-label={showAdvanced ? 'Hide advanced search' : 'Show advanced search'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* Results Section */}
           <div className={`${styles['search-results-section']} ${results?.length > 0 ? styles['search-results-section-expanded'] : ''}`}>

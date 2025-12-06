@@ -30,21 +30,16 @@
   overflow: hidden;
 }
 
-/* Hero Section */
+/* Hero Section - Full */
 .search-hero {
   background: linear-gradient(135deg, #0b264f 0%, #1a4a7a 100%);
   border-radius: 20px;
   padding: 2.5rem;
+  padding-bottom: 2rem;
   box-shadow: 0 4px 12px rgba(11, 38, 79, 0.15);
   position: relative;
   overflow: hidden;
   transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Compact hero state after search */
-.search-hero-compact {
-  padding: 2.25rem 1.5rem 1.25rem 1.5rem;
-  border-radius: 16px;
 }
 
 .search-hero::before {
@@ -56,11 +51,6 @@
   height: 400px;
   background: radial-gradient(circle, rgba(234, 171, 60, 0.15) 0%, transparent 70%);
   pointer-events: none;
-  transition: opacity 0.4s ease;
-}
-
-.search-hero-compact::before {
-  opacity: 0.5;
 }
 
 .search-hero::after {
@@ -72,11 +62,53 @@
   height: 300px;
   background: radial-gradient(circle, rgba(234, 171, 60, 0.1) 0%, transparent 70%);
   pointer-events: none;
-  transition: opacity 0.4s ease;
 }
 
-.search-hero-compact::after {
-  opacity: 0.5;
+/* Compact Hero - Just an expand bar */
+.search-hero-compact {
+  background: linear-gradient(135deg, #0b264f 0%, #1a4a7a 100%);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 4px 12px rgba(11, 38, 79, 0.15);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.search-hero-compact:hover {
+  background: linear-gradient(135deg, #0d2d5c 0%, #1d5288 100%);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Minimize button - top left of full hero */
+.search-hero-minimize {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(255, 255, 255, 0);
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 
+    background 0.2s ease,
+    color 0.2s ease;
+  z-index: 2;
+}
+
+.search-hero-minimize:hover {
+  background: rgba(255, 255, 255, 0.103);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .search-title {
@@ -87,22 +119,6 @@
   text-align: center;
   position: relative;
   z-index: 1;
-  max-height: 100px;
-  opacity: 1;
-  transform: translateY(0);
-  transition: 
-    opacity 0.3s ease,
-    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    margin 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.3s ease;
-}
-
-.search-title-hidden {
-  opacity: 0;
-  max-height: 0;
-  margin: 0;
-  transform: translateY(-10px);
-  pointer-events: none;
 }
 
 .search-subtitle {
@@ -112,22 +128,6 @@
   text-align: center;
   position: relative;
   z-index: 1;
-  max-height: 50px;
-  opacity: 1;
-  transform: translateY(0);
-  transition: 
-    opacity 0.3s ease,
-    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    margin 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.3s ease;
-}
-
-.search-subtitle-hidden {
-  opacity: 0;
-  max-height: 0;
-  margin: 0;
-  transform: translateY(-10px);
-  pointer-events: none;
 }
 
 .search-form {
@@ -141,22 +141,17 @@
   gap: 0.75rem;
   max-width: 700px;
   margin: 0 auto;
-  transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.search-input-wrapper-expanded {
-  max-width: 100%;
-}
-
-/* Expand button - appears when hero is compact */
-.search-hero-expand {
+/* Advanced toggle button - at bottom of hero */
+.search-hero-toggle {
   position: absolute;
-  top: 0.5rem;
+  bottom: 0.4rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.082);
+  background: rgba(255, 255, 255, 0.08);
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,18 +160,90 @@
   cursor: pointer;
   transition: 
     background 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.3s ease;
   z-index: 2;
 }
 
-.search-hero-expand:hover {
-  background: rgba(255, 255, 255, 0.116);
-  color: rgba(255, 255, 255, 0.8);
+.search-hero-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-hero-toggle-active {
+  transform: translateX(-50%) rotate(180deg);
+}
+
+/* Advanced Search Section */
+.search-advanced {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 
+    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    margin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0;
+}
+
+.search-advanced-visible {
+  max-height: 100px;
+  opacity: 1;
+  margin-top: 1rem;
+}
+
+.search-advanced-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.search-advanced-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.search-advanced-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.search-advanced-input {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.search-advanced-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-advanced-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(234, 171, 60, 0.2);
+}
+
+.search-advanced-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Adjust hero padding when advanced is visible */
+.search-hero-advanced {
+  padding-bottom: 2.5rem;
 }
 
 .search-input {
   flex: 1;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   background: rgba(255, 255, 255, 0.95);
   border: 2px solid transparent;
   border-radius: 12px;
@@ -203,7 +270,7 @@
 }
 
 .search-button {
-  padding: 1rem 2rem;
+  padding: 0.75rem 2rem;
   background: var(--color-accent);
   color: var(--color-primary);
   border: none;
@@ -498,12 +565,16 @@
 
   .search-hero {
     padding: 2rem 1.5rem;
+    padding-bottom: 2.5rem;
     border-radius: 16px;
   }
 
+  .search-hero-advanced {
+    padding-bottom: 3rem;
+  }
+
   .search-hero-compact {
-    padding: 2rem 1rem 1rem 1rem;
-    border-radius: 12px;
+    border-radius: 10px;
   }
 
   .search-title {
@@ -513,10 +584,6 @@
   .search-input-wrapper {
     flex-direction: column;
     gap: 0.75rem;
-  }
-
-  .search-input-wrapper-expanded {
-    flex-direction: column;
   }
 
   .search-button {
