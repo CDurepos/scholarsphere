@@ -2,20 +2,18 @@ DELIMITER $$
 
 /**
  * Generate recommendations for all registered users.
+ * Runs lowest-to-highest priority so higher priority types overwrite.
  * 
- * Uses additive scoring: multiple matching criteria increase the total score.
- * Procedures run lowest-to-highest priority so the type reflects the best match.
- * 
- * Score reference:
- *   0.10 shared_institution     | 0.22 publication_to_grant  | 0.28 publication_to_keyword
- *   0.15 shared_department      | 0.23 grant_to_publication  | 0.29 keyword_to_publication
- *   0.20 shared_grant           | 0.25 grant_to_keyword      | 0.30 shared_keyword
- *                               | 0.26 keyword_to_grant      |
+ * Priority (ENUM order):
+ *   1. shared_keyword          | 5. grant_to_keyword
+ *   2. keyword_to_publication  | 6. grant_to_publication
+ *   3. publication_to_keyword  | 7. publication_to_grant
+ *   4. keyword_to_grant        | 8. shared_grant
+ *                              | 9. shared_department
  */
 DROP PROCEDURE IF EXISTS generate_all_recommendations$$
 CREATE PROCEDURE generate_all_recommendations()
 BEGIN
-    CALL recommend_by_shared_institution();
     CALL recommend_by_shared_department();
     CALL recommend_by_shared_grant();
     CALL recommend_by_publication_to_grant();

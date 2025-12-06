@@ -144,18 +144,12 @@ function Dashboard() {
                     </div>
                   </div>
                   <div className={styles['recommendation-card-body']}>
-                    <p className={styles['recommendation-reason']}>{rec.recommendation_text}</p>
-                    <div className={styles['recommendation-match-score']}>
-                      <span className={styles['match-score-label']}>Match strength</span>
-                      <div className={styles['match-score-dots']}>
-                        {[1, 2, 3, 4, 5].map((dot) => (
-                          <span 
-                            key={dot}
-                            className={`${styles['match-dot']} ${rec.match_score >= dot * 0.2 ? styles['match-dot-filled'] : ''}`}
-                            title={`${Math.round(rec.match_score * 100)}%`}
-                          />
-                        ))}
-                      </div>
+                    <div className={styles['recommendation-match-badge']} data-strength={
+                      ['shared_keyword', 'keyword_to_publication', 'publication_to_keyword'].includes(rec.recommendation_type) ? 'high' :
+                      ['keyword_to_grant', 'grant_to_keyword', 'grant_to_publication', 'publication_to_grant', 'shared_grant'].includes(rec.recommendation_type) ? 'medium' : 'base'
+                    }>
+                      <span className={styles['match-pulse']} />
+                      <span className={styles['match-badge-text']}>{rec.recommendation_text}</span>
                     </div>
                   </div>
                   <div className={styles['recommendation-card-footer']}>
