@@ -5,7 +5,7 @@ from backend.app.routes.faculty import faculty_bp
 from backend.app.routes.recommend import recommend_bp
 from backend.app.routes.rate_limit import rate_limit_bp
 from backend.app.routes.institution import institution_bp
-from backend.app.routes.equipment_search import equipment_search_bp
+from backend.app.routes.equipment_search import equipment_bp
 
 
 from flask_cors import CORS
