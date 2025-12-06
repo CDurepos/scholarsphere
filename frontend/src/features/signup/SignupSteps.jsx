@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { checkUsernameAvailable } from '../../services/api';
-import './SignupSteps.css';
+import styles from './SignupSteps.module.css';
 
 /**
  * Combined Signup Steps Component
@@ -28,14 +28,14 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
   };
 
   return (
-    <div className="signup-step">
-      <h2 className="step-title">Get started</h2>
-      <p className="step-description">
+    <div className={styles['signup-step']}>
+      <h2 className={styles['step-title']}>Get started</h2>
+      <p className={styles['step-description']}>
         Let's begin with some basic information.
       </p>
 
-      <form onSubmit={handleSubmit} className="signup-form">
-        <div className="form-group">
+      <form onSubmit={handleSubmit} className={styles['signup-form']}>
+        <div className={styles['form-group']}>
           <label htmlFor="first_name">First Name *</label>
           <input
             type="text"
@@ -48,7 +48,7 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="last_name">Last Name *</label>
           <input
             type="text"
@@ -61,7 +61,7 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="institution_name">Institution *</label>
           {institutions.length > 0 ? (
             <select
@@ -91,7 +91,7 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
           )}
         </div>
 
-        <button type="submit" className="step-button" disabled={loading}>
+        <button type="submit" className={styles['step-button']} disabled={loading}>
           {loading ? 'Checking...' : 'Continue'}
         </button>
       </form>
@@ -107,33 +107,33 @@ export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmat
     const displayInstitution = initialData.institution_name || 'Not specified';
     
     return (
-      <div className="signup-step">
-        <h2 className="step-title">Is this you?</h2>
-        <p className="step-description">
+      <div className={styles['signup-step']}>
+        <h2 className={styles['step-title']}>Is this you?</h2>
+        <p className={styles['step-description']}>
           {matchType === 'name_only' 
             ? 'We found someone with the same name, but at a different institution:'
             : 'We found someone in our database matching this information:'}
         </p>
 
-        <div className="faculty-info-summary">
+        <div className={styles['faculty-info-summary']}>
           <p><strong>Name:</strong> {initialData.first_name} {initialData.last_name}</p>
           <p><strong>Institution:</strong> {displayInstitution}</p>
         </div>
 
         {matchType === 'name_only' && (
-          <div className="match-warning-box">
-            <p className="match-warning">
+          <div className={styles['match-warning-box']}>
+            <p className={styles['match-warning']}>
               ⚠️ Note: The institution in our database differs from what you entered. 
               If this is you, you can update your institution information.
             </p>
           </div>
         )}
 
-        <div className="confirmation-buttons">
+        <div className={styles['confirmation-buttons']}>
           <button
             type="button"
             onClick={onConfirm}
-            className="step-button step-button-primary"
+            className={`${styles['step-button']} ${styles['step-button-primary']}`}
             disabled={loading}
           >
             Yes, this is me
@@ -141,7 +141,7 @@ export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmat
           <button
             type="button"
             onClick={onDeny}
-            className="step-button step-button-secondary"
+            className={`${styles['step-button']} ${styles['step-button-secondary']}`}
             disabled={loading}
           >
             No, this is not me
@@ -285,16 +285,16 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
   };
 
   return (
-    <div className="signup-step">
-      <h2 className="step-title">Tell us about yourself</h2>
-      <p className="step-description">
+    <div className={styles['signup-step']}>
+      <h2 className={styles['step-title']}>Tell us about yourself</h2>
+      <p className={styles['step-description']}>
         {doPrefill 
           ? 'Review and update your information below.'
           : 'Help us learn more about you to complete your profile.'}
       </p>
 
-      <form onSubmit={handleSubmit} className="signup-form">
-        <div className="form-group">
+      <form onSubmit={handleSubmit} className={styles['signup-form']}>
+        <div className={styles['form-group']}>
           <label htmlFor="first_name">First Name *</label>
           <input
             type="text"
@@ -307,7 +307,7 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="last_name">Last Name *</label>
           <input
             type="text"
@@ -320,7 +320,7 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="institution_name">Institution *</label>
           <input
             type="text"
@@ -333,7 +333,7 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="email">Email</label>
           <input
             type="email"
@@ -344,7 +344,7 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="department">Department</label>
           <input
             type="text"
@@ -355,7 +355,7 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
           />
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="title">Title</label>
           <input
             type="text"
@@ -366,7 +366,7 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
           />
         </div>
 
-        <button type="submit" className="step-button" disabled={loading}>
+        <button type="submit" className={styles['step-button']} disabled={loading}>
           {loading ? (isExisting ? 'Updating...' : 'Creating...') : 'Continue to Credentials'}
         </button>
       </form>
@@ -483,16 +483,16 @@ export function CredentialsForm({ onSubmit, loading, stepNumber = 3 }) {
   };
 
   return (
-    <div className="signup-step">
-      <h2 className="step-title">Create your account</h2>
-      <p className="step-description">
+    <div className={styles['signup-step']}>
+      <h2 className={styles['step-title']}>Create your account</h2>
+      <p className={styles['step-description']}>
         Choose a username and password to secure your ScholarSphere account.
       </p>
 
-      <form onSubmit={handleSubmit} className="signup-form">
-        <div className="form-group">
+      <form onSubmit={handleSubmit} className={styles['signup-form']}>
+        <div className={styles['form-group']}>
           <label htmlFor="username">Username *</label>
-          <div className="username-input-wrapper">
+          <div className={styles['username-input-wrapper']}>
             <input
               type="text"
               id="username"
@@ -504,31 +504,31 @@ export function CredentialsForm({ onSubmit, loading, stepNumber = 3 }) {
               maxLength={16}
               className={
                 errors.username 
-                  ? 'error' 
+                  ? styles.error 
                   : usernameStatus === true 
-                    ? 'success' 
+                    ? styles.success 
                     : usernameStatus === false 
-                      ? 'error' 
+                      ? styles.error 
                       : ''
               }
             />
             {checkingUsername && formData.username.trim().length >= 3 && (
-              <span className="username-status-icon checking">⟳</span>
+              <span className={`${styles['username-status-icon']} ${styles.checking}`}>⟳</span>
             )}
             {!checkingUsername && usernameStatus === true && (
-              <span className="username-status-icon available">✓</span>
+              <span className={`${styles['username-status-icon']} ${styles.available}`}>✓</span>
             )}
             {!checkingUsername && usernameStatus === false && (
-              <span className="username-status-icon taken">✗</span>
+              <span className={`${styles['username-status-icon']} ${styles.taken}`}>✗</span>
             )}
           </div>
           {errors.username && (
-            <span className="error-text">{errors.username}</span>
+            <span className={styles['error-text']}>{errors.username}</span>
           )}
-          <small className="form-hint">Must be 4-16 characters</small>
+          <small className={styles['form-hint']}>Must be 4-16 characters</small>
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="password">Password *</label>
           <input
             type="password"
@@ -538,15 +538,15 @@ export function CredentialsForm({ onSubmit, loading, stepNumber = 3 }) {
             onChange={handleChange}
             required
             autoComplete="new-password"
-            className={errors.password ? 'error' : ''}
+            className={errors.password ? styles.error : ''}
           />
           {errors.password && (
-            <span className="error-text">{errors.password}</span>
+            <span className={styles['error-text']}>{errors.password}</span>
           )}
-          <small className="form-hint">Must be at least 8 characters</small>
+          <small className={styles['form-hint']}>Must be at least 8 characters</small>
         </div>
 
-        <div className="form-group">
+        <div className={styles['form-group']}>
           <label htmlFor="confirmPassword">Confirm Password *</label>
           <input
             type="password"
@@ -556,18 +556,17 @@ export function CredentialsForm({ onSubmit, loading, stepNumber = 3 }) {
             onChange={handleChange}
             required
             autoComplete="new-password"
-            className={errors.confirmPassword ? 'error' : ''}
+            className={errors.confirmPassword ? styles.error : ''}
           />
           {errors.confirmPassword && (
-            <span className="error-text">{errors.confirmPassword}</span>
+            <span className={styles['error-text']}>{errors.confirmPassword}</span>
           )}
         </div>
 
-        <button type="submit" className="step-button" disabled={loading}>
+        <button type="submit" className={styles['step-button']} disabled={loading}>
           {loading ? 'Registering...' : 'Complete Registration'}
         </button>
       </form>
     </div>
   );
 }
-

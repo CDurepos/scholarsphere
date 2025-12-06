@@ -1,18 +1,18 @@
 import Header from '../../components/Header';
-import './Equipment.css';
+import styles from './Equipment.module.css';
 
 /**
  * Equipment search page - placeholder
  */
 function Equipment() {
   return (
-    <div className="search-container">
+    <div className={styles['search-container']}>
       <Header />
       
-      <main className="search-main">
-        <div className="search-content">
-          <h2 className="search-title">Search Equipment</h2>
-          <div className="search-placeholder">
+      <main className={styles['search-main']}>
+        <div className={styles['search-content']}>
+          <h2 className={styles['search-title']}>Search Equipment</h2>
+          <div className={styles['search-placeholder']}>
             <p>Equipment search coming soon...</p>
           </div>
         </div>
@@ -22,4 +22,3 @@ function Equipment() {
 }
 
 export default Equipment;
-

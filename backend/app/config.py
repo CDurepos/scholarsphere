@@ -26,9 +26,8 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production") #TODO
     JWT_ACCESS_TOKEN_EXPIRATION_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRATION_MINUTES", "30"))
     JWT_REFRESH_TOKEN_EXPIRATION_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRATION_DAYS", "7"))
+    JWT_REFRESH_TOKEN_EXTENDED_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXTENDED_DAYS", "30"))  # "Remember me" duration
 
-    # === Other project settings ===
-    LLAMA_ACCESS_TOKEN = os.getenv("LLAMA_ACCESS_TOKEN")
 
     # === Validation ===
     if not all([DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME]):

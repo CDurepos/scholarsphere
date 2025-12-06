@@ -38,17 +38,19 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
-def create_session(faculty_id: str) -> tuple:
+def create_session(faculty_id: str, remember_me: bool = False) -> tuple:
     """
     Create a new session with a refresh token.
     
     Args:
         faculty_id: UUID of the faculty member
+        remember_me: If True, use extended expiration (30 days), else use default (7 days)
     
     Returns:
-        tuple: (refresh_token, session_id)
+        tuple: (refresh_token, session_id, expiration_days)
             - refresh_token: Raw refresh token to send to client (store in HttpOnly cookie)
             - session_id: UUID of the created session
+            - expiration_days: Number of days until expiration
     """
     try:
         with start_transaction() as transaction_context:
@@ -59,10 +61,13 @@ def create_session(faculty_id: str) -> tuple:
             # Generate session ID
             session_id = str(uuid.uuid4())
             
-            # Calculate expiration (default 7 days)
-            expires_at = datetime.datetime.utcnow() + datetime.timedelta(
-                days=Config.JWT_REFRESH_TOKEN_EXPIRATION_DAYS
+            # Calculate expiration based on remember_me flag
+            expiration_days = (
+                30
+                if remember_me 
+                else 7
             )
+            expires_at = datetime.datetime.utcnow() + datetime.timedelta(days=expiration_days)
             
             # Create session record
             sql_create_session(
@@ -75,7 +80,7 @@ def create_session(faculty_id: str) -> tuple:
             
             # Transaction commits automatically on success
         
-        return refresh_token, session_id
+        return refresh_token, session_id, expiration_days
     except Exception as e:
         # Transaction already rolled back by context manager
         raise e

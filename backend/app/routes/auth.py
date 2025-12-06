@@ -76,7 +76,8 @@ def login():
     Expected request body:
     {
         "username": "johndoe",
-        "password": "plaintextpassword"
+        "password": "plaintextpassword",
+        "remember_me": false  // Optional: extends session to 30 days if true
     }
     
     Returns:
@@ -98,11 +99,14 @@ def login():
         result = validate_login(data)
         faculty_id = result["faculty_id"]
         
+        # Check for remember_me flag (defaults to False)
+        remember_me = bool(data.get("remember_me", False))
+        
         # Generate access token (JWT)
         access_token = generate_access_token(faculty_id)
         
         # Create session and generate refresh token
-        refresh_token, session_id = create_session(faculty_id)
+        refresh_token, session_id, expiration_days = create_session(faculty_id, remember_me)
         
         # Create response with access token in JSON body
         response = make_response(jsonify({
@@ -111,13 +115,14 @@ def login():
             "faculty": result["faculty"]
         }), 200)
         
+        # Set cookie with expiration matching the session
         response.set_cookie(
             "refresh_token",
             refresh_token,
             httponly=True,
             secure=False,
             samesite="Lax",
-            max_age=7 * 24 * 60 * 60,
+            max_age=expiration_days * 24 * 60 * 60,
             path="/"
         )
         

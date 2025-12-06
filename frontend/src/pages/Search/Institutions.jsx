@@ -1,18 +1,18 @@
 import Header from '../../components/Header';
-import './Institutions.css';
+import styles from './Institutions.module.css';
 
 /**
  * Institutions search page - placeholder
  */
 function Institutions() {
   return (
-    <div className="search-container">
+    <div className={styles['search-container']}>
       <Header />
       
-      <main className="search-main">
-        <div className="search-content">
-          <h2 className="search-title">Search Institutions</h2>
-          <div className="search-placeholder">
+      <main className={styles['search-main']}>
+        <div className={styles['search-content']}>
+          <h2 className={styles['search-title']}>Search Institutions</h2>
+          <div className={styles['search-placeholder']}>
             <p>Institutions search coming soon...</p>
           </div>
         </div>
@@ -22,4 +22,3 @@ function Institutions() {
 }
 
 export default Institutions;
-

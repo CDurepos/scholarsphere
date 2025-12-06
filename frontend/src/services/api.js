@@ -162,16 +162,8 @@ export const getInstitutions = async () => {
  * ]
  */
 export const searchFaculty = async (params = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-  
-  // Add Authorization header if we have an access token
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
-
   const queryParams = new URLSearchParams();
+  
   // If a general query is provided, pass it directly to the backend
   // The backend should handle parsing it appropriately
   if (params.query) {
@@ -185,7 +177,9 @@ export const searchFaculty = async (params = {}) => {
   
   const response = await fetch(`${API_BASE_URL}/search/faculty?${queryParams.toString()}`, {
     method: 'GET',
-    headers,
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   return response.json();
 };
@@ -543,6 +537,7 @@ export const registerCredentials = async (data) => {
  * @param {Object} data - Request body
  * @param {string} data.username - Username
  * @param {string} data.password - Plain text password
+ * @param {boolean} [data.remember_me] - If true, extends session to 30 days (default: 7 days)
  * 
  * @returns {Promise<Object>} Response object
  * @returns {string} token - JWT token for authenticated sessions
@@ -573,7 +568,11 @@ export const login = async (data) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        username: data.username,
+        password: data.password,
+        remember_me: data.remember_me || false,
+      }),
     });
     
     const result = await response.json();
