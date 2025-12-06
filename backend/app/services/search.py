@@ -34,7 +34,7 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
         with start_transaction() as transaction_context:
             # Get keywords and ensure empty strings are treated as None
             keywords = filters.get("keywords", "").strip() or None
-            
+
             print(f"Keywords: {keywords}")
             # Case 1: Handle generic "query" parameter by searching across all fields
             query = filters.get("query", "").strip()
@@ -57,13 +57,19 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
                             all_results.append(result)
 
                 if keywords:
-                    all_results = rerank_by_keywords(all_results, keywords, transaction_context)
+                    all_results = rerank_by_keywords(
+                        all_results, keywords, transaction_context
+                    )
                 return jsonify(all_results[:result_limit]), 200
 
-            # Case 2: Normal filtering with specific parameters. NOTE: Frontend does not use this currently.
+            # Case 2: Normal filtering with specific parameters.
             valid_filters = {
-                key: filters.get(key, "").strip() for key in get_valid_search_filters()
-                if filters.get(key, "").strip()  # Only include filters that have actual values
+                key: (
+                    filters.get(key, "").strip()
+                    if filters.get(key, "").strip() != ""
+                    else None
+                )
+                for key in get_valid_search_filters()
             }
             if valid_filters:
                 print("Case 2")
@@ -75,10 +81,12 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
             # Case 3: Search purely by keywords
             if keywords:
                 print("Case 3")
-                #TODO: For any procedure that uses 'TEXT' type parameters, validate the input to ensure it is not too long.
-                results = sql_search_faculty_by_keyword(transaction_context, keywords, result_limit)
+                # TODO: For any procedure that uses 'TEXT' type parameters, validate the input to ensure it is not too long.
+                results = sql_search_faculty_by_keyword(
+                    transaction_context, keywords, result_limit
+                )
                 return jsonify(results[:result_limit]), 200
-            
+
             # Case 4: No filters or keywords provided
             print("Case 4")
             return jsonify([]), 200
@@ -96,27 +104,28 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
 def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):
     """
     Rerank the results by keywords.
-    
+
     For each faculty, builds a set of all their keywords (from their research keywords
     and from keywords explored in their publications), then scores by how many of the
     search keywords match.
     """
     # Parse search keywords into a lowercase set
     search_keywords = set(k.strip().lower() for k in keywords.split(",") if k.strip())
-    
+
     if not search_keywords:
         return results
-    
+
     for result in results:
         faculty_keywords = gather_keywords(result["faculty_id"], transaction_context)
         # Score is the number of matching keywords (set intersection)
         matching_keywords = search_keywords & faculty_keywords
         result["keyword_score"] = len(matching_keywords)
-    
+
     # Sort by keyword_score descending, keeping original order for ties
     results.sort(key=lambda x: x.get("keyword_score", 0), reverse=True)
-    
+
     return results
+
 
 def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
     """
@@ -130,7 +139,7 @@ def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
     for kw in research_keywords:
         if kw.get("name"):
             faculty_keywords.add(kw["name"].lower())
-    
+
     # Get keywords from faculty's publications
     publications = sql_read_publication_authored_by_faculty_by_faculty(
         transaction_context, faculty_id
