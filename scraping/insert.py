@@ -597,6 +597,8 @@ def insert_faculty_researches_keyword(
         for keyword in keywords:
             db.call_procedure(cursor, "add_keyword_for_faculty", (faculty_record["faculty_id"], keyword))
 
+        conn.commit()
+
     except Exception as e:
         if conn and conn.in_transaction:
             conn.rollback()
