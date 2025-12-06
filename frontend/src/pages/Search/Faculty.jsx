@@ -29,7 +29,7 @@ function Faculty() {
   const handleSearch = async (e) => {
     e.preventDefault();
     
-    if (!searchQuery.trim()) {
+    if (!searchQuery.trim() && !keywordQuery.trim()) {
       setResults([]);
       return;
     }
@@ -40,7 +40,7 @@ function Faculty() {
 
     try {
       // TODO: Include keywordQuery in search when backend supports it
-      const response = await searchFaculty({ query: searchQuery.trim() });
+      const response = await searchFaculty({ query: searchQuery.trim(), keywords: keywordQuery.trim() });
       
       const limitedResults = Array.isArray(response) 
         ? response.slice(0, MAX_RESULTS)
@@ -136,7 +136,7 @@ function Faculty() {
                   <button 
                     type="submit" 
                     className={styles['search-button']}
-                    disabled={loading || !searchQuery.trim()}
+                    disabled={loading || (!searchQuery.trim() && !keywordQuery.trim())}
                   >
                     {loading ? 'Searching...' : 'Search'}
                   </button>
@@ -146,11 +146,11 @@ function Faculty() {
                 <div className={`${styles['search-advanced']} ${showAdvanced ? styles['search-advanced-visible'] : ''}`}>
                   <div className={styles['search-advanced-content']}>
                     <div className={styles['search-advanced-field']}>
-                      <label className={styles['search-advanced-label']}>Keywords / Phrases</label>
+                      <label className={styles['search-advanced-label']}>Keywords / Phrases, separated by commas</label>
                       <input
                         type="text"
                         className={styles['search-advanced-input']}
-                        placeholder="e.g., machine learning, climate research..."
+                        placeholder="e.g., machine learning, climate research, etc."
                         value={keywordQuery}
                         onChange={handleKeywordChange}
                         disabled={loading}

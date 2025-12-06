@@ -2,7 +2,11 @@ from backend.app.db.transaction_context import TransactionContext
 
 from datetime import datetime, date
 
+#TODO: Do not use a single file for all procedures. Split into multiple files.
 
+# ============================================================================
+# SEARCH DB LAYER FUNCTIONS
+# ============================================================================
 def sql_search_faculty(
     transaction_context: TransactionContext, **filters: dict[str, str]
 ) -> list[dict]:
@@ -18,11 +22,67 @@ def sql_search_faculty(
         list[dict]: A list of dictionaries, each containing the faculty information.
     """
     cursor = transaction_context.cursor
-    cursor.callproc("search_faculty", list(filters.values()))
+    cursor.callproc("search_faculty", tuple(filters.values()))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+# ============================================================================
+# SEARCH BY KEYWORD DB LAYER FUNCTIONS
+# ============================================================================
+def sql_search_faculty_by_keyword(
+    transaction_context: TransactionContext,
+    keywords: list[str],
+    result_limit: int = 50,
+) -> list[dict]:
+    """
+    Search for faculty in the database based on keywords.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("search_faculty_by_keyword", (keywords,))
     results = [r.fetchall() for r in cursor.stored_results()]
     return results[0] if results else []
 
 
+def sql_read_publication_authored_by_faculty_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> list[dict]:
+    """
+    Read the publications that a faculty member has authored.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_publication_authored_by_faculty_by_faculty", (faculty_id,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+def sql_read_faculty_researches_keyword_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> list[dict]:
+    """
+    Read the keywords that a faculty member researches.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_faculty_researches_keyword_by_faculty", (faculty_id,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+def sql_read_publication_explores_keyword_by_publication(
+    transaction_context: TransactionContext,
+    publication_id: str,
+) -> list[dict]:
+    """
+    Read the keywords that a publication explores.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_publication_explores_keyword_by_publication", (publication_id,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+# ============================================================================
+# GENERATE KEYWORD DB LAYER FUNCTIONS
+# ============================================================================
 def sql_count_faculty_keyword_generations(
     transaction_context: TransactionContext,
     faculty_id: str,

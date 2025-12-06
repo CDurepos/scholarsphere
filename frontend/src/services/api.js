@@ -146,6 +146,7 @@ export const getInstitutions = async () => {
  * @param {string} [params.last_name] - Faculty member's last name (partial match)
  * @param {string} [params.department] - Department name (partial match)
  * @param {string} [params.institution] - Institution name (partial match)
+ * @param {string} [params.keywords] - Keywords / Phrases separated by commas (partial match)
  * 
  * @returns {Promise<Array>} Array of faculty members matching the search criteria
  * 
@@ -166,14 +167,24 @@ export const searchFaculty = async (params = {}) => {
   
   // If a general query is provided, pass it directly to the backend
   // The backend should handle parsing it appropriately
-  if (params.query) {
-    queryParams.append('query', params.query.trim());
-  }
+  const query = params.query?.trim();
+  const first_name = params.first_name?.trim();
+  const last_name = params.last_name?.trim();
+  const department = params.department?.trim();
+  const institution = params.institution?.trim();
+  const keywords = params.keywords?.trim();
   
-  if (params.first_name) queryParams.append('first_name', params.first_name);
-  if (params.last_name) queryParams.append('last_name', params.last_name);
-  if (params.department) queryParams.append('department', params.department);
-  if (params.institution) queryParams.append('institution', params.institution);
+  if (query) queryParams.append('query', query);
+  if (first_name) queryParams.append('first_name', first_name);
+  if (last_name) queryParams.append('last_name', last_name);
+  if (department) queryParams.append('department', department);
+  if (institution) queryParams.append('institution', institution);
+  if (keywords) queryParams.append('keywords', keywords);
+  
+  // Don't make API call if no search parameters provided
+  if (queryParams.toString() === '') {
+    return [];
+  }
   
   const response = await fetch(`${API_BASE_URL}/search/faculty?${queryParams.toString()}`, {
     method: 'GET',
@@ -214,6 +225,12 @@ export const lookupFacultyPublic = async (params = {}) => {
       'Content-Type': 'application/json',
     },
   });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to search for faculty');
+  }
+  
   return response.json();
 };
 
