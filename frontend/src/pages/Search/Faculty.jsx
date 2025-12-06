@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import { searchFaculty } from '../../services/api';
 import styles from './Faculty.module.css';
@@ -7,6 +8,7 @@ import styles from './Faculty.module.css';
  * Faculty search page component - allows users to search for faculty members
  */
 function Faculty() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [keywordQuery, setKeywordQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -69,7 +71,7 @@ function Faculty() {
   };
 
   const handleResultClick = (facultyId) => {
-    // TODO: Navigate to profile page when implemented
+    navigate(`/faculty/${facultyId}`);
   };
 
   const truncateText = (text, maxLength) => {

@@ -1,8 +1,8 @@
 DELIMITER $$
 
 /**
- * Retrieve recommendations for a faculty member with human-readable display text.
- * Returns faculty details via joins, ordered by match_score descending.
+ * Retrieve recommendations for a faculty member.
+ * Ordered by recommendation_type (ENUM order = priority).
  */
 DROP PROCEDURE IF EXISTS read_recommendations_for_faculty$$
 CREATE PROCEDURE read_recommendations_for_faculty(IN p_faculty_id CHAR(36))
@@ -14,7 +14,6 @@ BEGIN
         f.biography,
         i.name AS institution_name,
         fd.department_name,
-        r.match_score,
         r.recommendation_type,
         CASE r.recommendation_type
             WHEN 'shared_keyword'           THEN 'Similar research interests'
@@ -26,7 +25,6 @@ BEGIN
             WHEN 'publication_to_grant'     THEN 'Has funding for your publication topics'
             WHEN 'shared_grant'             THEN 'Co-funded by same grant'
             WHEN 'shared_department'        THEN 'Same department'
-            WHEN 'shared_institution'       THEN 'Same institution'
             ELSE 'Potential collaborator'
         END AS recommendation_text
     FROM faculty_recommended_to_faculty r
@@ -39,7 +37,7 @@ BEGIN
         GROUP BY faculty_id
     ) fd ON f.faculty_id = fd.faculty_id
     WHERE r.source_faculty_id = p_faculty_id
-    ORDER BY r.match_score DESC;
+    ORDER BY r.recommendation_type ASC;
 END $$
 
 DELIMITER ;
