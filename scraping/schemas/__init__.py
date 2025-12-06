@@ -1,5 +1,4 @@
 from .faculty import Faculty
-from .institution import Institution
 from .publication import Publication
 from .faculty_title import FacultyTitle
 from .faculty_email import FacultyEmail
@@ -9,7 +8,6 @@ from .publication_authored_by_faculty import PublicationAuthoredByFaculty
 
 __all__ = [
     "Faculty",
-    "Institution",
     "Publication",
     "FacultyTitle",
     "FacultyEmail",

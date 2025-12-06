@@ -23,20 +23,18 @@ def get_institutions_from_json():
     
     if _institutions_cache is not None:
         return _institutions_cache
-    
-    # Get the path to the JSON file
-    # The data directory is at backend/data (sibling to app directory)
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Go up from services -> app -> backend, then into data
-    json_path = os.path.join(current_dir, '..', '..', 'data', 'institutions.json')
-    
+
+    # Resolve absolute path to JSON file
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    json_path = os.path.join(BASE_DIR, 'data', 'institutions.json')
+
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             _institutions_cache = json.load(f)
         return _institutions_cache
-    except FileNotFoundError:
-        return []
-    except json.JSONDecodeError:
+
+    except Exception as e:
+        print("ERROR loading institutions JSON:", e)
         return []
 
 

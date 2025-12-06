@@ -148,44 +148,103 @@ def sql_create_faculty_generates_keyword(
 
 
 # ============================================================================
-# RECOMMEND DB LAYER FUNCTIONS
+# RECOMMENDATION DB LAYER FUNCTIONS
 # ============================================================================
-# The following procedures starting with "sql_recommend_" increment the match scores between faculty members in the faculty_recommended_to_faculty table.
-def sql_recommend_faculty_by_department():
-    return []
 
-
-def sql_recommend_faculty_by_grant_keyword():
-    return []
-
-
-def sql_recommend_faculty_by_grants():
-    return []
-
-
-def sql_recommend_faculty_by_institution():
-    return []
-
-
-def sql_recommend_faculty_by_publication_keyword():
-    return []
-
-
-def sql_recommend_faculty_by_shared_keyword():
-    return []
-
-
-def sql_get_recommendations(**filters: dict[str, str]):
+def sql_generate_all_recommendations(
+    transaction_context: TransactionContext,
+) -> None:
     """
-    Get recommendations for a user based on the faculty_recommended_to_faculty table.
-
+    Generate all faculty recommendations for registered users.
+    
+    Calls individual recommendation procedures in priority order (low to high)
+    so higher-priority matches overwrite lower-priority ones.
+    
+    Recommendation Types (ENUM values, priority order):
+    ===================================================
+    0.10 - shared_institution      : Both at the same institution
+    0.20 - shared_department       : Both in the same department
+    0.30 - shared_grant            : Both have the same grant
+    0.33 - publication_to_grant    : A published on X, B has grant for X
+    0.34 - grant_to_publication    : A has grant for X, B published on X
+    0.41 - grant_to_keyword        : A has grant for X, B researches X
+    0.42 - keyword_to_grant        : A researches X, B has grant for X
+    0.43 - publication_to_keyword  : A published on X, B researches X
+    0.44 - keyword_to_publication  : A researches X, B published on X
+    0.50 - shared_keyword          : Both research the same keyword
+    
     Args:
-        filters (dict): A dictionary of filters to use for getting recommendations. Must contain all the keys
-            in get_valid_recommend_filters(), which should be validated by the service layer.
-
+        transaction_context (TransactionContext): A transaction context object.
+    
     Returns:
-        list: A list of dictionaries, each containing the recommended faculty information.
+        None: Recommendations are stored in faculty_recommended_to_faculty table.
     """
+    cursor = transaction_context.cursor
+    cursor.callproc("generate_all_recommendations")
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_generate_recommendations_for_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Generate recommendations for a single faculty member.
+    
+    Called immediately after signup to provide instant recommendations
+    without waiting for the 12-hour event.
+    
+    Args:
+        transaction_context (TransactionContext): A transaction context object.
+        faculty_id (str): UUID of the faculty member to generate recommendations for.
+    
+    Returns:
+        None: Recommendations are stored in faculty_recommended_to_faculty table.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("generate_recommendations_for_faculty", (faculty_id,))
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_read_recommendations_for_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> list[dict]:
+    """
+    Get personalized recommendations for a specific faculty member.
+    
+    Args:
+        transaction_context (TransactionContext): A transaction context object.
+        faculty_id (str): UUID of the faculty member to get recommendations for.
+    
+    Returns:
+        list[dict]: List of recommended faculty with match details.
+            Each dict contains:
+            - faculty_id: UUID of recommended faculty
+            - first_name, last_name, biography: Faculty info
+            - institution_name: Primary institution
+            - department_name: Primary department
+            - match_score: Score for ranking (0.0 to 1.0)
+            - recommendation_type: ENUM value (e.g., 'shared_keyword')
+            - recommendation_text: Human-readable text (e.g., "Similar research interests")
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_recommendations_for_faculty", (faculty_id,))
+    stored_results = list(cursor.stored_results())
+    if stored_results:
+        return stored_results[0].fetchall()
     return []
 
 

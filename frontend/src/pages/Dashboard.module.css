@@ -1,8 +1,10 @@
 .dashboard-container {
-  min-height: 100vh;
+  height: 100vh;
   background: #f8f9fa;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-particles {
@@ -14,34 +16,41 @@
 }
 
 .dashboard-main {
+  flex: 1;
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2.5rem 2rem;
+  padding: 2rem 2rem 1.5rem 2rem;
   position: relative;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0; /* Important for flex child overflow */
 }
 
 /* Welcome Tile */
 .dashboard-welcome-tile {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(11, 38, 79, 0.1);
   border: 1px solid rgba(11, 38, 79, 0.08);
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .dashboard-welcome-title {
-  font-size: 2.25rem;
+  font-size: 1.875rem;
   font-weight: 700;
   color: var(--color-primary);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   line-height: 1.2;
 }
 
 .dashboard-welcome-subtitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--color-muted);
   margin: 0;
 }
@@ -82,26 +91,31 @@
 .dashboard-recommendations-tile {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(11, 38, 79, 0.1);
   border: 1px solid rgba(11, 38, 79, 0.08);
-  margin-bottom: 3rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Important for flex child overflow */
+  overflow: hidden;
 }
 
 .dashboard-section-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .dashboard-section-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-primary);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
 }
 
 .dashboard-section-description {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--color-muted);
   margin: 0;
 }
@@ -110,6 +124,29 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  flex: 1;
+  min-height: 0; /* Important for grid scroll */
+}
+
+/* Custom scrollbar for recommendations */
+.dashboard-recommendations-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-recommendations-grid::-webkit-scrollbar-track {
+  background: rgba(11, 38, 79, 0.05);
+  border-radius: 4px;
+}
+
+.dashboard-recommendations-grid::-webkit-scrollbar-thumb {
+  background: rgba(11, 38, 79, 0.2);
+  border-radius: 4px;
+}
+
+.dashboard-recommendations-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 38, 79, 0.3);
 }
 
 .dashboard-recommendation-card {
@@ -187,21 +224,49 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   background: rgba(11, 38, 79, 0.04);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .match-score-label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.match-score-value {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-primary);
+.match-score-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.match-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(11, 38, 79, 0.15);
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.match-dot-filled {
+  background: linear-gradient(135deg, #0b264f 0%, #1a4a7a 100%);
+  box-shadow: 0 2px 6px rgba(11, 38, 79, 0.3);
+}
+
+/* Staggered animation on hover */
+.recommendation-match-score:hover .match-dot-filled {
+  transform: scale(1.15);
+}
+
+.recommendation-match-score:hover .match-dot-filled:nth-child(1) { transition-delay: 0ms; }
+.recommendation-match-score:hover .match-dot-filled:nth-child(2) { transition-delay: 50ms; }
+.recommendation-match-score:hover .match-dot-filled:nth-child(3) { transition-delay: 100ms; }
+.recommendation-match-score:hover .match-dot-filled:nth-child(4) { transition-delay: 150ms; }
+.recommendation-match-score:hover .match-dot-filled:nth-child(5) { transition-delay: 200ms; }
 
 .recommendation-card-footer {
   margin-top: auto;
@@ -227,18 +292,46 @@
   color: #ffffff;
 }
 
+.dashboard-recommendations-loading {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--color-surface);
+  border-radius: 16px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-recommendations-loading p {
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  margin: 0;
+}
+
 .dashboard-empty-recommendations {
   text-align: center;
   padding: 3rem 2rem;
   background: var(--color-surface);
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(11, 38, 79, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .dashboard-empty-recommendations p {
   font-size: 1.1rem;
   color: var(--color-muted);
   margin: 0 0 1rem 0;
+}
+
+.dashboard-empty-hint {
+  font-size: 0.95rem !important;
+  color: var(--color-muted);
+  opacity: 0.8;
 }
 
 .dashboard-search-link {
@@ -265,14 +358,15 @@
 .dashboard-success-message {
   background: linear-gradient(135deg, #0b264f 0%, #1a4a7a 100%);
   color: #ffffff;
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-radius: 12px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 16px rgba(11, 38, 79, 0.3);
   animation: slideDown 0.3s ease-out;
+  flex-shrink: 0;
 }
 
 .dashboard-success-message p {
@@ -318,7 +412,16 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-main {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+
+  .dashboard-welcome-tile {
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-recommendations-tile {
+    padding: 1.25rem 1.5rem;
   }
 
   .dashboard-header-section {
@@ -327,11 +430,11 @@
   }
 
   .dashboard-welcome-title {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
 
   .dashboard-welcome-subtitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .dashboard-search-nav-button {
@@ -341,10 +444,19 @@
 
   .dashboard-recommendations-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .dashboard-section-title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+  }
+
+  .dashboard-section-header {
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-recommendation-card {
+    padding: 1.25rem;
   }
 }
 

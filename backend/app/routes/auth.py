@@ -15,10 +15,36 @@ from backend.app.services.session import (
     revoke_session,
     revoke_all_sessions,
 )
+from backend.app.services.search import search_faculty_service
 from backend.app.utils.jwt import generate_access_token
 from flask import Blueprint, request, jsonify, make_response
 
 auth_bp = Blueprint("auth", __name__)
+
+
+# =============================================================================
+# PUBLIC ENDPOINTS (no auth required)
+# =============================================================================
+
+@auth_bp.route("/lookup-faculty", methods=["GET"])
+def lookup_faculty():
+    """
+    Public endpoint for looking up faculty during signup.
+    
+    This endpoint does NOT require authentication, allowing new users
+    to search for their existing faculty record before creating an account.
+    
+    Query parameters:
+    - query: General search query (searches across all fields)
+    - first_name: Filter by first name
+    - last_name: Filter by last name
+    - department: Filter by department
+    - institution: Filter by institution
+    
+    Returns:
+        JSON array of matching faculty members
+    """
+    return search_faculty_service(**request.args)
 
 # Register credentials to faculty_id
 @auth_bp.route("/register", methods=["POST"])
@@ -76,7 +102,8 @@ def login():
     Expected request body:
     {
         "username": "johndoe",
-        "password": "plaintextpassword"
+        "password": "plaintextpassword",
+        "remember_me": false  // Optional: extends session to 30 days if true
     }
     
     Returns:
@@ -98,11 +125,14 @@ def login():
         result = validate_login(data)
         faculty_id = result["faculty_id"]
         
+        # Check for remember_me flag (defaults to False)
+        remember_me = bool(data.get("remember_me", False))
+        
         # Generate access token (JWT)
         access_token = generate_access_token(faculty_id)
         
         # Create session and generate refresh token
-        refresh_token, session_id = create_session(faculty_id)
+        refresh_token, session_id, expiration_days = create_session(faculty_id, remember_me)
         
         # Create response with access token in JSON body
         response = make_response(jsonify({
@@ -111,13 +141,14 @@ def login():
             "faculty": result["faculty"]
         }), 200)
         
+        # Set cookie with expiration matching the session
         response.set_cookie(
             "refresh_token",
             refresh_token,
             httponly=True,
             secure=False,
             samesite="Lax",
-            max_age=7 * 24 * 60 * 60,
+            max_age=expiration_days * 24 * 60 * 60,
             path="/"
         )
         

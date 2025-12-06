@@ -322,14 +322,34 @@ CREATE TABLE IF NOT EXISTS faculty_follows_faculty(
 
 -- Source: faculty_recommended_to_faculty.sql
 
+-- Recommendation relationship between faculty members
+-- Only stores recommendations where at least one faculty has an account
+
 CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
-    -- Model as directional relationship 
-    -- Allows for different match scoring dependent on user properties & data
-    source_faculty_id  CHAR(36)    NOT NULL,
-    target_faculty_id  CHAR(36)    NOT NULL,
+    -- Directional: source is who we're recommending TO, target is who we're recommending
+    source_faculty_id   CHAR(36)        NOT NULL,
+    target_faculty_id   CHAR(36)        NOT NULL,
     
-    match_score     FLOAT,
-    created_at      DATE        NOT NULL,
+    -- Match score for ranking (0.0 to 1.0)
+    match_score         DECIMAL(5,4)    NOT NULL DEFAULT 0.0,
+    
+    -- Recommendation type (constrained to valid values)
+    recommendation_type ENUM(
+        'shared_keyword',           -- Both research the same keyword
+        'keyword_to_publication',   -- Source researches keyword, target published on it
+        'publication_to_keyword',   -- Source published on keyword, target researches it
+        'keyword_to_grant',         -- Source researches keyword, target has grant for it
+        'grant_to_keyword',         -- Source has grant for keyword, target researches it
+        'grant_to_publication',     -- Source has grant for keyword, target published on it
+        'publication_to_grant',     -- Source published on keyword, target has grant for it
+        'shared_grant',             -- Both have the same grant
+        'shared_department',        -- Both in the same department
+        'shared_institution'        -- Both at the same institution
+    ) NOT NULL,
+    
+    -- Timestamps
+    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (source_faculty_id, target_faculty_id),
 
@@ -341,8 +361,13 @@ CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
     FOREIGN KEY (target_faculty_id)
         REFERENCES faculty(faculty_id) 
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+        
+    INDEX idx_recommendations_source (source_faculty_id),
+    INDEX idx_recommendations_score (source_faculty_id, match_score DESC),
+    INDEX idx_recommendations_type (recommendation_type)
 );
+
 
 -- Source: faculty_researches_keyword.sql
 
