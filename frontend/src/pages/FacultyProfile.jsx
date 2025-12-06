@@ -111,13 +111,27 @@ function FacultyProfile() {
     setSaveMessage('');
     
     try {
-      await updateFaculty(facultyId, formData);
+      // Call the API to update the database
+      const result = await updateFaculty(facultyId, formData);
       
-      // Update local faculty state with new data
-      setFaculty(prev => ({
-        ...prev,
-        ...formData,
-      }));
+      // Only update local state after successful API response
+      // Refresh faculty data from API to ensure we have the latest
+      const updatedFaculty = await getFacultyById(facultyId);
+      setFaculty(updatedFaculty);
+      
+      // Update formData to match the refreshed data
+      setFormData({
+        first_name: updatedFaculty.first_name || '',
+        last_name: updatedFaculty.last_name || '',
+        biography: updatedFaculty.biography || '',
+        orcid: updatedFaculty.orcid || '',
+        google_scholar_url: updatedFaculty.google_scholar_url || '',
+        research_gate_url: updatedFaculty.research_gate_url || '',
+        emails: updatedFaculty.emails || [],
+        phones: updatedFaculty.phones || [],
+        departments: updatedFaculty.departments || [],
+        titles: updatedFaculty.titles || [],
+      });
       
       // Also update localStorage if it's own profile
       if (isOwnProfile) {
@@ -126,7 +140,7 @@ function FacultyProfile() {
           const parsed = JSON.parse(storedFaculty);
           localStorage.setItem('faculty', JSON.stringify({
             ...parsed,
-            ...formData,
+            ...updatedFaculty,
           }));
         }
       }
@@ -137,7 +151,10 @@ function FacultyProfile() {
       // Clear success message after 3 seconds
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (err) {
-      setSaveMessage('Failed to save changes. Please try again.');
+      // Show the actual error message from the API
+      const errorMessage = err.message || 'Failed to save changes. Please try again.';
+      setSaveMessage(`Error: ${errorMessage}`);
+      console.error('Failed to update faculty profile:', err);
     } finally {
       setSaving(false);
     }
