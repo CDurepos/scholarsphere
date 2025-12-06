@@ -3686,24 +3686,26 @@ DELIMITER ;
 DELIMITER $$
 
 /**
- * Adds a new keyword and associates it with a faculty member.
+ * Adds a keyword and associates it with a faculty member.
  * 
- * This workflow procedure combines two operations:
- * 1. Creates a new keyword record
- * 2. Links the keyword to the specified faculty member via the join table
+ * This workflow procedure:
+ * 1. Normalizes the keyword name to lowercase for comparison
+ * 2. Checks if the keyword already exists (case-insensitive)
+ * 3. Creates the keyword if it doesn't exist
+ * 4. Links the keyword to the specified faculty member via the join table
  * 
- * This is a convenience procedure that handles the complete workflow of
- * adding a keyword for a faculty member in a single call.
+ * Keywords are normalized to lowercase to ensure "NLP" and "nlp" are treated
+ * as the same keyword. The keyword is stored in lowercase in the database.
  * 
  * @param p_faculty_id    Required UUID of the faculty member
- * @param p_name          Required keyword name (max 64 characters)
+ * @param p_name          Required keyword name (max 64 characters, will be normalized to lowercase)
  * 
  * @returns Result set containing:
- *   - keyword_id: UUID of the newly created keyword
  *   - faculty_id: UUID of the associated faculty member
- *   - action: Status message ('inserted')
+ *   - keyword_name: The normalized keyword name that was used
+ *   - action: Status message ('inserted' or 'linked')
  * 
- * @throws SQLSTATE '45000' if faculty_id is NULL
+ * @throws SQLSTATE '45000' if faculty_id or keyword name is NULL
  */
 DROP PROCEDURE IF EXISTS add_keyword_for_faculty$$
 CREATE PROCEDURE add_keyword_for_faculty(
@@ -3711,22 +3713,47 @@ CREATE PROCEDURE add_keyword_for_faculty(
     IN p_name VARCHAR(64)
 )
 BEGIN
-    -- Validate input: faculty_id must be provided
+    DECLARE v_normalized_name VARCHAR(64);
+    DECLARE v_existing_name VARCHAR(64);
+    DECLARE v_action VARCHAR(20);
+    
+    -- Validate input
     IF p_faculty_id IS NULL OR p_name IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'faculty_id and keyword name are required.';
     END IF;
 
-    -- Step 1: Create the keyword record
-    CALL create_keyword(p_name);
+    -- Normalize keyword to lowercase for comparison and storage
+    SET v_normalized_name = LOWER(TRIM(p_name));
+    
+    -- Check if keyword already exists (case-insensitive)
+    SELECT name INTO v_existing_name
+    FROM keyword
+    WHERE LOWER(name) = v_normalized_name
+    LIMIT 1;
+    
+    -- If keyword doesn't exist, create it
+    IF v_existing_name IS NULL THEN
+        INSERT INTO keyword (name)
+        VALUES (v_normalized_name)
+        ON DUPLICATE KEY UPDATE name = name; -- Handle race condition
+        SET v_action = 'inserted';
+    ELSE
+        -- Use the existing keyword name (preserve original casing if different)
+        SET v_normalized_name = v_existing_name;
+        SET v_action = 'linked';
+    END IF;
 
-    -- Step 2: Link the keyword to the faculty member
-    CALL create_faculty_researches_keyword(p_faculty_id, p_name);
+    -- Link the keyword to the faculty member (using normalized name)
+    INSERT INTO faculty_researches_keyword (faculty_id, name)
+    VALUES (p_faculty_id, v_normalized_name)
+    ON DUPLICATE KEY UPDATE name = name; -- Ignore if relationship already exists
 
-    -- Step 3: Return confirmation with both IDs for reference
-    SELECT p_faculty_id AS faculty_id,
-           p_name AS keyword_id,
-           'inserted' AS action;
+    -- Return confirmation
+    SELECT 
+        p_faculty_id AS faculty_id,
+        v_normalized_name AS keyword_name,
+        v_action AS action;
 END $$
 DELIMITER ;
 
@@ -3804,7 +3831,7 @@ END $$
 DELIMITER ;
 
 
--- Source: workflow/clean_faculty_generates_keyword.sql
+-- Source: workflow/clean/clean_faculty_generates_keyword.sql
 
 DELIMITER $$
 
@@ -3868,7 +3895,7 @@ DELIMITER ;
 
 
 
--- Source: workflow/clean_session.sql
+-- Source: workflow/clean/clean_session.sql
 
 DELIMITER $$
 
@@ -4368,7 +4395,7 @@ END $$
 DELIMITER ;
 
 
--- Source: workflow/search_faculty.sql
+-- Source: workflow/search/search_faculty.sql
 
 DELIMITER $$
 
@@ -4426,7 +4453,8 @@ END $$
 DELIMITER ;
 
 
--- Source: workflow/search_faculty_by_keyword.sql
+
+-- Source: workflow/search/search_faculty_by_keyword.sql
 
 DELIMITER $$
 
@@ -4548,6 +4576,46 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS temp_search_keywords_2;
 END $$
 DELIMITER ;
+
+
+
+-- Source: workflow/search/search_keywords.sql
+
+DELIMITER $$
+
+/**
+ * Search keywords by prefix for autocomplete functionality.
+ * 
+ * Returns keywords that start with the given search term, ordered by name.
+ * Used for autocomplete suggestions when users add research interests.
+ * 
+ * @param p_search_term  Search prefix (min 2 characters recommended)
+ * @param p_limit        Maximum number of results to return (default 10)
+ * 
+ * @returns Result set containing:
+ *   - name: Keyword name (max 64 characters)
+ */
+DROP PROCEDURE IF EXISTS search_keywords$$
+CREATE PROCEDURE search_keywords(
+    IN p_search_term VARCHAR(64),
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_limit INT DEFAULT 10;
+    
+    IF p_limit IS NOT NULL AND p_limit > 0 THEN
+        SET v_limit = p_limit;
+    END IF;
+    
+    SELECT DISTINCT name
+    FROM keyword
+    WHERE LOWER(name) LIKE CONCAT(LOWER(TRIM(p_search_term)), '%')
+    ORDER BY name ASC
+    LIMIT v_limit;
+END $$
+
+DELIMITER ;
+
 
 
 -- Source: workflow/validate_login.sql

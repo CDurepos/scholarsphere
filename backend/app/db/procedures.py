@@ -67,6 +67,103 @@ def sql_read_faculty_researches_keyword_by_faculty(
     results = [r.fetchall() for r in cursor.stored_results()]
     return results[0] if results else []
 
+
+def sql_search_keywords(
+    transaction_context: TransactionContext,
+    search_term: str,
+    limit: int = 10,
+) -> list[dict]:
+    """
+    Search keywords by prefix for autocomplete.
+    
+    Args:
+        transaction_context: Database transaction context.
+        search_term: Search prefix string.
+        limit: Maximum number of results (default 10).
+    
+    Returns:
+        list[dict]: List of keyword records with 'name' field.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("search_keywords", (search_term, limit))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+def sql_add_keyword_for_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+    keyword_name: str,
+) -> None:
+    """
+    Add a keyword for a faculty member (creates keyword if needed).
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_id: UUID of the faculty member.
+        keyword_name: Keyword name to add.
+    
+    Returns:
+        None
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("add_keyword_for_faculty", (faculty_id, keyword_name))
+    # Consume result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_delete_faculty_researches_keyword(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+    keyword_name: str,
+) -> None:
+    """
+    Remove a keyword from a faculty member's research interests.
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_id: UUID of the faculty member.
+        keyword_name: Keyword name to remove.
+    
+    Returns:
+        None
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("delete_faculty_researches_keyword", (faculty_id, keyword_name))
+    # Consume result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_delete_all_faculty_keywords(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Delete all keywords for a faculty member.
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_id: UUID of the faculty member.
+    
+    Returns:
+        None
+    """
+    cursor = transaction_context.cursor
+    cursor.execute(
+        "DELETE FROM faculty_researches_keyword WHERE faculty_id = %s",
+        (faculty_id,)
+    )
+
 def sql_read_publication_explores_keyword_by_publication(
     transaction_context: TransactionContext,
     publication_id: str,

@@ -118,3 +118,4 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS temp_search_keywords_2;
 END $$
 DELIMITER ;
+

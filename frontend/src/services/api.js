@@ -128,13 +128,13 @@ export const logout = async () => {
  * @returns {Promise<Array>} Array of institution objects
  */
 export const getInstitutions = async () => {
-  const response = await fetch(`${API_BASE_URL}/institution`, {
+  const response = await fetch(`${API_BASE_URL}/institution/list`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
   });
-  return response.json().then(data => data.sort((a, b) => a.name.localeCompare(b.name)));
+  return response.json();
 };
 
 /**
@@ -764,6 +764,109 @@ export const getRecommendations = async (faculty_id) => {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to get recommendations');
+  }
+  
+  return response.json();
+};
+
+// ============================================================================
+// KEYWORD API FUNCTIONS
+// ============================================================================
+
+/**
+ * Search keywords by prefix for autocomplete
+ * 
+ * @param {string} searchTerm - Search prefix (min 2 characters)
+ * @param {number} [limit=10] - Max results to return
+ * 
+ * @returns {Promise<string[]>} Array of keyword names
+ * 
+ * Example response:
+ * ["machine learning", "macroeconomics", "macrobiology"]
+ */
+export const searchKeywords = async (searchTerm, limit = 10) => {
+  if (!searchTerm || searchTerm.trim().length < 2) {
+    return [];
+  }
+  
+  const response = await fetch(
+    `${API_BASE_URL}/search/keyword?q=${encodeURIComponent(searchTerm.trim())}&limit=${limit}`,
+    {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  
+  if (!response.ok) {
+    return [];
+  }
+  
+  return response.json();
+};
+
+/**
+ * Get all keywords (research interests) for a faculty member
+ * 
+ * @param {string} faculty_id - UUID of the faculty member
+ * 
+ * @returns {Promise<string[]>} Array of keyword names
+ */
+export const getFacultyKeywords = async (faculty_id) => {
+  const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}/keyword`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get keywords');
+  }
+  
+  return response.json();
+};
+
+
+/**
+ * Replace all keywords for a faculty member with a new list
+ * 
+ * @param {string} faculty_id - UUID of the faculty member
+ * @param {string[]} keywords - Array of keyword names
+ * 
+ * @returns {Promise<Object>} Success response
+ */
+export const updateFacultyKeywords = async (faculty_id, keywords) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  let response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}/keyword`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers,
+    body: JSON.stringify({ keywords }),
+  });
+  
+  // Retry with refreshed token if unauthorized
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}/keyword`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({ keywords }),
+      });
+    }
+  }
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update keywords');
   }
   
   return response.json();

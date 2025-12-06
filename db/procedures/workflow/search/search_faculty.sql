@@ -52,3 +52,4 @@ BEGIN
         AND (p_institution IS NULL OR i.name            LIKE CONCAT('%', p_institution, '%'));
 END $$
 DELIMITER ;
+
