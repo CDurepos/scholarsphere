@@ -162,8 +162,16 @@ export const getInstitutions = async () => {
  * ]
  */
 export const searchFaculty = async (params = {}) => {
-  const queryParams = new URLSearchParams();
+  const headers = {
+    'Content-Type': 'application/json',
+  };
   
+  // Add Authorization header if we have an access token
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  const queryParams = new URLSearchParams();
   // If a general query is provided, pass it directly to the backend
   // The backend should handle parsing it appropriately
   if (params.query) {
@@ -177,9 +185,7 @@ export const searchFaculty = async (params = {}) => {
   
   const response = await fetch(`${API_BASE_URL}/search/faculty?${queryParams.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   });
   return response.json();
 };

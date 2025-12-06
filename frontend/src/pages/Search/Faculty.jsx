@@ -37,7 +37,6 @@ function Faculty() {
     setLoading(true);
     setError('');
     setHasSearched(true);
-    setShowAdvanced(false);
 
     try {
       // TODO: Include keywordQuery in search when backend supports it
