@@ -10,18 +10,6 @@ from backend.app.services.faculty import (
     get_faculty as get_faculty_service
 )
 from backend.app.utils.jwt import require_auth
-from backend.app.db.transaction_context import start_transaction
-from backend.app.db.procedures import (
-    sql_update_faculty,
-    sql_delete_faculty_email_by_faculty,
-    sql_delete_faculty_phone_by_faculty,
-    sql_delete_faculty_department_by_faculty,
-    sql_delete_faculty_title_by_faculty,
-    sql_create_faculty_email,
-    sql_create_faculty_phone,
-    sql_create_faculty_department,
-    sql_create_faculty_title,
-)
 
 from flask import Blueprint, request, jsonify, g
 
@@ -137,70 +125,20 @@ def update_faculty(faculty_id):
     if current_faculty_id != faculty_id:
         return jsonify({"error": "Unauthorized: You can only update your own profile"}), 403
     
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({"error": "Request body is required"}), 400
-    
-    if not faculty_id:
-        return jsonify({"error": "faculty_id is required"}), 400
-    
     try:
-        with start_transaction() as tx:
-            # Convert empty strings to None for optional fields
-            def empty_to_none(value):
-                return None if (value is None or (isinstance(value, str) and value.strip() == "")) else value
-            
-            # 1. Update base faculty information
-            sql_update_faculty(
-                tx,
-                faculty_id,
-                empty_to_none(data.get('first_name')),
-                empty_to_none(data.get('last_name')),
-                empty_to_none(data.get('biography')),
-                empty_to_none(data.get('orcid')),
-                empty_to_none(data.get('google_scholar_url')),
-                empty_to_none(data.get('research_gate_url')),
-                None  # scraped_from - don't update this via API
-            )
-            
-            # 2. Delete old related records (only if arrays are provided in request)
-            if 'emails' in data:
-                sql_delete_faculty_email_by_faculty(tx, faculty_id)
-                # 3. Insert new emails
-                for email in data.get('emails', []):
-                    if email and email.strip():
-                        sql_create_faculty_email(tx, faculty_id, email.strip())
-            
-            if 'phones' in data:
-                sql_delete_faculty_phone_by_faculty(tx, faculty_id)
-                # 4. Insert new phones
-                for phone in data.get('phones', []):
-                    if phone and phone.strip():
-                        sql_create_faculty_phone(tx, faculty_id, phone.strip())
-            
-            if 'departments' in data:
-                sql_delete_faculty_department_by_faculty(tx, faculty_id)
-                # 5. Insert new departments
-                for dept in data.get('departments', []):
-                    if dept and dept.strip():
-                        sql_create_faculty_department(tx, faculty_id, dept.strip())
-            
-            if 'titles' in data:
-                sql_delete_faculty_title_by_faculty(tx, faculty_id)
-                # 6. Insert new titles
-                for title in data.get('titles', []):
-                    if title and title.strip():
-                        sql_create_faculty_title(tx, faculty_id, title.strip())
-            
-            # Transaction commits automatically on success via context manager
-            
-        return jsonify({
-            "message": "Profile updated successfully"
-        }), 200
-            
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Request body is required"}), 400
+        
+        if not faculty_id:
+            return jsonify({"error": "faculty_id is required"}), 400
+        
+        # Use service layer function which handles transaction management
+        result = update_faculty_service(faculty_id, data)
+        return jsonify(result), 200
+        
     except Exception as e:
-        # Transaction already rolled back by context manager on exception
         error_msg = str(e).lower()
         if "does not exist" in error_msg or "not found" in error_msg:
             return jsonify({"error": f"Faculty member with id {faculty_id} not found"}), 404
