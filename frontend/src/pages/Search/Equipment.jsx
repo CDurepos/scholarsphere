@@ -136,7 +136,7 @@ function Equipment() {
           {!loading && results.length > 0 && (
             <div className="results-grid">
               {results.map(item => (
-                <div key={item.eq_id} className="equipment-card">
+                <div key={item.equipment_id} className="equipment-card">
                   <h3>{item.name}</h3>
                   <p>{item.description}</p>
                   <p><strong>Institution:</strong> {item.institution_name}</p>
