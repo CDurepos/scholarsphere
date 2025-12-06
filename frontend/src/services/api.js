@@ -134,7 +134,7 @@ export const getInstitutions = async () => {
       'Content-Type': 'application/json',
     },
   });
-  return response.json();
+  return response.json().then(data => data.sort((a, b) => a.name.localeCompare(b.name)));
 };
 
 /**
