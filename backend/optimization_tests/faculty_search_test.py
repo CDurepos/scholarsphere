@@ -58,6 +58,13 @@ QUERIES = {
         },
         "keywords": None,
     },
+    "q6": {
+        "description": "The letter 'a'",
+        "filters": {
+            "query": "a",
+        },
+        "keywords": "computer vision",
+    },
 }
 
 # Output file configuration
