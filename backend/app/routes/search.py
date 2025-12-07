@@ -37,8 +37,8 @@ def search_faculty():
     if not has_search_params:
         return jsonify([]), 200
     
-    response = search_faculty_service(result_limit=50, **request.args)
-    return response
+    results, status_code = search_faculty_service(result_limit=50, **request.args)
+    return jsonify(results), status_code
 
 
 @search_bp.route("/keyword", methods=["GET"])

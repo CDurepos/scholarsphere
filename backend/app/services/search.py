@@ -8,10 +8,8 @@ from backend.app.db.procedures import (
 from backend.app.db.transaction_context import start_transaction
 from backend.app.utils.search_filters import get_valid_search_filters
 
-from flask import jsonify
 
-
-def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
+def search_faculty_service(result_limit: int = 50, conn=None, **filters: dict[str, str]):
     """
     Service layer for searching for faculty in the database based on search filters.
 
@@ -23,15 +21,16 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
 
     Args:
         result_limit: The maximum number of results to include in the response.
+        conn: A debug/testing only parameter to pass in a connection to the database. Do not use in production.
         **filters: Arbitrary keyword arguments representing the filters to use for searching.
                    Can include a "query" parameter for general searching across all fields.
                    Can include a "keywords" parameter for searching by keywords / phrases.
 
     Returns:
-        tuple: A tuple containing (jsonify response, status_code).
+        tuple: A tuple containing (results, status_code) where results is a list or error dict.
     """
     try:
-        with start_transaction() as transaction_context:
+        with start_transaction(conn) as transaction_context:
             # Get keywords and ensure empty strings are treated as None
             keywords = filters.get("keywords", "").strip() or None
 
@@ -60,7 +59,7 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
                     all_results = rerank_by_keywords(
                         all_results, keywords, transaction_context
                     )
-                return jsonify(all_results[:result_limit]), 200
+                return all_results[:result_limit], 200
 
             # Case 2: Normal filtering with specific parameters.
             valid_filters = {
@@ -76,7 +75,7 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
                 results = sql_search_faculty(transaction_context, **valid_filters)
                 if keywords:
                     results = rerank_by_keywords(results, keywords, transaction_context)
-                return jsonify(results[:result_limit]), 200
+                return results[:result_limit], 200
 
             # Case 3: Search purely by keywords
             if keywords:
@@ -85,20 +84,17 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
                 results = sql_search_faculty_by_keyword(
                     transaction_context, keywords, result_limit
                 )
-                return jsonify(results[:result_limit]), 200
+                return results[:result_limit], 200
 
             # Case 4: No filters or keywords provided
             print("Case 4")
-            return jsonify([]), 200
+            return [], 200
     except Exception as e:
         # Context manager already handled transaction cleanup
-        # Convert exception to JSON error response for API layer
+        # Return error dict for route layer to handle
         print(f"Error: {e}")
         error_message = str(e)
-        return (
-            jsonify({"error": f"Error searching for faculty: {error_message}"}),
-            500,
-        )
+        return {"error": f"Error searching for faculty: {error_message}"}, 500
 
 
 def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):

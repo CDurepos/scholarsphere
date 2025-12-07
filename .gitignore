@@ -4,5 +4,5 @@ __pycache__/
 
 scrape_storage/
 
-optimization_tests/
+backend/optimization_tests/output/
 .idea/
