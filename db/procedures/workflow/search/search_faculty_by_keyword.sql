@@ -110,7 +110,7 @@ BEGIN
         f.last_name,
         d.department_name,
         i.name
-    HAVING COUNT(DISTINCT matched_keywords.keyword) > 1
+    HAVING COUNT(DISTINCT matched_keywords.keyword) > 0
     ORDER BY keyword_overlap DESC;
     
     -- Clean up

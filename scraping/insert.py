@@ -18,7 +18,11 @@ from pathlib import Path
 # Add parent directory to path for imports (must be before backend imports)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backend.models.qwen import generate_keywords_with_qwen, unload_qwen_model
+from backend.models.qwen import (
+    generate_faculty_keywords_with_qwen,
+    generate_publication_keywords_with_qwen,
+    unload_qwen_model,
+)
 
 import json
 import uuid
@@ -503,7 +507,7 @@ def insert_faculty_researches_keyword(
         if not isinstance(faculty_record.get("faculty_id"), str):
             raise ValueError(f"At keyword insertion time, faculty ID is not a string for faculty: {faculty_record}")
         biography = faculty_record.get("biography")
-        keywords = generate_keywords_with_qwen(biography, num_keywords=5)
+        keywords = generate_faculty_keywords_with_qwen(biography, num_keywords=5)
 
     except Exception as e:
         print(f"[ERROR] Failed to generate keywords for faculty {faculty_record.get('first_name')} {faculty_record.get('last_name')}: {str(e)}")
@@ -533,6 +537,76 @@ def insert_faculty_researches_keyword(
             conn.close()
 
     return True
+
+
+def insert_publication_explores_keyword(
+    publication_id: str, abstract: str, db: DatabaseConnection
+) -> bool:
+    """
+    Given a publication, generate a list of keywords from the abstract and insert them
+    into the database using the publication_explores_keyword join table.
+
+    Args:
+        publication_id: The UUID of the publication
+        abstract: The abstract of the publication
+        db: DatabaseConnection instance
+
+    Returns:
+        True if insertion is successful, else False
+    """
+    if not publication_id or not publication_id.strip():
+        print("[ERROR] Publication ID is required for keyword insertion")
+        return False
+
+    if not abstract or not abstract.strip():
+        # No abstract means no keywords to generate
+        return True
+
+    keywords = []
+    try:
+        keywords = generate_publication_keywords_with_qwen(abstract, num_keywords=5)
+    except Exception as e:
+        print(f"[ERROR] Failed to generate keywords for publication {publication_id}: {str(e)}")
+        return False
+
+    if not keywords:
+        "TODO: This is will throw off the successful insertion count. Edit this and check other insert methods too."
+        return True  # No keywords generated, but not an error
+
+    conn = None
+    cursor = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        for keyword in keywords:
+            db.call_procedure(
+                cursor, "add_keyword_for_publication", (publication_id, keyword)
+            )
+            # Consume result set
+            try:
+                stored_results = list(cursor.stored_results())
+                if stored_results:
+                    stored_results[0].fetchall()
+            except:
+                pass
+
+        conn.commit()
+
+    except Exception as e:
+        if conn and conn.in_transaction:
+            conn.rollback()
+        print(f"[ERROR] Failed to insert keywords for publication {publication_id}: {str(e)}")
+        return False
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return True
+
 
 def main():
     """Main insertion function."""
@@ -601,14 +675,6 @@ def main():
             if "records" in locals():
                 total_stats["failed"] += len(records)
 
-    # Unload model and tokenizer from memory after all faculty keywords have been generated
-    print("\n[INFO] Unloading model from memory...")
-    try:
-        unload_qwen_model()
-        print("[OK] Model unloaded successfully")
-    except Exception as e:
-        print(f"[WARN] Failed to unload model: {str(e)}")
-
     print("\n" + "=" * 60)
     print("Insertion Summary")
     print("=" * 60)
@@ -622,6 +688,10 @@ def main():
             f"\n[WARN] {total_stats['failed']} records failed to insert. Check errors above."
         )
 
+    print("\n" + "=" * 60)
+    print("Step 2: Inserting Publication Records")
+    print("=" * 60)
+
     publications_inserted = 0
     for pub_file in publication_files:
         if not os.path.exists(pub_file):
@@ -633,14 +703,30 @@ def main():
             publications = load_jsonl(pub_file)
             
             for publication in tqdm(publications, total=len(publications), desc="Inserting publication records"):
-                db_id = insert_publication_record(publication, db)
-                if db_id:
+                publication_id = insert_publication_record(publication, db)
+                if publication_id:
                     publications_inserted += 1
+                    # Insert keywords for this publication
+                    abstract = publication.get("abstract")
+                    if abstract and abstract.strip():
+                        keyword_success = insert_publication_explores_keyword(
+                            publication_id, abstract, db
+                        )
+                        if not keyword_success:
+                            print(f"[WARN] Failed to insert keywords for publication {publication.get('title')}")
         except Exception as e:
             print(f"[ERROR] Failed to process {pub_file}: {e}")
             import traceback
 
             traceback.print_exc()
+
+    # Unload model after all keywords (faculty + publication) have been generated
+    print("\n[INFO] Unloading model from memory...")
+    try:
+        unload_qwen_model()
+        print("[OK] Model unloaded successfully")
+    except Exception as e:
+        print(f"[WARN] Failed to unload model: {str(e)}")
 
     print(f"\n[INFO] Inserted {publications_inserted} publications")
     print("\n[INFO] Data insertion complete!")
