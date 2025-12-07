@@ -3,7 +3,10 @@ from collections import defaultdict
 from backend.app.db.procedures import (
     sql_search_faculty,
     sql_search_faculty_by_keyword,
-    sql_batch_get_faculty_keywords,
+    sql_read_faculty_researches_keyword_by_faculty,
+    sql_read_publication_authored_by_faculty_by_faculty,
+    sql_read_publication_explores_keyword_by_publication,
+    sql_search_keywords,
 )
 from backend.app.db.transaction_context import start_transaction
 from backend.app.utils.search_filters import get_valid_search_filters
@@ -148,3 +151,63 @@ def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):
     results.sort(key=lambda x: x.get("keyword_score", 0), reverse=True)
 
     return results
+
+
+def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
+    """
+    Gather the keywords for a faculty member.
+    """
+    faculty_keywords = set()
+    # Get keywords from faculty's direct research keywords
+    research_keywords = sql_read_faculty_researches_keyword_by_faculty(
+        transaction_context, faculty_id
+    )
+    for kw in research_keywords:
+        if kw.get("name"):
+            faculty_keywords.add(kw["name"].lower())
+
+    # Get keywords from faculty's publications
+    publications = sql_read_publication_authored_by_faculty_by_faculty(
+        transaction_context, faculty_id
+    )
+    for publication in publications:
+        pub_keywords = sql_read_publication_explores_keyword_by_publication(
+            transaction_context, publication["publication_id"]
+        )
+        for kw in pub_keywords:
+            if kw.get("name"):
+                faculty_keywords.add(kw["name"].lower())
+
+    return faculty_keywords
+
+
+def search_keywords_service(search_term: str, limit: int = 10):
+    """
+    Service layer for searching keywords by prefix for autocomplete.
+    
+    Args:
+        search_term: Search prefix string (min 2 characters).
+        limit: Maximum number of results (default 10, max 50).
+    
+    Returns:
+        tuple: A tuple containing (jsonify response, status_code).
+    """
+    try:
+        # Validate search term length
+        search_term = search_term.strip()
+        if len(search_term) < 2:
+            return jsonify([]), 200
+        
+        # Validate and clamp limit
+        limit = max(1, min(int(limit), 50))
+        
+        with start_transaction() as transaction_context:
+            results = sql_search_keywords(transaction_context, search_term, limit)
+            keywords = [row.get("name") for row in results if row.get("name")]
+            return jsonify(keywords), 200
+    except Exception as e:
+        error_message = str(e)
+        return (
+            jsonify({"error": f"Error searching keywords: {error_message}"}),
+            500,
+        )

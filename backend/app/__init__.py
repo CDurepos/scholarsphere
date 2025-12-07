@@ -5,7 +5,6 @@ from backend.app.routes.faculty import faculty_bp
 from backend.app.routes.recommend import recommend_bp
 from backend.app.routes.rate_limit import rate_limit_bp
 from backend.app.routes.institution import institution_bp
-from backend.app.routes.equipment_search import equipment_bp
 
 
 from flask_cors import CORS
@@ -33,7 +32,6 @@ def create_app():
     api_bp.register_blueprint(recommend_bp, url_prefix="/recommend")
     api_bp.register_blueprint(rate_limit_bp, url_prefix="/rate-limit")
     api_bp.register_blueprint(institution_bp, url_prefix="/institution")
-    api_bp.register_blueprint(equipment_bp, url_prefix="/equipment")
 
     app.register_blueprint(api_bp, url_prefix="/api")
 

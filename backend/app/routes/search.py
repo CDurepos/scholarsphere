@@ -1,8 +1,10 @@
 from backend.app.utils.jwt import require_auth
-from backend.app.services.search import search_faculty_service
+from backend.app.services.search import (
+    search_faculty_service,
+    search_keywords_service,
+)
 from backend.app.utils.search_filters import get_valid_search_filters
-from backend.app.db.transaction_context import start_transaction
-from backend.app.db.procedures import sql_search_keywords
+from backend.app.db.connection import get_connection
 
 from flask import Blueprint, request, jsonify
 
@@ -58,19 +60,68 @@ def search_keywords():
         -> ["machine learning", "macroeconomics", "macrobiology"]
     """
     search_term = request.args.get("q", "").strip()
-    
-    if len(search_term) < 2:
-        return jsonify([])
+    limit = request.args.get("limit", 10)
     
     try:
-        limit = min(int(request.args.get("limit", 10)), 50)
+        limit = int(limit)
     except ValueError:
         limit = 10
     
+    return search_keywords_service(search_term, limit)
+
+@search_bp.route("/equipment", methods=["GET"])
+def search_equipment():
+    """
+    Search equipment by keywords, location, and availability.
+    
+    Query Parameters:
+        keywords (str): Optional search keywords (searches name and description)
+        location (list): Optional list of locations (city or zip codes), can be specified multiple times
+        available (str): Optional "true" to filter by availability = 'available'
+    
+    Returns:
+        JSON array of equipment records with institution information
+    
+    Example:
+        GET /api/search/equipment?keywords=microscope&location=Portland&available=true
+    """
+    keywords = request.args.get("keywords", "")
+    locations = request.args.getlist("location")
+    available_only = request.args.get("available", "false").lower() == "true"
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
     try:
-        with start_transaction() as ctx:
-            results = sql_search_keywords(ctx, search_term, limit)
-            keywords = [row.get("name") for row in results if row.get("name")]
-        return jsonify(keywords)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        sql = """
+            SELECT e.equipment_id, e.name, e.description, e.availability,
+                   i.name AS institution_name, i.city
+            FROM equipment e
+            JOIN institution i ON e.institution_id = i.institution_id
+            WHERE 1=1
+        """
+        params = []
+
+        if keywords:
+            sql += " AND (e.name LIKE %s OR e.description LIKE %s)"
+            kw = f"%{keywords}%"
+            params.extend([kw, kw])
+
+        if locations:
+            sql += " AND ("
+            clauses = []
+            for loc in locations:
+                clauses.append("(i.city = %s OR i.zip = %s)")
+                params.extend([loc, loc])
+            sql += " OR ".join(clauses) + ")"
+
+        if available_only:
+            sql += " AND e.availability = 'available'"
+
+        cursor.execute(sql, tuple(params))
+        results = cursor.fetchall()
+
+        return jsonify(results)
+    finally:
+        cursor.close()
+        conn.close()
