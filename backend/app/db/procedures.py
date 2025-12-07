@@ -8,7 +8,8 @@ from datetime import datetime, date
 # SEARCH DB LAYER FUNCTIONS
 # ============================================================================
 def sql_search_faculty(
-    transaction_context: TransactionContext, **filters: dict[str, str]
+    transaction_context: TransactionContext,
+    **filters: dict[str, str],
 ) -> list[dict]:
     """
     Search for faculty in the database based on search filters.
@@ -31,11 +32,17 @@ def sql_search_faculty(
 # ============================================================================
 def sql_search_faculty_by_keyword(
     transaction_context: TransactionContext,
-    keywords: list[str],
-    result_limit: int = 50,
+    keywords: str,
 ) -> list[dict]:
     """
     Search for faculty in the database based on keywords.
+    
+    Args:
+        transaction_context: Database transaction context.
+        keywords: Comma-separated string of keywords to search for.
+    
+    Returns:
+        list[dict]: List of faculty records with keyword_overlap score.
     """
     cursor = transaction_context.cursor
     cursor.callproc("search_faculty_by_keyword", (keywords,))

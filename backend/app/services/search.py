@@ -92,9 +92,7 @@ def search_faculty_service(result_limit: int = 50, conn=None, **filters: dict[st
             # Case 3: Search purely by keywords
             if keywords:
                 # TODO: For any procedure that uses 'TEXT' type parameters, validate the input to ensure it is not too long.
-                results = sql_search_faculty_by_keyword(
-                    transaction_context, keywords, result_limit
-                )
+                results = sql_search_faculty_by_keyword(transaction_context, keywords)
                 return results[:result_limit], 200
 
             # Case 4: No filters or keywords provided
