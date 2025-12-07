@@ -321,6 +321,16 @@ def update_faculty(faculty_id: str, data: dict):
             
             # Transaction commits automatically on success
         
+        # Generate recommendations after profile update
+        # This ensures new connections appear immediately when keywords, departments, etc. are added
+        try:
+            with start_transaction() as rec_transaction_context:
+                from backend.app.db.procedures import sql_generate_recommendations_for_faculty
+                sql_generate_recommendations_for_faculty(rec_transaction_context, faculty_id)
+        except Exception as rec_err:
+            # Log but don't fail the update if recommendation generation fails
+            print(f"Warning: Failed to generate recommendations after profile update: {rec_err}")
+        
         return {
             "faculty_id": faculty_id,
             "message": "Faculty member updated successfully"

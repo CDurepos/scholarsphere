@@ -105,7 +105,7 @@ function Dashboard() {
         
         <div className={styles['dashboard-welcome-tile']}>
           <h1 className={styles['dashboard-welcome-title']}>
-            Welcome back, {faculty.first_name}
+            Welcome back, <span className={styles['dashboard-welcome-name']}>{faculty.first_name}</span>
           </h1>
           <p className={styles['dashboard-welcome-subtitle']}>
             Here's what's new for you today

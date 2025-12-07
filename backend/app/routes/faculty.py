@@ -244,6 +244,17 @@ def update_faculty_keywords(faculty_id):
             # Add new keywords
             for keyword in validated_keywords:
                 sql_add_keyword_for_faculty(ctx, faculty_id, keyword)
+        
+        # Generate recommendations after keyword update
+        # This ensures new connections appear immediately when keywords are added
+        try:
+            from backend.app.db.procedures import sql_generate_recommendations_for_faculty
+            with start_transaction() as rec_ctx:
+                sql_generate_recommendations_for_faculty(rec_ctx, faculty_id)
+        except Exception as rec_err:
+            # Log but don't fail the update if recommendation generation fails
+            print(f"Warning: Failed to generate recommendations after keyword update: {rec_err}")
+        
         return jsonify({"message": "Keywords updated successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
