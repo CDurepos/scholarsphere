@@ -35,7 +35,6 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
             # Get keywords and ensure empty strings are treated as None
             keywords = filters.get("keywords", "").strip() or None
 
-            print(f"Keywords: {keywords}")
             # Case 1: Handle generic "query" parameter by searching across all fields
             query = filters.get("query", "").strip()
             if query:
@@ -57,6 +56,7 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
                             all_results.append(result)
 
                 if keywords:
+                    #TODO: Just reranking by keywords might not make a lot of sense from a user perspective. Especially if no faculty have the keywords.
                     all_results = rerank_by_keywords(
                         all_results, keywords, transaction_context
                     )
@@ -71,7 +71,7 @@ def search_faculty_service(result_limit: int = 50, **filters: dict[str, str]):
                 )
                 for key in get_valid_search_filters()
             }
-            if valid_filters:
+            if any(valid_filters.values()):
                 print("Case 2")
                 results = sql_search_faculty(transaction_context, **valid_filters)
                 if keywords:
