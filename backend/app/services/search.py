@@ -13,18 +13,20 @@ def search_faculty_service(result_limit: int = 50, conn=None, **filters: dict[st
     """
     Service layer for searching for faculty in the database based on search filters.
 
-    This function accepts any number of keyword arguments (e.g., first_name="Alice", department="CS"), which are collected into a dictionary called `filters`.
+    This function accepts any number of keyword arguments (e.g., first_name="Alice", department="CS"), 
+    which are collected into a dictionary called `filters`.
     Only valid filters, determined by get_valid_search_filters(), will be passed to the database procedures.
 
-    If a "query" parameter is provided, it will search across all fields (first_name, last_name, department, institution)
-    and combine the results.
+    If a "query" parameter is provided, it is treated as comma-separated search terms.
+    Each term is searched across all fields (first_name, last_name, department, institution).
+    Only faculty matching ALL terms (in any field) are returned (intersection logic).
 
     Args:
         result_limit: The maximum number of results to include in the response.
         conn: A debug/testing only parameter to pass in a connection to the database. Do not use in production.
         **filters: Arbitrary keyword arguments representing the filters to use for searching.
-                   Can include a "query" parameter for general searching across all fields.
-                   Can include a "keywords" parameter for searching by keywords / phrases.
+                   Can include a "query" parameter for general searching across all fields (comma-separated terms).
+                   Can include a "keywords" parameter for searching by research keywords / phrases.
 
     Returns:
         tuple: A tuple containing (results, status_code) where results is a list or error dict.
@@ -35,26 +37,38 @@ def search_faculty_service(result_limit: int = 50, conn=None, **filters: dict[st
             keywords = filters.get("keywords", "").strip() or None
 
             # Case 1: Handle generic "query" parameter by searching across all fields
+            # Query is comma-separated terms; faculty must match ALL terms (in any field) to be returned
             query = filters.get("query", "").strip()
             if query:
-                # Search across all fields and combine unique results
-                all_results = []
-                seen_ids = set()
-
-                # Try searching in each field
-                for field in get_valid_search_filters():
-                    # Create a filter dict with the query in the current field and None for others
-                    field_filters = {key: None for key in get_valid_search_filters()}
-                    field_filters[field] = query
-                    results = sql_search_faculty(transaction_context, **field_filters)
-                    for result in results:
-                        faculty_id = result.get("faculty_id")
-                        if faculty_id and faculty_id not in seen_ids:
-                            seen_ids.add(faculty_id)
-                            all_results.append(result)
+                # Parse query into individual search terms
+                search_terms = [term.strip() for term in query.split(",") if term.strip()][:len(get_valid_search_filters())] # Crucial that this is sliced.
+                
+                if not search_terms:
+                    return [], 200
+                
+                # For each term, search with that term in ALL filter fields
+                # The SQL procedure uses OR, so it finds faculty matching the term in ANY field
+                # We then intersect results across all terms
+                result_sets = []
+                for term in search_terms:
+                    # Pass the same term as all 4 arguments
+                    term_filters = {key: term for key in get_valid_search_filters()}
+                    results = sql_search_faculty(transaction_context, **term_filters)
+                    # Store as dict keyed by faculty_id for easy lookup
+                    result_sets.append({r["faculty_id"]: r for r in results})
+                
+                # Find faculty_ids that appear in ALL result sets (intersection)
+                if result_sets:
+                    common_ids = set(result_sets[0].keys())
+                    for result_dict in result_sets[1:]:
+                        common_ids &= set(result_dict.keys())
+                    
+                    # Build final results from the first result set (preserves full record)
+                    all_results = [result_sets[0][fid] for fid in common_ids]
+                else:
+                    all_results = []
 
                 if keywords:
-                    #TODO: Just reranking by keywords might not make a lot of sense from a user perspective. Especially if no faculty have the keywords.
                     all_results = rerank_by_keywords(
                         all_results, keywords, transaction_context
                     )
@@ -100,10 +114,13 @@ def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):
     For each faculty, this function builds a set of all their keywords, then scores by how many of the
     search keywords match.
     """
+    if not results:
+        return results
+    
     # Parse search keywords into a lowercase set
     search_keywords = set(k.strip().lower() for k in keywords.split(",") if k.strip())
 
-    if not search_keywords or not results:
+    if not search_keywords:
         return results
 
     # Extract all faculty IDs from results
