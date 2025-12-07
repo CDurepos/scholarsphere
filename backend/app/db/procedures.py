@@ -43,6 +43,37 @@ def sql_search_faculty_by_keyword(
     return results[0] if results else []
 
 
+def sql_batch_get_faculty_keywords(
+    transaction_context: TransactionContext,
+    faculty_ids: list[str],
+) -> list[dict]:
+    """
+    Retrieve all keywords for a batch of faculty members in a single query.
+    
+    Keywords are combined from two sources:
+    1. Direct research keywords (faculty_researches_keyword)
+    2. Publication keywords (via publication_authored_by_faculty and 
+      publication_explores_keyword)
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_ids: List of faculty UUIDs to fetch keywords for.
+    
+    Returns:
+        list[dict]: List of dicts with 'faculty_id' and 'keyword' keys.
+    """
+    if not faculty_ids:
+        return []
+    
+    # Convert list to comma-separated string for the stored procedure
+    faculty_ids_str = ",".join(faculty_ids)
+    
+    cursor = transaction_context.cursor
+    cursor.callproc("batch_get_faculty_keywords", (faculty_ids_str,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
 def sql_read_publication_authored_by_faculty_by_faculty(
     transaction_context: TransactionContext,
     faculty_id: str,
