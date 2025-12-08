@@ -1,4 +1,8 @@
 """
+Author: Aidan Bell
+"""
+
+"""
 Faculty Search Performance Test Script
 
 This script tests the speed of the faculty search service with various query types.

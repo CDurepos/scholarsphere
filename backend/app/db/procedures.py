@@ -1,3 +1,7 @@
+"""
+Author(s): Aidan Bell, Clayton Durepos
+"""
+
 from backend.app.db.transaction_context import TransactionContext
 
 from datetime import datetime, date

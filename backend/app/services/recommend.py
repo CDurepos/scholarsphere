@@ -1,4 +1,8 @@
 """
+Author: Clayton Durepos
+"""
+
+"""
 Recommendation service for faculty collaboration suggestions.
 """
 from backend.app.db.procedures import (

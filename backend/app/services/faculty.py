@@ -1,4 +1,8 @@
 """
+Author: Clayton Durepos
+"""
+
+"""
 Faculty service layer
 Handles business logic for faculty member management
 """

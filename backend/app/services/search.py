@@ -1,3 +1,7 @@
+"""
+Author(s): Clayton Durepos, Aidan Bell
+"""
+
 from collections import defaultdict
 
 from backend.app.db.procedures import (

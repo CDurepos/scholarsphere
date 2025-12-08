@@ -1,4 +1,6 @@
-# Aidan
+"""
+Author: Aidan Bell
+"""
 
 from backend.app.db.connection import get_connection
 

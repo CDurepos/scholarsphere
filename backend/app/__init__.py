@@ -1,3 +1,7 @@
+"""
+Written by Clayton Durepos, Abby Pitcairn, Aidan Bell
+"""
+
 from backend.app.config import Config
 from backend.app.routes.auth import auth_bp
 from backend.app.routes.search import search_bp

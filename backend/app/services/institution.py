@@ -1,4 +1,8 @@
 """
+Author(s):Clayton Durepos, Abby Pitcairn
+"""
+
+"""
 Institution service layer
 Handles institution data from JSON file and database operations
 """

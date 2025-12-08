@@ -1,4 +1,8 @@
 """
+Author: Clayton Durepos
+"""
+
+"""
 JWT utility functions for access token generation and verification.
 """
 import jwt

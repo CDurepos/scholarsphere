@@ -1,3 +1,7 @@
+"""
+Author(s): Aidan Bell, Clayton Durepos
+"""
+
 from backend.app.utils.jwt import require_auth
 from backend.app.services.search import (
     search_faculty_service,

@@ -1,4 +1,8 @@
 """
+Author(s):Clayton Durepos, Abby Pitcairn, Aidan Bell
+"""
+
+"""
 Institution-related API endpoints
 """
 

@@ -1,4 +1,8 @@
 """
+Author(s):Clayton Durepos, Aidan Bell
+"""
+
+"""
 Authentication-related API endpoints
 v11.25.2025
 """
