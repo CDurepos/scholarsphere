@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# Written by Abigail Pitcairn 
+
 """
 ScholarSphere Database Backup Demonstration Script
 

@@ -6,9 +6,6 @@ import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import styles from './Equipment.module.css';
 
-/* Abby Pitcairn */
-/* 2025-12-07 */
-
 function Equipment() {
   const [institutions, setInstitutions] = useState([]);
   const [locations, setLocations] = useState([]);

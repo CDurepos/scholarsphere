@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Abigail Pitcairn 
+
 # ScholarSphere Database Backup Script
 # This script creates a MySQL database backup using mysqldump
 
