@@ -1,3 +1,7 @@
+/**
+ * @author Abby Pitcairn
+ */
+
 import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import styles from './Equipment.module.css';
@@ -69,9 +73,6 @@ function Equipment() {
     }
   };
 
-  const handleExpandHero = () => {
-    setHasSearched(false);
-  };
 
   return (
     <div className={styles['search-container']}>
@@ -79,153 +80,125 @@ function Equipment() {
 
       <main className={styles['search-main']}>
         <div className={styles['search-content']}>
-          {/* Compact Hero - Just an expand bar */}
-          {hasSearched && (
-            <button 
-              type="button"
-              className={styles['search-hero-compact']}
-              onClick={handleExpandHero}
-              aria-label="Expand search"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m18 15-6-6-6 6"/>
-              </svg>
-            </button>
-          )}
+          {/* Full Hero Section with Search - Always visible */}
+          <div className={`${styles['search-hero']} ${showAdvanced ? styles['search-hero-advanced'] : ''}`}>
+            <h2 className={styles['search-title']}>Search Equipment</h2>
+            <p className={styles['search-subtitle']}>
+              Find equipment by name, description, or location
+            </p>
+            
+            <form onSubmit={handleSearch} className={styles['search-form']}>
+              <div className={styles['search-input-wrapper']}>
+                <input
+                  type="text"
+                  className={styles['search-input']}
+                  placeholder="Search by keywords..."
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  disabled={loading}
+                />
+                <button 
+                  type="submit" 
+                  className={styles['search-button']}
+                  disabled={loading || !keywords.trim()}
+                >
+                  {loading ? 'Searching...' : 'Search'}
+                </button>
+              </div>
 
-          {/* Full Hero Section with Search */}
-          {!hasSearched && (
-            <div className={`${styles['search-hero']} ${showAdvanced ? styles['search-hero-advanced'] : ''}`}>
-              {/* Minimize button - top left */}
-              <button 
-                type="button"
-                className={styles['search-hero-minimize']}
-                onClick={() => setHasSearched(true)}
-                aria-label="Minimize search"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14"/>
-                </svg>
-              </button>
-
-              <h2 className={styles['search-title']}>Search Equipment</h2>
-              <p className={styles['search-subtitle']}>
-                Find equipment by name, description, or location
-              </p>
-              
-              <form onSubmit={handleSearch} className={styles['search-form']}>
-                <div className={styles['search-input-wrapper']}>
-                  <input
-                    type="text"
-                    className={styles['search-input']}
-                    placeholder="Search by keywords..."
-                    value={keywords}
-                    onChange={(e) => setKeywords(e.target.value)}
-                    disabled={loading}
-                  />
-                  <button 
-                    type="submit" 
-                    className={styles['search-button']}
-                    disabled={loading || !keywords.trim()}
-                  >
-                    {loading ? 'Searching...' : 'Search'}
-                  </button>
-                </div>
-
-                {/* Advanced Search Section */}
-                <div className={`${styles['search-advanced']} ${showAdvanced ? styles['search-advanced-visible'] : ''}`}>
-                  <div className={styles['search-advanced-content']}>
-                    {/* Multi-select Location Menu */}
-                    <div className={styles['search-advanced-field']}>
-                      <div className={styles['institutions-header']}>
-                        <label className={styles['search-advanced-label']}>Locations</label>
+              {/* Advanced Search Section */}
+              <div className={`${styles['search-advanced']} ${showAdvanced ? styles['search-advanced-visible'] : ''}`}>
+                <div className={styles['search-advanced-content']}>
+                  {/* Multi-select Location Menu */}
+                  <div className={styles['search-advanced-field']}>
+                    <div className={styles['institutions-header']}>
+                      <label className={styles['search-advanced-label']}>Locations</label>
+                      <button
+                        type="button"
+                        className={styles['institutions-toggle']}
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        aria-label={menuOpen ? 'Collapse institutions' : 'Expand institutions'}
+                      >
+                        <span>{menuOpen ? 'Hide' : 'Show'} Institutions</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d={menuOpen ? "m18 15-6-6-6 6" : "m6 9 6 6 6-6"}/>
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {locations.length > 0 && (
+                      <div className={styles['selected-count']}>
+                        {locations.length} {locations.length === 1 ? 'institution' : 'institutions'} selected
                         <button
                           type="button"
-                          className={styles['institutions-toggle']}
-                          onClick={() => setMenuOpen(!menuOpen)}
-                          aria-label={menuOpen ? 'Collapse institutions' : 'Expand institutions'}
+                          className={styles['clear-selected-btn']}
+                          onClick={clearLocations}
                         >
-                          <span>{menuOpen ? 'Hide' : 'Show'} Institutions</span>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d={menuOpen ? "m18 15-6-6-6 6" : "m6 9 6 6 6-6"}/>
-                          </svg>
+                          Clear
                         </button>
                       </div>
-                      
-                      {locations.length > 0 && (
-                        <div className={styles['selected-count']}>
-                          {locations.length} {locations.length === 1 ? 'institution' : 'institutions'} selected
-                          <button
-                            type="button"
-                            className={styles['clear-selected-btn']}
-                            onClick={clearLocations}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
+                    )}
 
-                      {menuOpen && (
-                        <div className={styles['institutions-list']} onClick={(e) => e.stopPropagation()}>
-                          {institutions.map(inst => (
-                            <label key={inst.name} className={styles['institution-item']}>
-                              <input
-                                type="checkbox"
-                                checked={locations.includes(inst.city)}
-                                onChange={() => toggleLocation(inst.city)}
-                                disabled={loading}
-                              />
-                              <div className={styles['institution-info']}>
-                                <span className={styles['institution-name']}>{inst.name}</span>
-                                <span className={styles['institution-city']}>{inst.city}</span>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {menuOpen && (
+                      <div className={styles['institutions-list']} onClick={(e) => e.stopPropagation()}>
+                        {institutions.map(inst => (
+                          <label key={inst.name} className={styles['institution-item']}>
+                            <input
+                              type="checkbox"
+                              checked={locations.includes(inst.city)}
+                              onChange={() => toggleLocation(inst.city)}
+                              disabled={loading}
+                            />
+                            <div className={styles['institution-info']}>
+                              <span className={styles['institution-name']}>{inst.name}</span>
+                              <span className={styles['institution-city']}>{inst.city}</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Availability */}
-                    <div className={styles['checkbox-group']}>
-                      <input
-                        type="checkbox"
-                        id="availableOnly"
-                        checked={availableOnly}
-                        onChange={(e) => setAvailableOnly(e.target.checked)}
-                        disabled={loading}
-                      />
-                      <label htmlFor="availableOnly" className={styles['search-advanced-label']}>
-                        Show only available equipment
-                      </label>
-                    </div>
+                  {/* Availability */}
+                  <div className={styles['checkbox-group']}>
+                    <input
+                      type="checkbox"
+                      id="availableOnly"
+                      checked={availableOnly}
+                      onChange={(e) => setAvailableOnly(e.target.checked)}
+                      disabled={loading}
+                    />
+                    <label htmlFor="availableOnly" className={styles['search-advanced-label']}>
+                      Show only available equipment
+                    </label>
                   </div>
                 </div>
-              </form>
+              </div>
+            </form>
 
-              {/* Advanced toggle arrow - at bottom */}
-              <button 
-                type="button"
-                className={`${styles['search-hero-toggle']} ${showAdvanced ? styles['search-hero-toggle-active'] : ''}`}
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                aria-label={showAdvanced ? 'Hide advanced search' : 'Show advanced search'}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
-              </button>
-            </div>
-          )}
+            {/* Advanced toggle arrow - at bottom */}
+            <button 
+              type="button"
+              className={`${styles['search-hero-toggle']} ${showAdvanced ? styles['search-hero-toggle-active'] : ''}`}
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              aria-label={showAdvanced ? 'Hide advanced search' : 'Show advanced search'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+          </div>
 
-          {/* Results Section */}
-          <div className={`${styles['search-results-section']} ${results?.length > 0 ? styles['search-results-section-expanded'] : ''}`}>
+          {/* Results Section - Always expanded */}
+          <div className={`${styles['search-results-section']} ${styles['search-results-section-expanded']}`}>
             {error && <div className={styles['search-error']}>{error}</div>}
 
             {results === null && !error ? (
               <div className={styles['search-initial']}>
                 <div className={styles['search-initial-icon']}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <path d="M9 9h6v6H9z"/>
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
                   </svg>
                 </div>
                 <h3>Start Your Search</h3>
@@ -292,8 +265,8 @@ function Equipment() {
               <div className={styles['search-empty']}>
                 <div className={styles['search-empty-icon']}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <path d="M9 9h6v6H9z"/>
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
                   </svg>
                 </div>
                 <p>No results found. Try a different search term.</p>

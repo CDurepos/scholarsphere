@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos
+
 -- GRANT ORG SCHEMA
 -- Not all organizations that fund a grant may be an educational or research institution
 -- We store the names of funding org's as a MV attribute of grants 

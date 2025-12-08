@@ -1,3 +1,7 @@
+"""
+Author: Abby Pitcairn
+"""
+
 #!/usr/bin/env python3
 """
 USM Faculty Scraper

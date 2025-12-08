@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 DELIMITER $$
 
 /**

@@ -1,3 +1,7 @@
+/**
+ * Written by Clayton Durepos
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { checkUsernameAvailable } from '../../services/api';
 import styles from './SignupSteps.module.css';
@@ -100,11 +104,11 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
 }
 
 // Step 2: Confirmation wrapper (shows confirmation or profile form)
-export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting, matchType }) {
+export function ConfirmationStep({ initialData, onSubmit, loading, institutions, showConfirmation, onConfirm, onDeny, doPrefill, isExisting, matchType }) {
   // If we need to show confirmation first, show that
   if (showConfirmation) {
-    // Get the institution name to display (use the one from DB if available, otherwise from search)
-    const displayInstitution = initialData.institution_name || 'Not specified';
+    // Use the institution from DB for display, not the user-entered one
+    const displayInstitution = initialData.db_institution_name || initialData.institution_name || 'Not specified';
     
     return (
       <div className={styles['signup-step']}>
@@ -156,6 +160,7 @@ export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmat
     initialData={initialData}
     onSubmit={onSubmit}
     loading={loading}
+    institutions={institutions}
     doPrefill={doPrefill}
     stepNumber={2}
     isExisting={isExisting}
@@ -163,15 +168,16 @@ export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmat
 }
 
 // Profile Information Form (used in Step 2 - can be prefilled or empty)
-export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = false, stepNumber = 2, isExisting = false }) {
+export function ProfileInfoForm({ initialData, onSubmit, loading, institutions = [], doPrefill = false, stepNumber = 2, isExisting = false }) {
   // Initialize form data based on whether it should be prefilled
   const getInitialFormData = () => {
     if (doPrefill) {
       // Prefill with existing data (only first item from arrays)
+      // Use DB institution when prefilling so they see their actual institution
       return {
         first_name: initialData.first_name || '',
         last_name: initialData.last_name || '',
-        institution_name: initialData.institution_name || '',
+        institution_name: initialData.db_institution_name || initialData.institution_name || '',
         emails: initialData.emails && initialData.emails.length > 0 ? [initialData.emails[0]] : [''],
         phones: initialData.phones && initialData.phones.length > 0 ? [initialData.phones[0]] : [''],
         departments: initialData.departments && initialData.departments.length > 0 ? [initialData.departments[0]] : [''],
@@ -220,10 +226,11 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
       });
     } else {
       // User clicked "Yes" - prefill with existing data (only first item from arrays)
+      // Use DB institution when prefilling so they see their actual institution
       setFormData({
         first_name: initialData.first_name || '',
         last_name: initialData.last_name || '',
-        institution_name: initialData.institution_name || '',
+        institution_name: initialData.db_institution_name || initialData.institution_name || '',
         emails: initialData.emails && initialData.emails.length > 0 ? [initialData.emails[0]] : [''],
         phones: initialData.phones && initialData.phones.length > 0 ? [initialData.phones[0]] : [''],
         departments: initialData.departments && initialData.departments.length > 0 ? [initialData.departments[0]] : [''],
@@ -322,15 +329,32 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
 
         <div className={styles['form-group']}>
           <label htmlFor="institution_name">Institution *</label>
-          <input
-            type="text"
-            id="institution_name"
-            name="institution_name"
-            value={formData.institution_name}
-            onChange={handleChange}
-            required
-            placeholder=""
-          />
+          {institutions.length > 0 ? (
+            <select
+              id="institution_name"
+              name="institution_name"
+              value={formData.institution_name}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select an institution</option>
+              {institutions.map((inst) => (
+                <option key={inst.institution_id} value={inst.name}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              id="institution_name"
+              name="institution_name"
+              value={formData.institution_name}
+              onChange={handleChange}
+              required
+              placeholder="Enter institution name"
+            />
+          )}
         </div>
 
         <div className={styles['form-group']}>

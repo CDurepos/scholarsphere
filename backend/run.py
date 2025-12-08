@@ -1,3 +1,7 @@
+"""
+Written by Clayton Durepos, Aidan Bell
+"""
+
 import sys
 from pathlib import Path
 

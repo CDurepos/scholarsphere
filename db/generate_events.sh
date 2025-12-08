@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Aidan Bell
+
 # Script to generate 004_init_events.sql from all files in the events directory
 # Ignores *.md files
 

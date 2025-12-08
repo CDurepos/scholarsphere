@@ -1,4 +1,8 @@
 """
+Author(s): Clayton Durepos, Aidan Bell
+"""
+
+"""
 Recommendation API endpoints
 """
 from backend.app.services.recommend import (

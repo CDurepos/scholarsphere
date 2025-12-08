@@ -1,3 +1,5 @@
+-- Written by Aidan Bell
+
 CREATE TABLE IF NOT EXISTS faculty (
     faculty_id          CHAR(36)        PRIMARY KEY,
     
@@ -24,5 +26,6 @@ CREATE TABLE IF NOT EXISTS faculty (
     ),
 
     -- Index on last name and first name for faster search functionality
-    INDEX idx_faculty_last_first_name (last_name, first_name)
+    INDEX idx_faculty_last_name (last_name),
+    INDEX idx_faculty_first_name (first_name)
 );

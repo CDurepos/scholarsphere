@@ -1,3 +1,7 @@
+"""
+Author:Aidan Bell
+"""
+
 from scraping.utils.json_output import write_faculty_jsonl
 from scraping.schemas import (
     Faculty,

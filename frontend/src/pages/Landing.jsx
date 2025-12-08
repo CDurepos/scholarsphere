@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { Link } from 'react-router-dom';
 import { FaSearch, FaHandshake, FaBookOpen, FaGlobe, FaLightbulb, FaChartBar } from 'react-icons/fa';
 import ConnectionParticles from '../components/ConnectionParticles';

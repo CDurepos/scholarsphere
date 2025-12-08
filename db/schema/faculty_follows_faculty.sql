@@ -1,3 +1,5 @@
+-- Written by Aidan Bell
+
 CREATE TABLE IF NOT EXISTS faculty_follows_faculty(
     follower_id     CHAR(36)    NOT NULL,
     followee_id     CHAR(36)    NOT NULL,

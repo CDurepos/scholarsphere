@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { checkFacultyExists, saveFaculty, registerCredentials, login, checkCredentialsExist, isAuthenticated } from '../services/api';
@@ -79,7 +83,9 @@ function Signup() {
     first_name: '',
     last_name: '',
     institution_name: '',
+    db_institution_name: '', // Institution from DB for display in "Is this you?"
     faculty_id: null,
+    signup_token: null, // Signup token for updating existing faculty
     exists: false,
     doPrefill: false, // Whether to prefill the form
     matchType: null, // 'perfect' or 'name_only', or null
@@ -145,13 +151,18 @@ function Signup() {
       if (response.exists && response.faculty) {
         // User exists - show confirmation first
         const facultyId = response.faculty.faculty_id;
+        // Extract signup_token from the faculty object (added by backend)
+        const signupToken = response.faculty.signup_token || null;
         setStoredFacultyId(facultyId); // Store in localStorage
         setSignupData({
           ...signupData,
           first_name: data.first_name,
           last_name: data.last_name,
           institution_name: data.institution_name,
+          // Store DB institution separately for display in "Is this you?"
+          db_institution_name: response.faculty.institution_name || data.institution_name,
           faculty_id: facultyId,
+          signup_token: signupToken, // Store signup token for later use
           exists: true,
           matchType: response.matchType || 'perfect', // Track match type
           doPrefill: false, // Will be set to true if user confirms
@@ -248,7 +259,12 @@ function Signup() {
       // Use unified saveFaculty function - it will create or update based on faculty_id
       // If faculty_id is null/undefined, it creates a new faculty
       // If faculty_id exists, it updates the existing faculty
-      const response = await saveFaculty(signupData.faculty_id, formData);
+      // Pass signup_token if updating existing faculty during signup
+      const response = await saveFaculty(
+        signupData.faculty_id, 
+        formData, 
+        signupData.signup_token
+      );
       
       // Get the faculty_id (either from response if created, or existing one if updated)
       const facultyId = response.faculty_id || signupData.faculty_id;
@@ -267,7 +283,7 @@ function Signup() {
       // Move to credentials step
       setStep(3);
     } catch (err) {
-      setError('Failed to save faculty information. Please try again.');
+      setError(err.message || 'Failed to save faculty information. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -360,16 +376,9 @@ function Signup() {
       />
       <div className={styles['signup-card']}>
         <h1 className={styles['signup-title']}>Sign Up for ScholarSphere</h1>
+        <div className={styles['signup-divider']}></div>
         
         {error && <div className={styles['error-message']}>{error}</div>}
-
-        <div className={styles['signup-progress']}>
-          <div className={`${styles['progress-step']} ${step >= 1 ? styles.active : ''}`}>1</div>
-          <div className={`${styles['progress-line']} ${step >= 2 ? styles.active : ''}`}></div>
-          <div className={`${styles['progress-step']} ${step >= 2 ? styles.active : ''}`}>2</div>
-          <div className={`${styles['progress-line']} ${step >= 3 ? styles.active : ''}`}></div>
-          <div className={`${styles['progress-step']} ${step >= 3 ? styles.active : ''}`}>3</div>
-        </div>
 
         {step === 1 && (
           <BasicInfoForm

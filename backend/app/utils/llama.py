@@ -1,3 +1,7 @@
+"""
+Author: Aidan Bell
+"""
+
 import os
 import re
 import torch

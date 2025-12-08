@@ -1,3 +1,7 @@
+"""
+Author: Owen Leitzell
+"""
+
 #!/usr/bin/env python3
 """
 UMA Faculty Scraper

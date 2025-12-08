@@ -1,3 +1,7 @@
+"""
+Author(s): Aidan Bell, Clayton Durepos
+"""
+
 from backend.app.db.transaction_context import TransactionContext
 
 from datetime import datetime, date
@@ -18,7 +22,59 @@ def sql_search_faculty(
         list[dict]: A list of dictionaries, each containing the faculty information.
     """
     cursor = transaction_context.cursor
-    cursor.callproc("search_faculty", list(filters.values()))
+    cursor.callproc("search_faculty", tuple(filters.values()))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+def sql_search_existing_faculty(
+    transaction_context: TransactionContext,
+    first_name: str = None,
+    last_name: str = None,
+    institution: str = None,
+) -> list[dict]:
+    """
+    Search for existing faculty members during signup lookup.
+    
+    This procedure is specifically designed for the signup flow to find existing
+    faculty records. It uses AND logic - all provided parameters must match.
+    
+    Args:
+        transaction_context: Database transaction context.
+        first_name: Optional first name to search for (partial match).
+        last_name: Optional last name to search for (partial match).
+        institution: Optional institution name to search for (partial match).
+    
+    Returns:
+        list[dict]: A list of dictionaries containing faculty information.
+    """
+    cursor = transaction_context.cursor
+    # Pass parameters in order: first_name, last_name, institution
+    params = (first_name, last_name, institution)
+    cursor.callproc("search_existing_faculty", params)
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+# ============================================================================
+# SEARCH BY KEYWORD DB LAYER FUNCTIONS
+# ============================================================================
+def sql_search_faculty_by_keyword(
+    transaction_context: TransactionContext,
+    keywords: str,
+) -> list[dict]:
+    """
+    Search for faculty in the database based on keywords.
+    
+    Args:
+        transaction_context: Database transaction context.
+        keywords: Comma-separated string of keywords to search for.
+    
+    Returns:
+        list[dict]: List of faculty records with keyword_overlap score.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("search_faculty_by_keyword", (keywords,))
     results = [r.fetchall() for r in cursor.stored_results()]
     return results[0] if results else []
 
@@ -803,6 +859,31 @@ def sql_check_faculty_works_at_institution_exists(
     )
     result = cursor.fetchone()
     return result["count"] > 0 if result else False
+
+
+def sql_delete_faculty_works_at_institution_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Delete all institution relationships for a faculty member.
+
+    Args:
+        transaction_context (TransactionContext): A transaction context object to use for the database connection.
+        faculty_id (str): UUID of the faculty member.
+
+    Returns:
+        None: No result set.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("delete_faculty_works_at_institution_by_faculty", (faculty_id,))
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        if stored_results:
+            stored_results[0].fetchall()
+    except:
+        pass
 
 
 # ============================================================================

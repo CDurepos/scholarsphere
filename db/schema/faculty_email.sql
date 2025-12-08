@@ -1,3 +1,5 @@
+-- Written by Aidan Bell
+
 CREATE TABLE IF NOT EXISTS faculty_email (
     faculty_id  CHAR(36)        NOT NULL,
     email       VARCHAR(255),
