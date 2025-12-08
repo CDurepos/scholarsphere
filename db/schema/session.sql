@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos
+
 -- SESSION SCHEMA
 -- Stores hashed refresh tokens for long-term authentication sessions
 CREATE TABLE IF NOT EXISTS session (

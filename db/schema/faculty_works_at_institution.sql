@@ -1,3 +1,5 @@
+-- Written by Abby Pitcairn
+
 -- Represents the many-to-many relation between Faculty and Institution
 CREATE TABLE faculty_works_at_institution (
     faculty_id      CHAR(36)    NOT NULL,

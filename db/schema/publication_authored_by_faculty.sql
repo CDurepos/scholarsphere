@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 CREATE TABLE IF NOT EXISTS publication_authored_by_faculty (
     faculty_id         CHAR(36)    NOT NULL,
     publication_id  CHAR(36)    NOT NULL,

@@ -1,3 +1,5 @@
+-- Written by Aidan Bell
+
 /**
  * Faculty-to-faculty recommendations.
  * ENUM order defines priority (first = highest).

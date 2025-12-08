@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 CREATE TABLE faculty_researches_keyword (
     name        VARCHAR(64)     NOT NULL,
     faculty_id     CHAR(36)     NOT NULL,

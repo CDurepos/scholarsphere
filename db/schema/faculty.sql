@@ -1,3 +1,5 @@
+-- Written by Aidan Bell
+
 CREATE TABLE IF NOT EXISTS faculty (
     faculty_id          CHAR(36)        PRIMARY KEY,
     

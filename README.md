@@ -66,6 +66,12 @@ cd backend
 python run.py
 ```
 
+# Team Member Contributions
+
+ScholarSphere was developed by four undergraduate students, who each primarily worked on individual components of the application. 
+
+Each file is annotated with its author. For files which have more than one author, the order in which authors are listed are organized from most contribution to least.
+
 # COS457 Phase 2 Task Distribution
 
 ### GitHub Username to Student Map

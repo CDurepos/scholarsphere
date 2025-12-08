@@ -1,3 +1,5 @@
+-- Written by Abby Pitcairn
+
 -- EQUIPMENT SCH
 CREATE TABLE IF NOT EXISTS equipment (
     equipment_id            CHAR(36)        PRIMARY KEY,

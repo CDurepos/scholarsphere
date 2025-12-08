@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 DELIMITER $$
 
 DROP FUNCTION IF EXISTS count_user_keywords$$
