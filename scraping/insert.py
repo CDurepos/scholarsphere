@@ -1,3 +1,7 @@
+"""
+Author(s): Aidan Bell, Clayton Durepos, Abby Pitcairn
+"""
+
 #!/usr/bin/env python3
 """
 Data insertion script for scraped JSON data.

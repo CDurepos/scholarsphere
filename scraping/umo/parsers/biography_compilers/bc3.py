@@ -1,3 +1,7 @@
+"""
+Author:Aidan Bell
+"""
+
 from scraping.utils import get_headers
 from scraping.umo.utils.normalize_whitespace import norm_ws
 
