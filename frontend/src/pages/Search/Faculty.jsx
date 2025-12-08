@@ -1,3 +1,7 @@
+/**
+ * @author Aidan Bell
+ */
+
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';

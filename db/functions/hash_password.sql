@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos
+
 DELIMITER $$
 
 DROP FUNCTION IF EXISTS hash_password$$

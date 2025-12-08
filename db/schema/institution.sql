@@ -1,3 +1,5 @@
+-- Written by Abby Pitcairn
+
 -- Institution schema
 CREATE TABLE IF NOT EXISTS institution (
     institution_id      CHAR(36)        PRIMARY KEY,

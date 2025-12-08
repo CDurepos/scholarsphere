@@ -1,3 +1,7 @@
+"""
+Author: Aidan Bell
+"""
+
 import mysql.connector
 from flask import current_app
 

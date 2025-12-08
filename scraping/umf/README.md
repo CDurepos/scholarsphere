@@ -1,3 +1,5 @@
+<!-- Written by Clayton Durepos -->
+
 # ScholarSphere UMF Scraper
 
 This component of the ScholarSphere data ingestion pipeline was written

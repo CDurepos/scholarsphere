@@ -1,4 +1,8 @@
 """
+Author(s):Clayton Durepos, Abby Pitcairn, Aidan Bell
+"""
+
+"""
 Institution-related API endpoints
 """
 
@@ -11,7 +15,6 @@ institution_bp = Blueprint("institution", __name__)
 def institution_list():
     try:
         institutions = get_institutions_from_json()
-        print(institutions)
         institutions_sorted = sorted(institutions, key=lambda x: x.get("name",""))
         return jsonify(institutions_sorted)
     except Exception as e:

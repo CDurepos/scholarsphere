@@ -6,68 +6,19 @@ Built by students, for the COS457 Database Systems course at the University of S
 
 # How to Run
 
-## Frontend
+## Requirements
 
-To run the frontend of ScholarSphere, you'll first need a working version of `Node.js`. You can install this [here](https://nodejs.org/en/download).
+To run the ScholarSphere application, you must first have a running MySQL server on your machine, `sudo` access on your machine, and a `.env` file at the root of the project repository. This should hold the following variables:
 
-Once you've got `Node.js` installed, install dependencies with:
-
-```
-cd frontend
-npm install
-```
-
-Finally, run a development server:
-
-```
-npm run dev
+```bash
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=...
+DB_PASS=...
+DB_NAME=scholarsphere
 ```
 
-## Backend
-While the frontend looks pretty, it can't do much without the backend. To run this part of the application, you'll need a working version of Python. We recommend using `Anaconda`, which you can download [here](https://www.anaconda.com/download).
-
-Once that's finished up and you've got things set up, you can run the backend like so:
-
-```
-cd backend
-python run.py
-```
-
-## Database
-
-To utilize our database, download and setup MySQL.
-
-Once finished, you should enter the `mysql` shell and run the command...
-
-`SOURCE ~/init/000_create_database.sql`
-
-Note that you may have to use the absolute path to this file.
-
-Once you've created the database, you should then run each of the remaining scripts within the `init` directory. Following this, you should do the same for the scripts within the `migrations` directory. Each file in these directories begins with a prefix following the format `XXX_`, these indicate the order in which the scripts should be run.
-
-## Scraping
-
-To utilize our web-scraping tools, you must have downloaded and setup a local Python interpreter and environment.
-
-Using your local environment, use the following command to install dependencies:
-
-`pip install -r scraping/requirements.txt`
-
-Once you have dependencies installed, you can run the unified scraper utilizing the command...
-
-`python ~/scraper.py`
-
-This may take some time. We suggest moving to Database setup while the scraper runs.
-
-## Data Loading
-
-Once you've got the database setup & the scraper finishes gathering data, it's time to load the data into the freshly initialized database.
-
-To do this, add your user-set database password to the `scraping/insert.py` file. Then, run:
-
-`python ~/insert.py`
-
-Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
+Where `DB_USER` and `DB_PASS` are the appropriate admin credentials for your local MySQL server.
 
 ## Database Backup
 
@@ -151,9 +102,53 @@ If you would like any API routes involving calls to an LLM to work (just keyword
 pytorch and torchvision. That can be done through here: https://pytorch.org/get-started/locally/. The app will run fine without this, but some
 functionality will be limited.
 
-# COS457 Phase 2 Task Distribution
+## For General Use
 
-### GitHub Username to Student Map
+To launch this application for usage, you should only run the following two commands in a bash terminal, from the root of the repository.
+
+1. `bash bin/install.sh`
+    
+    This script will install `node.js` and `conda` if not already installed on your device. Following this, it will install all dependencies for the application, instantiate the database, and populate the database.
+
+2. `bash bin/run.sh`
+
+    This script will run all components of the application. By default, the backend will run on `localhost:5000` and the frontend will run on `localhost:5173`.
+
+    If you are using a Mac, you may need to disable AirDrop and the AirDrop receiver for the `:5000` port to be available for this application.
+
+## For Development
+
+### Installation
+
+Similar to the quick start, we recommend first running `bash bin/install.sh`
+
+This script will install `node.js` and `conda` if not already installed on your device. Following this, it will install all dependencies for the application, instantiate the database, and populate the database.
+
+### Frontend
+
+You can start the frontend development server with the following commands:
+
+```
+cd frontend
+npm run dev
+```
+
+### Backend
+
+The backend development server is run like so:
+
+```
+cd backend
+python run.py
+```
+
+# Team Member Contributions
+
+ScholarSphere was developed by four undergraduate students, who each primarily worked on individual components of the application. 
+
+Each file is annotated with its author. For files which have more than one author, the order in which authors are listed are organized from most contribution to least.
+
+## GitHub Username to Student Map
 
 aidan073:      Aidan Bell
 
@@ -162,6 +157,8 @@ CDurepos:      Clayton Durepos
 abbyPitcairn:  Abby Pitcairn
 
 OwenLeitzell:  Owen Leitzell
+
+# COS457 Phase 2 Task Distribution
 
 ### D1 - Recorded Video Demonstration
 1. Clayton: Show the database running from scratch (creation, data loading, constraints in action). **deadline**: 11/15

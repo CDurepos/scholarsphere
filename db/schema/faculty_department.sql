@@ -1,3 +1,5 @@
+-- Written by Aidan Bell
+
 CREATE TABLE IF NOT EXISTS faculty_department (
     faculty_id      CHAR(36)        NOT NULL,
     department_name VARCHAR(128),

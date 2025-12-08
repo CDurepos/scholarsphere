@@ -1,4 +1,8 @@
 """
+Author(s): Clayton Durepos
+"""
+
+"""
 Authentication service layer
 Handles business logic for user authentication and credential management
 """

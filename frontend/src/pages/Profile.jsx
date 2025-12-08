@@ -1,3 +1,7 @@
+/**
+ * @author Owen Leitzell
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -7,6 +11,7 @@ import {
   getFacultyKeywords,
   searchKeywords,
   updateFacultyKeywords,
+  getInstitutions,
 } from '../services/api';
 import Header from '../components/Header';
 import styles from './Profile.module.css';
@@ -28,6 +33,7 @@ function Profile() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [institutions, setInstitutions] = useState([]);
   
   // Keywords state
   const [keywords, setKeywords] = useState([]);
@@ -42,6 +48,7 @@ function Profile() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
+    institution_name: '',
     biography: '',
     orcid: '',
     google_scholar_url: '',
@@ -73,15 +80,20 @@ function Profile() {
           setIsOwnProfile(storedFacultyId === facultyId);
         }
         
-        // Fetch faculty data
-        const data = await getFacultyById(facultyId);
+        // Fetch faculty data and institutions in parallel
+        const [data, keywordsData, institutionsData] = await Promise.all([
+          getFacultyById(facultyId),
+          getFacultyKeywords(facultyId),
+          getInstitutions(),
+        ]);
+        
         setFaculty(data);
-        // Fetch keywords separately
-        const keywordsData = await getFacultyKeywords(facultyId);
         setKeywords(keywordsData || []);
+        setInstitutions(institutionsData || []);
         setFormData({
           first_name: data.first_name || '',
           last_name: data.last_name || '',
+          institution_name: data.institution_name || '',
           biography: data.biography || '',
           orcid: data.orcid || '',
           google_scholar_url: data.google_scholar_url || '',
@@ -92,13 +104,6 @@ function Profile() {
           titles: data.titles || [],
           keywords: keywordsData || [],
         });
-        
-        // Fetch keywords
-        setKeywords(keywordsData || []);
-        setFormData(prev => ({
-          ...prev,
-          keywords: keywordsData || [],
-        }));
       } catch (err) {
         setError(err.message || 'Failed to load faculty profile');
       } finally {
@@ -248,6 +253,7 @@ function Profile() {
       setFormData({
         first_name: updatedFaculty.first_name || '',
         last_name: updatedFaculty.last_name || '',
+        institution_name: updatedFaculty.institution_name || '',
         biography: updatedFaculty.biography || '',
         orcid: updatedFaculty.orcid || '',
         google_scholar_url: updatedFaculty.google_scholar_url || '',
@@ -287,6 +293,7 @@ function Profile() {
     setFormData({
       first_name: faculty.first_name || '',
       last_name: faculty.last_name || '',
+      institution_name: faculty.institution_name || '',
       biography: faculty.biography || '',
       orcid: faculty.orcid || '',
       google_scholar_url: faculty.google_scholar_url || '',
@@ -390,8 +397,25 @@ function Profile() {
             )}
           </div>
           
-          {faculty.institution_name && (
-            <p className={styles['profile-institution']}>{faculty.institution_name}</p>
+          {isEditing ? (
+            <div className={styles['institution-edit']}>
+              <select
+                value={formData.institution_name}
+                onChange={(e) => setFormData({ ...formData, institution_name: e.target.value })}
+                className={styles['institution-select']}
+              >
+                <option value="">Select an institution</option>
+                {institutions.map((inst) => (
+                  <option key={inst.institution_id} value={inst.name}>
+                    {inst.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            faculty.institution_name && (
+              <p className={styles['profile-institution']}>{faculty.institution_name}</p>
+            )
           )}
         </div>
 

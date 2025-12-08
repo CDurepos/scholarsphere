@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import Header from '../../components/Header';
 import styles from './Institutions.module.css';
 

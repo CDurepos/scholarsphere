@@ -1,3 +1,5 @@
+-- Written by Abby Pitcairn
+
 -- EQUIPMENT SCH
 CREATE TABLE IF NOT EXISTS equipment (
     equipment_id            CHAR(36)        PRIMARY KEY,
@@ -25,6 +27,6 @@ CREATE TABLE IF NOT EXISTS equipment (
     -- Index on equipment name
     INDEX idx_equipment_name (name),
 
-    -- Quickly check availability
-    INDEX idx_equipment_availability (availability)
+    -- Quickly check availability (using prefix index due to VARCHAR(2048) length)
+    INDEX idx_equipment_availability (availability(255))
 );

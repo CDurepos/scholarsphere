@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Clayton Durepos
+
 # ScholarSphere Run Script
 # This script starts the backend and frontend development servers
 
@@ -94,8 +96,8 @@ check_mysql() {
         set +a
     fi
     
-    DB_USER="${DB_USER:-root}"
-    DB_PASS="${DB_PASS:-scholarsphere123}"
+    DB_USER="${DB_USER:-admin}"
+    DB_PASS="${DB_PASS:-admin}"
     
     # Check if MySQL is accessible
     if ! mysql -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1;" >/dev/null 2>&1; then

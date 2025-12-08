@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos
+
 CREATE TABLE grants_granted_to_faculty (
     grant_id        CHAR(36)    NOT NULL,
     faculty_id      CHAR(36)    NOT NULL,

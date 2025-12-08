@@ -1,3 +1,7 @@
+"""
+Author: Aidan Bell
+"""
+
 from typing import Optional, List, Union
 from dataclasses import dataclass
 

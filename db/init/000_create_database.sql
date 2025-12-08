@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos
+
 -- Create the scholarsphere database
 DROP DATABASE IF EXISTS scholarsphere;
 

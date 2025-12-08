@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 CREATE TABLE IF NOT EXISTS publication (
     publication_id  CHAR(36) NOT NULL PRIMARY KEY,
 
