@@ -1,5 +1,5 @@
 .header {
-  background: var(--color-surface);
+  background: var(--color-header-bg, rgba(255, 255, 255, 0.95));
   padding: 0 2rem;
   box-shadow: 0 2px 8px rgba(11, 38, 79, 0.08);
   display: flex;
@@ -9,8 +9,8 @@
   top: 0;
   z-index: 100;
   backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(11, 38, 79, 0.1);
+  border-bottom: 1px solid var(--color-card-border, rgba(11, 38, 79, 0.1));
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header-left {
@@ -91,7 +91,8 @@
   left: 0;
   border-radius: 8px;
   background: var(--color-surface);
-  box-shadow: 0 4px 16px rgba(11, 38, 79, 0.15), 0 0 0 1px rgba(11, 38, 79, 0.08);
+  box-shadow: 0 4px 16px rgba(11, 38, 79, 0.15);
+  border: 1px solid var(--color-card-border, rgba(11, 38, 79, 0.08));
   min-width: 160px;
   z-index: 1000;
   overflow: hidden;
@@ -198,7 +199,8 @@
   right: 0;
   background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(11, 38, 79, 0.15), 0 0 0 1px rgba(11, 38, 79, 0.08);
+  box-shadow: 0 8px 24px rgba(11, 38, 79, 0.15);
+  border: 1px solid var(--color-card-border, rgba(11, 38, 79, 0.08));
   min-width: 300px;
   z-index: 1000;
   overflow: hidden;
@@ -325,6 +327,68 @@
 
 .header-dropdown-logout:hover {
   background: rgba(11, 38, 79, 0.04);
+}
+
+/* Dark Mode Toggle */
+.header-dropdown-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.header-dropdown-theme-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.header-dropdown-theme-label svg {
+  color: var(--color-accent);
+}
+
+.theme-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--color-border);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  background: rgba(11, 38, 79, 0.25);
+}
+
+.theme-toggle-active {
+  background: var(--color-accent);
+}
+
+.theme-toggle-active:hover {
+  background: var(--color-accent-dark);
+}
+
+.theme-toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: var(--color-surface);
+  border-radius: 50%;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-active .theme-toggle-slider {
+  transform: translateX(20px);
 }
 
 /* Responsive Design */

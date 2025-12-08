@@ -1,12 +1,13 @@
-/* Faculty Search Page - Modern Light Theme */
+/* Faculty Search Page - Modern Theme with Dark Mode Support */
 
 .search-container {
   height: 100vh;
-  background: #f8f9fa;
+  background: var(--color-light);
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: background-color 0.3s ease;
 }
 
 .search-main {
@@ -244,7 +245,7 @@
 .search-input {
   flex: 1;
   padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--color-surface);
   border: 2px solid transparent;
   border-radius: 12px;
   font-size: 1rem;
@@ -265,8 +266,9 @@
 }
 
 .search-input:disabled {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--color-surface-alt);
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .search-button {
@@ -301,16 +303,17 @@
 
 /* Results Section */
 .search-results-section {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-card-bg, rgba(255, 255, 255, 0.9));
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 4px 16px rgba(11, 38, 79, 0.1);
-  border: 1px solid rgba(11, 38, 79, 0.08);
+  border: 1px solid var(--color-card-border, transparent);
   margin-top: 1rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 /* When results are showing, expand to fill space */
@@ -394,7 +397,7 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(to top, var(--color-card-bg, rgba(255, 255, 255, 0.95)) 0%, transparent 100%);
   pointer-events: none;
   z-index: 1;
   opacity: 1;
@@ -411,7 +414,7 @@
   border-radius: 14px;
   padding: 1.25rem;
   box-shadow: 0 2px 8px rgba(11, 38, 79, 0.08);
-  border: 1px solid rgba(11, 38, 79, 0.06);
+  border: 1px solid var(--color-card-border, rgba(11, 38, 79, 0.06));
   transition: all 0.2s ease;
   cursor: pointer;
   display: flex;

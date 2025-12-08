@@ -1,6 +1,7 @@
 .profile-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, rgba(11, 38, 79, 0.04) 0%, #ffffff 45%);
+  background: linear-gradient(180deg, var(--color-surface-alt) 0%, var(--color-light) 45%);
+  transition: background 0.3s ease;
 }
 
 .profile-main {
@@ -185,7 +186,7 @@
 .edit-button {
   padding: 0.75rem 1.5rem;
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-light);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -247,6 +248,8 @@
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(11, 38, 79, 0.1);
+  border: 1px solid var(--color-card-border, transparent);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .profile-card h3 {
@@ -611,7 +614,7 @@
 
 .academic-link:hover {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-light);
   transform: translateX(4px);
 }
 
@@ -654,7 +657,7 @@
 
 .save-button {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-light);
 }
 
 .save-button:hover:not(:disabled) {

@@ -1,13 +1,14 @@
-/* Equipment Search Page - Modern Light Theme */
+/* Equipment Search Page - Modern Theme with Dark Mode Support */
 /* Abby Pitcairn */
 /* 2025-12-07 */
 
 .search-container {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--color-light);
   position: relative;
   display: flex;
   flex-direction: column;
+  transition: background-color 0.3s ease;
 }
 
 .search-main {
