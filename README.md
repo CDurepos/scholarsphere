@@ -26,7 +26,7 @@ If you would like any API routes involving calls to an LLM to work (just keyword
 pytorch and torchvision. That can be done through here: https://pytorch.org/get-started/locally/. The app will run fine without this, but some
 functionality will be limited.
 
-## Quick Launch
+## For General Use
 
 To launch this application for usage, you should only run the following two commands in a bash terminal, from the root of the repository.
 
@@ -40,7 +40,7 @@ To launch this application for usage, you should only run the following two comm
 
     If you are using a Mac, you may need to disable AirDrop and the AirDrop receiver for the `:5000` port to be available for this application.
 
-## Launching for Development
+## For Development
 
 ### Installation
 
@@ -72,9 +72,7 @@ ScholarSphere was developed by four undergraduate students, who each primarily w
 
 Each file is annotated with its author. For files which have more than one author, the order in which authors are listed are organized from most contribution to least.
 
-# COS457 Phase 2 Task Distribution
-
-### GitHub Username to Student Map
+## GitHub Username to Student Map
 
 aidan073:      Aidan Bell
 
@@ -83,6 +81,8 @@ CDurepos:      Clayton Durepos
 abbyPitcairn:  Abby Pitcairn
 
 OwenLeitzell:  Owen Leitzell
+
+# COS457 Phase 2 Task Distribution
 
 ### D1 - Recorded Video Demonstration
 1. Clayton: Show the database running from scratch (creation, data loading, constraints in action). **deadline**: 11/15
