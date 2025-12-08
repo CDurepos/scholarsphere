@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout as logoutApi } from '../services/api';

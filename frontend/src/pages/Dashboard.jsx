@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos, Aidan Bell
+ */
+
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { isAuthenticated, getRecommendations } from '../services/api';

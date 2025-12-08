@@ -1,4 +1,8 @@
 /**
+ * @author Clayton Durepos, Aidan Bell, Owen Leitzell, Abby Pitcairn
+ */
+
+/**
  * API Service for ScholarSphere
  * 
  * This file contains API service functions for authentication and faculty operations.

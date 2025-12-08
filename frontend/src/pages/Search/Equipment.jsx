@@ -1,3 +1,7 @@
+/**
+ * @author Abby Pitcairn
+ */
+
 import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import styles from './Equipment.module.css';

@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 .header {
   background: var(--color-header-bg, rgba(255, 255, 255, 0.95));
   padding: 0 2rem;

@@ -1,3 +1,7 @@
+/**
+ * Written by Clayton Durepos
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { checkUsernameAvailable } from '../../services/api';
 import styles from './SignupSteps.module.css';

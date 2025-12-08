@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { checkFacultyExists, saveFaculty, registerCredentials, login, checkCredentialsExist, isAuthenticated } from '../services/api';
