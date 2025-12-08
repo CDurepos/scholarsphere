@@ -1,12 +1,17 @@
+"""
+Author(s): Clayton Durepos, Aidan Bell
+"""
+
 #!/usr/bin/env python3
 """
 Scraper orchestration script.
 
 Runs all institution scrapers (UMA, UMF, UMO, USM) and collects their JSON output
-into the scraping/out directory. Each scraper produces two files and an optional third file:
+into the scraping/out directory. Each scraper produces:
 - {institution}_faculty.jsonl: Newline-delimited JSON with faculty records
-- {institution}_institution.json: Single JSON object with institution data
-- {institution}_publications.jsonl: Newline-delimited JSON with publication records
+- {institution}_publications.jsonl: Newline-delimited JSON with publication records (UMO only)
+
+Institution data is sourced from data/institutions.json.
 
 Usage:
     python scraping/scrape.py
@@ -15,14 +20,14 @@ Usage:
 import os
 import sys
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Optional, Union
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-def run_umf_scraper(output_dir: str) -> Tuple[str, str, None]:
-    """Run UMF scraper and return output file paths."""
+def run_umf_scraper(output_dir: str) -> str:
+    """Run UMF scraper and return output file path."""
     print("\n" + "="*60)
     print("Running UMF Scraper")
     print("="*60)
@@ -30,8 +35,8 @@ def run_umf_scraper(output_dir: str) -> Tuple[str, str, None]:
     return umf_main(output_dir)
 
 
-def run_uma_scraper(output_dir: str) -> Tuple[str, str, None]:
-    """Run UMA scraper and return output file paths."""
+def run_uma_scraper(output_dir: str) -> str:
+    """Run UMA scraper and return output file path."""
     print("\n" + "="*60)
     print("Running UMA Scraper")
     print("="*60)
@@ -39,8 +44,8 @@ def run_uma_scraper(output_dir: str) -> Tuple[str, str, None]:
     return uma_main(output_dir)
 
 
-def run_umo_scraper(output_dir: str) -> Tuple[str, str, str]:
-    """Run UMO scraper and return output file paths."""
+def run_umo_scraper(output_dir: str) -> Tuple[str, str]:
+    """Run UMO scraper and return output file paths (faculty, publications)."""
     print("\n" + "="*60)
     print("Running UMO Scraper")
     print("="*60)
@@ -48,8 +53,8 @@ def run_umo_scraper(output_dir: str) -> Tuple[str, str, str]:
     return umo_main(output_dir)
 
 
-def run_usm_scraper(output_dir: str) -> Tuple[str, str, None]:
-    """Run USM scraper and return output file paths."""
+def run_usm_scraper(output_dir: str) -> str:
+    """Run USM scraper and return output file path."""
     print("\n" + "="*60)
     print("Running USM Scraper")
     print("="*60)
@@ -74,35 +79,30 @@ def main():
     print("\n" + "="*60)
     print("ScholarSphere Scraper Orchestration")
     print("="*60)
+    print("[INFO] Institution data sourced from data/institutions.json")
     
+    # Scrapers: (name, function, faculty_filename, publications_filename or None)
     scrapers = [
-        ("UMF", run_umf_scraper, "umf_faculty.jsonl", "umf_institution.json", None),
-        ("UMA", run_uma_scraper, "uma_faculty.jsonl", "uma_institution.json", None),
-        ("UMO", run_umo_scraper, "umo_faculty.jsonl", "umo_institution.json", "umo_publications.jsonl"),
-        ("USM", run_usm_scraper, "usm_faculty.jsonl", "usm_institution.json", None),
+        ("UMF", run_umf_scraper, "umf_faculty.jsonl", None),
+        ("UMA", run_uma_scraper, "uma_faculty.jsonl", None),
+        ("UMO", run_umo_scraper, "umo_faculty.jsonl", "umo_publications.jsonl"),
+        ("USM", run_usm_scraper, "usm_faculty.jsonl", None),
     ]
     
     all_faculty_files: List[str] = []
-    all_institution_files: List[str] = []
     all_publications_files: List[str] = []
     
-    for name, scraper_func, faculty_filename, institution_filename, publications_filename in scrapers:
+    for name, scraper_func, faculty_filename, publications_filename in scrapers:
         faculty_file = os.path.join(output_dir, faculty_filename)
-        institution_file = os.path.join(output_dir, institution_filename)
-        if publications_filename:
-            publications_file = os.path.join(output_dir, publications_filename)
-        else:
-            publications_file = None
+        publications_file = os.path.join(output_dir, publications_filename) if publications_filename else None
         
-        if os.path.exists(faculty_file) and os.path.exists(institution_file) and (not publications_file or os.path.exists(publications_file)):
+        # Check if output already exists
+        if os.path.exists(faculty_file) and (not publications_file or os.path.exists(publications_file)):
             print(f"\n[SKIP] {name} scraper - output files already exist")
             all_faculty_files.append(faculty_file)
-            all_institution_files.append(institution_file)
+            print(f"[OK] {name} faculty data: {faculty_file}")
             if publications_file:
                 all_publications_files.append(publications_file)
-            print(f"[OK] {name} faculty data: {faculty_file}")
-            print(f"[OK] {name} institution data: {institution_file}")
-            if publications_file:
                 print(f"[OK] {name} publications data: {publications_file}")
             continue
         
@@ -110,22 +110,16 @@ def main():
             print(f"\n[INFO] Running {name} scraper...")
             result = scraper_func(output_dir)
             
-            # Handle scrapers that return 2 values (faculty, institution) or 3 values (faculty, institution, publications)
-            if len(result) == 2:
-                faculty_file, institution_file = result
-                publications_file = None
-            elif len(result) == 3:
-                faculty_file, institution_file, publications_file = result
+            # Handle scrapers that return 1 value (faculty) or 2 values (faculty, publications)
+            if isinstance(result, tuple):
+                faculty_file, publications_file = result
             else:
-                raise ValueError(f"Unexpected return value from {name} scraper: expected 2 or 3 values, got {len(result)}")
+                faculty_file = result
+                publications_file = None
             
             if faculty_file and os.path.exists(faculty_file):
                 all_faculty_files.append(faculty_file)
                 print(f"[OK] {name} faculty data: {faculty_file}")
-            
-            if institution_file and os.path.exists(institution_file):
-                all_institution_files.append(institution_file)
-                print(f"[OK] {name} institution data: {institution_file}")
 
             if publications_file and os.path.exists(publications_file):
                 all_publications_files.append(publications_file)
@@ -140,12 +134,7 @@ def main():
     print("Scraping Summary")
     print("="*60)
     
-    print(f"Institution files: {len(all_institution_files)}")
-    for inst_file in all_institution_files:
-        size = os.path.getsize(inst_file)
-        print(f"  - {inst_file} ({size} bytes)")
-    
-    print(f"\nFaculty files: {len(all_faculty_files)}")
+    print(f"Faculty files: {len(all_faculty_files)}")
     for faculty_file in all_faculty_files:
         size = os.path.getsize(faculty_file)
         record_count = count_jsonl_records(faculty_file)

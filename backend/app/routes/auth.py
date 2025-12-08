@@ -1,4 +1,8 @@
 """
+Author(s):Clayton Durepos, Aidan Bell
+"""
+
+"""
 Authentication-related API endpoints
 v11.25.2025
 """
@@ -15,10 +19,49 @@ from backend.app.services.session import (
     revoke_session,
     revoke_all_sessions,
 )
-from backend.app.utils.jwt import generate_access_token
+from backend.app.services.search import search_faculty_service, search_existing_faculty_service
+from backend.app.utils.jwt import generate_access_token, generate_signup_token
 from flask import Blueprint, request, jsonify, make_response
 
 auth_bp = Blueprint("auth", __name__)
+
+
+# =============================================================================
+# PUBLIC ENDPOINTS (no auth required)
+# =============================================================================
+
+@auth_bp.route("/lookup-faculty", methods=["GET"])
+def lookup_faculty():
+    """
+    Public endpoint for looking up faculty during signup.
+    
+    This endpoint does NOT require authentication, allowing new users
+    to search for their existing faculty record before creating an account.
+    
+    Query parameters:
+    - first_name: Filter by first name
+    - last_name: Filter by last name
+    - institution: Filter by institution
+    
+    Returns:
+        JSON array of matching faculty members
+    """
+    result, status_code = search_existing_faculty_service(
+        first_name=request.args.get("first_name"),
+        last_name=request.args.get("last_name"),
+        institution=request.args.get("institution"),
+    )
+    
+    # If results found, add signup tokens to each result
+    if isinstance(result, list) and len(result) > 0:
+        for faculty in result:
+            faculty_id = faculty.get("faculty_id")
+            if faculty_id:
+                # Generate signup token for this faculty_id
+                signup_token = generate_signup_token(faculty_id)
+                faculty["signup_token"] = signup_token
+    
+    return jsonify(result), status_code
 
 # Register credentials to faculty_id
 @auth_bp.route("/register", methods=["POST"])

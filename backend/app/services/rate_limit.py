@@ -1,8 +1,10 @@
-# Aidan - generated_keywords_service
+"""
+Author: Aidan Bell
+"""
 
 
 from backend.app.services.faculty import get_faculty
-from backend.models.qwen import generate_keywords_with_qwen
+from backend.models.qwen import generate_faculty_keywords_with_qwen
 from backend.app.db.transaction_context import start_transaction
 from backend.app.db.procedures import sql_create_faculty_generates_keyword
 from backend.app.db.procedures import sql_count_faculty_keyword_generations
@@ -70,7 +72,7 @@ def generate_keyword_service(faculty_id: str):
             # This might be preferred if we want to consider the rate limit even if the LLM fails.
             # NOTE: We do not unload the model here because we want to keep it loaded for the next request. If we have multiple 
             # workers, we should carefully consider the memory implications.
-            keywords = generate_keywords_with_qwen(biography)
+            keywords = generate_faculty_keywords_with_qwen(biography)
             if not keywords:
                 # Raise exception to trigger rollback of generation record
                 raise ValueError("No keywords generated from LLM")

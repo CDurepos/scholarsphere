@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { Link } from 'react-router-dom';
 import { FaSearch, FaHandshake, FaBookOpen, FaGlobe, FaLightbulb, FaChartBar } from 'react-icons/fa';
 import ConnectionParticles from '../components/ConnectionParticles';
@@ -28,7 +32,7 @@ function Landing() {
           <a href="#how-it-works" className={styles['landing-nav-link']}>
             How it works
           </a>
-          <Link to="/login" className={styles['landing-nav-link']}>
+          <Link to="/login" className={styles['landing-nav-button-secondary']}>
             Sign in
           </Link>
           <Link to="/signup" className={styles['landing-nav-button-primary']}>

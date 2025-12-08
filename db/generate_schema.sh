@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Clayton Durepos
+
 # Script to generate 001_init_schema.sql from all files in the schema directory
 # Ignores *.md files
 

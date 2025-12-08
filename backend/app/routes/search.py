@@ -1,7 +1,14 @@
-from backend.app.utils.jwt import require_auth
-from backend.app.services.search import search_faculty_service
-from backend.app.utils.search_filters import get_valid_search_filters
+"""
+Author(s): Aidan Bell, Clayton Durepos
+"""
 
+from backend.app.utils.jwt import require_auth
+from backend.app.services.search import (
+    search_faculty_service,
+    search_keywords_service,
+    search_equipment_service,
+)
+from backend.app.utils.search_filters import get_valid_search_filters
 from flask import Blueprint, request, jsonify
 
 
@@ -16,13 +23,64 @@ def search_faculty():
 
     Query parameters:
     - query: General search query (searches across all fields)
+    - keywords: Comma-separated keywords to filter by
     - first_name: Filter by first name
     - last_name: Filter by last name
     - department: Filter by department
     - institution: Filter by institution
 
     Returns:
-        tuple: A tuple containing (jsonify response, status_code).
+        JSON array of matching faculty members
     """
-    response = search_faculty_service(**request.args)
-    return response
+    has_search_params = any(
+        request.args.get(param, "").strip()
+        for param in ["query", "keywords", *get_valid_search_filters()]
+    )
+    
+    if not has_search_params:
+        return jsonify([]), 200
+    
+    results, status_code = search_faculty_service(result_limit=50, **request.args)
+    return jsonify(results), status_code
+
+
+@search_bp.route("/keyword", methods=["GET"])
+def search_keywords():
+    """
+    Search keywords by prefix for autocomplete.
+    
+    Query Parameters:
+        q (str): Search term (required, min 2 characters)
+        limit (int): Max results (optional, default 10, max 50)
+    
+    Returns:
+        JSON array of keyword names
+    """
+    search_term = request.args.get("q", "").strip()
+    try:
+        limit = int(request.args.get("limit", 10))
+    except ValueError:
+        limit = 10
+    
+    return search_keywords_service(search_term, limit)
+
+
+@search_bp.route("/equipment", methods=["GET"])
+def search_equipment():
+    """
+    Search equipment by keywords, location, and availability.
+    
+    Query Parameters:
+        keywords (str): Optional search keywords (searches name and description)
+        location (list): Optional list of locations (city or zip codes)
+        available (str): Optional "true" to filter by availability
+    
+    Returns:
+        JSON array of equipment records with institution information
+    """
+    keywords = request.args.get("keywords", "").strip() or None
+    locations = request.args.getlist("location") or None
+    available_only = request.args.get("available", "false").lower() == "true"
+    
+    results, status_code = search_equipment_service(keywords, locations, available_only)
+    return jsonify(results), status_code

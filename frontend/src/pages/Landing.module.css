@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 .landing-container {
   background:
     radial-gradient(circle at top left, rgba(198, 214, 255, 0.4), transparent 55%),
@@ -58,6 +62,27 @@
   color: var(--color-accent);
 }
 
+.landing-nav-button-secondary {
+  color: var(--color-primary);
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.landing-nav-button-secondary:hover {
+  border-color: var(--color-accent);
+  background: rgba(255, 189, 92, 0.08);
+  color: var(--color-primary);
+}
+
 .landing-nav-button-primary {
   background: linear-gradient(
     135deg,
@@ -76,14 +101,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 12px rgba(11, 38, 79, 0.26);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
 .landing-nav-button-primary:hover {
-  transform: translateY(-1px);
+  
   filter: brightness(1.05);
-  box-shadow: 0 14px 32px rgba(11, 38, 79, 0.34);
   color: var(--color-primary);
 }
 

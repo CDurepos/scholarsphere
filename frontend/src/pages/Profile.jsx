@@ -1,15 +1,28 @@
-import { useState, useEffect } from 'react';
+/**
+ * @author Owen Leitzell
+ */
+
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getFacultyById, updateFaculty, isAuthenticated } from '../services/api';
+import { 
+  getFacultyById, 
+  updateFaculty, 
+  isAuthenticated,
+  getFacultyKeywords,
+  searchKeywords,
+  updateFacultyKeywords,
+  getInstitutions,
+} from '../services/api';
 import Header from '../components/Header';
-import './FacultyProfile.css';
+import styles from './Profile.module.css';
 
 /**
  * Faculty Profile Page
- * - Displays faculty member information
+ * - Displays faculty member information including research interests
  * - Allows editing if viewing own profile
+ * - Keyword autocomplete for research interests
  */
-function FacultyProfile() {
+function Profile() {
   const { facultyId } = useParams();
   const navigate = useNavigate();
   
@@ -20,11 +33,22 @@ function FacultyProfile() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [institutions, setInstitutions] = useState([]);
+  
+  // Keywords state
+  const [keywords, setKeywords] = useState([]);
+  const [newKeyword, setNewKeyword] = useState('');
+  const [keywordSuggestions, setKeywordSuggestions] = useState([]);
+  const [showKeywordSuggestions, setShowKeywordSuggestions] = useState(false);
+  const [keywordLoading, setKeywordLoading] = useState(false);
+  const keywordInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
   
   // Form state for editing
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
+    institution_name: '',
     biography: '',
     orcid: '',
     google_scholar_url: '',
@@ -33,6 +57,7 @@ function FacultyProfile() {
     phones: [],
     departments: [],
     titles: [],
+    keywords: [],
   });
 
   // Input states for adding new items to arrays
@@ -41,6 +66,7 @@ function FacultyProfile() {
   const [newDepartment, setNewDepartment] = useState('');
   const [newTitle, setNewTitle] = useState('');
 
+  // Fetch faculty data and keywords
   useEffect(() => {
     const fetchFaculty = async () => {
       setLoading(true);
@@ -54,11 +80,20 @@ function FacultyProfile() {
           setIsOwnProfile(storedFacultyId === facultyId);
         }
         
-        const data = await getFacultyById(facultyId);
+        // Fetch faculty data and institutions in parallel
+        const [data, keywordsData, institutionsData] = await Promise.all([
+          getFacultyById(facultyId),
+          getFacultyKeywords(facultyId),
+          getInstitutions(),
+        ]);
+        
         setFaculty(data);
+        setKeywords(keywordsData || []);
+        setInstitutions(institutionsData || []);
         setFormData({
           first_name: data.first_name || '',
           last_name: data.last_name || '',
+          institution_name: data.institution_name || '',
           biography: data.biography || '',
           orcid: data.orcid || '',
           google_scholar_url: data.google_scholar_url || '',
@@ -67,6 +102,7 @@ function FacultyProfile() {
           phones: data.phones || [],
           departments: data.departments || [],
           titles: data.titles || [],
+          keywords: keywordsData || [],
         });
       } catch (err) {
         setError(err.message || 'Failed to load faculty profile');
@@ -79,6 +115,52 @@ function FacultyProfile() {
       fetchFaculty();
     }
   }, [facultyId]);
+
+  // Handle click outside to close keyword suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current && 
+        !suggestionsRef.current.contains(event.target) &&
+        keywordInputRef.current &&
+        !keywordInputRef.current.contains(event.target)
+      ) {
+        setShowKeywordSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced keyword search
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (newKeyword.trim().length >= 2 && isEditing) {
+        setKeywordLoading(true);
+        try {
+          const suggestions = await searchKeywords(newKeyword.trim(), 8);
+          // Filter out already added keywords (case-insensitive)
+          const keywordLower = newKeyword.trim().toLowerCase();
+          const filtered = suggestions.filter(s => {
+            const sLower = s.toLowerCase();
+            return !formData.keywords.some(k => k.toLowerCase() === sLower);
+          });
+          setKeywordSuggestions(filtered);
+          setShowKeywordSuggestions(true);
+        } catch (err) {
+          console.error('Failed to search keywords:', err);
+        } finally {
+          setKeywordLoading(false);
+        }
+      } else {
+        setKeywordSuggestions([]);
+        setShowKeywordSuggestions(false);
+      }
+    }, 300);
+    
+    return () => clearTimeout(searchTimeout);
+  }, [newKeyword, formData.keywords, isEditing]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -106,23 +188,72 @@ function FacultyProfile() {
     }));
   };
 
+  // Keyword handlers (only used in edit mode)
+  const handleAddKeyword = (keywordToAdd) => {
+    const keyword = keywordToAdd || newKeyword.trim();
+    if (!keyword || keyword.length < 2) {
+      return;
+    }
+    
+    // Check if already exists (case-insensitive)
+    const keywordLower = keyword.toLowerCase();
+    if (formData.keywords.some(k => k.toLowerCase() === keywordLower)) {
+      setNewKeyword('');
+      setShowKeywordSuggestions(false);
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      keywords: [...prev.keywords, keyword],
+    }));
+    setNewKeyword('');
+    setShowKeywordSuggestions(false);
+  };
+
+  const handleRemoveKeyword = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      keywords: prev.keywords.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleKeywordKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (keywordSuggestions.length > 0) {
+        handleAddKeyword(keywordSuggestions[0]);
+      } else if (newKeyword.trim().length >= 2) {
+        handleAddKeyword();
+      }
+    } else if (e.key === 'Escape') {
+      setShowKeywordSuggestions(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveMessage('');
     
     try {
-      // Call the API to update the database
-      const result = await updateFaculty(facultyId, formData);
+      // Save faculty data (excluding keywords)
+      const { keywords, ...facultyData } = formData;
+      await updateFaculty(facultyId, facultyData);
       
-      // Only update local state after successful API response
-      // Refresh faculty data from API to ensure we have the latest
+      // Save keywords separately
+      await updateFacultyKeywords(facultyId, keywords);
+      
+      // Refresh faculty data
       const updatedFaculty = await getFacultyById(facultyId);
-      setFaculty(updatedFaculty);
+      const updatedKeywords = await getFacultyKeywords(facultyId);
       
-      // Update formData to match the refreshed data
+      setFaculty(updatedFaculty);
+      setKeywords(updatedKeywords || []);
+      
       setFormData({
         first_name: updatedFaculty.first_name || '',
         last_name: updatedFaculty.last_name || '',
+        institution_name: updatedFaculty.institution_name || '',
         biography: updatedFaculty.biography || '',
         orcid: updatedFaculty.orcid || '',
         google_scholar_url: updatedFaculty.google_scholar_url || '',
@@ -131,9 +262,10 @@ function FacultyProfile() {
         phones: updatedFaculty.phones || [],
         departments: updatedFaculty.departments || [],
         titles: updatedFaculty.titles || [],
+        keywords: updatedKeywords || [],
       });
       
-      // Also update localStorage if it's own profile
+      // Update localStorage if own profile
       if (isOwnProfile) {
         const storedFaculty = localStorage.getItem('faculty');
         if (storedFaculty) {
@@ -147,11 +279,8 @@ function FacultyProfile() {
       
       setSaveMessage('Profile updated successfully!');
       setIsEditing(false);
-      
-      // Clear success message after 3 seconds
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (err) {
-      // Show the actual error message from the API
       const errorMessage = err.message || 'Failed to save changes. Please try again.';
       setSaveMessage(`Error: ${errorMessage}`);
       console.error('Failed to update faculty profile:', err);
@@ -161,10 +290,10 @@ function FacultyProfile() {
   };
 
   const handleCancel = () => {
-    // Reset form data to original faculty data
     setFormData({
       first_name: faculty.first_name || '',
       last_name: faculty.last_name || '',
+      institution_name: faculty.institution_name || '',
       biography: faculty.biography || '',
       orcid: faculty.orcid || '',
       google_scholar_url: faculty.google_scholar_url || '',
@@ -173,17 +302,20 @@ function FacultyProfile() {
       phones: faculty.phones || [],
       departments: faculty.departments || [],
       titles: faculty.titles || [],
+      keywords: keywords || [],
     });
     setIsEditing(false);
     setSaveMessage('');
+    setNewKeyword('');
+    setShowKeywordSuggestions(false);
   };
 
   if (loading) {
     return (
-      <div className="profile-container">
+      <div className={styles['profile-container']}>
         <Header />
-        <main className="profile-main">
-          <div className="profile-loading">Loading profile...</div>
+        <main className={styles['profile-main']}>
+          <div className={styles['profile-loading']}>Loading profile...</div>
         </main>
       </div>
     );
@@ -191,13 +323,13 @@ function FacultyProfile() {
 
   if (error) {
     return (
-      <div className="profile-container">
+      <div className={styles['profile-container']}>
         <Header />
-        <main className="profile-main">
-          <div className="profile-error">
+        <main className={styles['profile-main']}>
+          <div className={styles['profile-error']}>
             <h2>Error Loading Profile</h2>
             <p>{error}</p>
-            <button className="profile-button" onClick={() => navigate(-1)}>
+            <button className={styles['profile-button']} onClick={() => navigate(-1)}>
               Go Back
             </button>
           </div>
@@ -207,15 +339,15 @@ function FacultyProfile() {
   }
 
   return (
-    <div className="profile-container">
+    <div className={styles['profile-container']}>
       <Header />
       
-      <main className="profile-main">
+      <main className={styles['profile-main']}>
         {saveMessage && (
-          <div className={`profile-message ${saveMessage.includes('Failed') ? 'error' : 'success'}`}>
+          <div className={`${styles['profile-message']} ${saveMessage.includes('Error') ? styles['error'] : styles['success']}`}>
             <p>{saveMessage}</p>
             <button 
-              className="close-message-btn"
+              className={styles['close-message-btn']}
               onClick={() => setSaveMessage('')}
               aria-label="Close message"
             >
@@ -224,22 +356,22 @@ function FacultyProfile() {
           </div>
         )}
 
-        <div className="profile-header-section">
-          <button className="back-button" onClick={() => navigate(-1)}>
+        <div className={styles['profile-header-section']}>
+          <button className={styles['back-button']} onClick={() => navigate(-1)}>
             ← Back
           </button>
           
-          <div className="profile-title-row">
-            <h1 className="profile-name">
+          <div className={styles['profile-title-row']}>
+            <h1 className={styles['profile-name']}>
               {isEditing ? (
-                <div className="name-edit-row">
+                <div className={styles['name-edit-row']}>
                   <input
                     type="text"
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleInputChange}
                     placeholder="First Name"
-                    className="name-input"
+                    className={styles['name-input']}
                   />
                   <input
                     type="text"
@@ -247,7 +379,7 @@ function FacultyProfile() {
                     value={formData.last_name}
                     onChange={handleInputChange}
                     placeholder="Last Name"
-                    className="name-input"
+                    className={styles['name-input']}
                   />
                 </div>
               ) : (
@@ -257,7 +389,7 @@ function FacultyProfile() {
             
             {isOwnProfile && !isEditing && (
               <button 
-                className="edit-button"
+                className={styles['edit-button']}
                 onClick={() => setIsEditing(true)}
               >
                 Edit Profile
@@ -265,32 +397,121 @@ function FacultyProfile() {
             )}
           </div>
           
-          {faculty.institution_name && (
-            <p className="profile-institution">{faculty.institution_name}</p>
+          {isEditing ? (
+            <div className={styles['institution-edit']}>
+              <select
+                value={formData.institution_name}
+                onChange={(e) => setFormData({ ...formData, institution_name: e.target.value })}
+                className={styles['institution-select']}
+              >
+                <option value="">Select an institution</option>
+                {institutions.map((inst) => (
+                  <option key={inst.institution_id} value={inst.name}>
+                    {inst.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            faculty.institution_name && (
+              <p className={styles['profile-institution']}>{faculty.institution_name}</p>
+            )
           )}
         </div>
 
-        <div className="profile-content">
+        <div className={styles['profile-content']}>
           {/* Left Column - Main Info */}
-          <div className="profile-column profile-column-main">
+          <div className={`${styles['profile-column']} ${styles['profile-column-main']}`}>
+            {/* Research Interests */}
+            <div className={styles['profile-card']}>
+              <h3>Research Interests</h3>
+              {isEditing ? (
+                <div className={styles['editable-list']}>
+                  {formData.keywords.map((keyword, index) => (
+                    <div key={index} className={styles['list-item-editable']}>
+                      <span>{keyword}</span>
+                      <button 
+                        type="button"
+                        className={styles['remove-item-btn']}
+                        onClick={() => handleRemoveKeyword(index)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <div className={styles['keyword-input-container']}>
+                    <div className={styles['keyword-input-wrapper']}>
+                      <input
+                        ref={keywordInputRef}
+                        type="text"
+                        value={newKeyword}
+                        onChange={(e) => setNewKeyword(e.target.value)}
+                        onKeyDown={handleKeywordKeyDown}
+                        onFocus={() => newKeyword.length >= 2 && setShowKeywordSuggestions(true)}
+                        placeholder="Add a research interest..."
+                        className={styles['keyword-input']}
+                      />
+                      {keywordLoading && (
+                        <span className={styles['keyword-loading']}>...</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className={styles['add-item-btn']}
+                      onClick={() => handleAddKeyword()}
+                      disabled={newKeyword.trim().length < 2}
+                    >
+                      Add
+                    </button>
+                    
+                    {/* Autocomplete dropdown */}
+                    {showKeywordSuggestions && keywordSuggestions.length > 0 && (
+                      <div ref={suggestionsRef} className={styles['keyword-suggestions']}>
+                        {keywordSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className={styles['keyword-suggestion']}
+                            onClick={() => handleAddKeyword(suggestion)}
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className={styles['list-display']}>
+                  {keywords && keywords.length > 0 ? (
+                    keywords.map((keyword, index) => (
+                      <span key={index} className={styles['list-tag']}>{keyword}</span>
+                    ))
+                  ) : (
+                    <p className={styles['no-data']}>No research interests listed</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Titles */}
-            <div className="profile-card">
+            <div className={styles['profile-card']}>
               <h3>Titles</h3>
               {isEditing ? (
-                <div className="editable-list">
+                <div className={styles['editable-list']}>
                   {formData.titles.map((title, index) => (
-                    <div key={index} className="list-item-editable">
+                    <div key={index} className={styles['list-item-editable']}>
                       <span>{title}</span>
                       <button 
                         type="button"
-                        className="remove-item-btn"
+                        className={styles['remove-item-btn']}
                         onClick={() => removeFromArray('titles', index)}
                       >
                         ×
                       </button>
                     </div>
                   ))}
-                  <div className="add-item-row">
+                  <div className={styles['add-item-row']}>
                     <input
                       type="text"
                       value={newTitle}
@@ -300,7 +521,7 @@ function FacultyProfile() {
                     />
                     <button 
                       type="button"
-                      className="add-item-btn"
+                      className={styles['add-item-btn']}
                       onClick={() => addToArray('titles', newTitle, setNewTitle)}
                     >
                       Add
@@ -308,36 +529,36 @@ function FacultyProfile() {
                   </div>
                 </div>
               ) : (
-                <div className="list-display">
+                <div className={styles['list-display']}>
                   {faculty.titles && faculty.titles.length > 0 ? (
                     faculty.titles.map((title, index) => (
-                      <span key={index} className="list-tag">{title}</span>
+                      <span key={index} className={styles['list-tag']}>{title}</span>
                     ))
                   ) : (
-                    <p className="no-data">No titles listed</p>
+                    <p className={styles['no-data']}>No titles listed</p>
                   )}
                 </div>
               )}
             </div>
 
             {/* Departments */}
-            <div className="profile-card">
+            <div className={styles['profile-card']}>
               <h3>Departments</h3>
               {isEditing ? (
-                <div className="editable-list">
+                <div className={styles['editable-list']}>
                   {formData.departments.map((dept, index) => (
-                    <div key={index} className="list-item-editable">
+                    <div key={index} className={styles['list-item-editable']}>
                       <span>{dept}</span>
                       <button 
                         type="button"
-                        className="remove-item-btn"
+                        className={styles['remove-item-btn']}
                         onClick={() => removeFromArray('departments', index)}
                       >
                         ×
                       </button>
                     </div>
                   ))}
-                  <div className="add-item-row">
+                  <div className={styles['add-item-row']}>
                     <input
                       type="text"
                       value={newDepartment}
@@ -347,7 +568,7 @@ function FacultyProfile() {
                     />
                     <button 
                       type="button"
-                      className="add-item-btn"
+                      className={styles['add-item-btn']}
                       onClick={() => addToArray('departments', newDepartment, setNewDepartment)}
                     >
                       Add
@@ -355,20 +576,20 @@ function FacultyProfile() {
                   </div>
                 </div>
               ) : (
-                <div className="list-display">
+                <div className={styles['list-display']}>
                   {faculty.departments && faculty.departments.length > 0 ? (
                     faculty.departments.map((dept, index) => (
-                      <span key={index} className="list-tag">{dept}</span>
+                      <span key={index} className={styles['list-tag']}>{dept}</span>
                     ))
                   ) : (
-                    <p className="no-data">No departments listed</p>
+                    <p className={styles['no-data']}>No departments listed</p>
                   )}
                 </div>
               )}
             </div>
 
             {/* Biography */}
-            <div className="profile-card">
+            <div className={styles['profile-card']}>
               <h3>Biography</h3>
               {isEditing ? (
                 <textarea
@@ -376,40 +597,40 @@ function FacultyProfile() {
                   value={formData.biography}
                   onChange={handleInputChange}
                   placeholder="Write a biography..."
-                  className="biography-textarea"
+                  className={styles['biography-textarea']}
                   rows={6}
                 />
               ) : (
-                <p className="biography-text">
-                  {faculty.biography || <span className="no-data">No biography available</span>}
+                <p className={styles['biography-text']}>
+                  {faculty.biography || <span className={styles['no-data']}>No biography available</span>}
                 </p>
               )}
             </div>
           </div>
 
           {/* Right Column - Contact & Links */}
-          <div className="profile-column profile-column-side">
+          <div className={`${styles['profile-column']} ${styles['profile-column-side']}`}>
             {/* Contact Information */}
-            <div className="profile-card">
+            <div className={styles['profile-card']}>
               <h3>Contact</h3>
               
-              <div className="contact-section">
+              <div className={styles['contact-section']}>
                 <h4>Email</h4>
                 {isEditing ? (
-                  <div className="editable-list">
+                  <div className={styles['editable-list']}>
                     {formData.emails.map((email, index) => (
-                      <div key={index} className="list-item-editable">
+                      <div key={index} className={styles['list-item-editable']}>
                         <span>{email}</span>
                         <button 
                           type="button"
-                          className="remove-item-btn"
+                          className={styles['remove-item-btn']}
                           onClick={() => removeFromArray('emails', index)}
                         >
                           ×
                         </button>
                       </div>
                     ))}
-                    <div className="add-item-row">
+                    <div className={styles['add-item-row']}>
                       <input
                         type="email"
                         value={newEmail}
@@ -419,7 +640,7 @@ function FacultyProfile() {
                       />
                       <button 
                         type="button"
-                        className="add-item-btn"
+                        className={styles['add-item-btn']}
                         onClick={() => addToArray('emails', newEmail, setNewEmail)}
                       >
                         Add
@@ -427,37 +648,37 @@ function FacultyProfile() {
                     </div>
                   </div>
                 ) : (
-                  <div className="contact-list">
+                  <div className={styles['contact-list']}>
                     {faculty.emails && faculty.emails.length > 0 ? (
                       faculty.emails.map((email, index) => (
-                        <a key={index} href={`mailto:${email}`} className="contact-link">
+                        <a key={index} href={`mailto:${email}`} className={styles['contact-link']}>
                           {email}
                         </a>
                       ))
                     ) : (
-                      <p className="no-data">No email listed</p>
+                      <p className={styles['no-data']}>No email listed</p>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className="contact-section">
+              <div className={styles['contact-section']}>
                 <h4>Phone</h4>
                 {isEditing ? (
-                  <div className="editable-list">
+                  <div className={styles['editable-list']}>
                     {formData.phones.map((phone, index) => (
-                      <div key={index} className="list-item-editable">
+                      <div key={index} className={styles['list-item-editable']}>
                         <span>{phone}</span>
                         <button 
                           type="button"
-                          className="remove-item-btn"
+                          className={styles['remove-item-btn']}
                           onClick={() => removeFromArray('phones', index)}
                         >
                           ×
                         </button>
                       </div>
                     ))}
-                    <div className="add-item-row">
+                    <div className={styles['add-item-row']}>
                       <input
                         type="tel"
                         value={newPhone}
@@ -467,7 +688,7 @@ function FacultyProfile() {
                       />
                       <button 
                         type="button"
-                        className="add-item-btn"
+                        className={styles['add-item-btn']}
                         onClick={() => addToArray('phones', newPhone, setNewPhone)}
                       >
                         Add
@@ -475,15 +696,15 @@ function FacultyProfile() {
                     </div>
                   </div>
                 ) : (
-                  <div className="contact-list">
+                  <div className={styles['contact-list']}>
                     {faculty.phones && faculty.phones.length > 0 ? (
                       faculty.phones.map((phone, index) => (
-                        <a key={index} href={`tel:${phone}`} className="contact-link">
+                        <a key={index} href={`tel:${phone}`} className={styles['contact-link']}>
                           {phone}
                         </a>
                       ))
                     ) : (
-                      <p className="no-data">No phone listed</p>
+                      <p className={styles['no-data']}>No phone listed</p>
                     )}
                   </div>
                 )}
@@ -491,12 +712,12 @@ function FacultyProfile() {
             </div>
 
             {/* Academic Links */}
-            <div className="profile-card">
+            <div className={styles['profile-card']}>
               <h3>Academic Profiles</h3>
               
               {isEditing ? (
-                <div className="links-edit">
-                  <div className="link-input-group">
+                <div className={styles['links-edit']}>
+                  <div className={styles['link-input-group']}>
                     <label>ORCID</label>
                     <input
                       type="text"
@@ -506,7 +727,7 @@ function FacultyProfile() {
                       placeholder="0000-0000-0000-0000"
                     />
                   </div>
-                  <div className="link-input-group">
+                  <div className={styles['link-input-group']}>
                     <label>Google Scholar</label>
                     <input
                       type="url"
@@ -516,7 +737,7 @@ function FacultyProfile() {
                       placeholder="https://scholar.google.com/..."
                     />
                   </div>
-                  <div className="link-input-group">
+                  <div className={styles['link-input-group']}>
                     <label>ResearchGate</label>
                     <input
                       type="url"
@@ -528,15 +749,15 @@ function FacultyProfile() {
                   </div>
                 </div>
               ) : (
-                <div className="links-display">
+                <div className={styles['links-display']}>
                   {faculty.orcid && (
                     <a 
                       href={`https://orcid.org/${faculty.orcid}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="academic-link"
+                      className={styles['academic-link']}
                     >
-                      <span className="link-icon">🔗</span>
+                      <span className={styles['link-icon']}>🔗</span>
                       ORCID
                     </a>
                   )}
@@ -545,9 +766,9 @@ function FacultyProfile() {
                       href={faculty.google_scholar_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="academic-link"
+                      className={styles['academic-link']}
                     >
-                      <span className="link-icon">📚</span>
+                      <span className={styles['link-icon']}>📚</span>
                       Google Scholar
                     </a>
                   )}
@@ -556,14 +777,14 @@ function FacultyProfile() {
                       href={faculty.research_gate_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="academic-link"
+                      className={styles['academic-link']}
                     >
-                      <span className="link-icon">🔬</span>
+                      <span className={styles['link-icon']}>🔬</span>
                       ResearchGate
                     </a>
                   )}
                   {!faculty.orcid && !faculty.google_scholar_url && !faculty.research_gate_url && (
-                    <p className="no-data">No academic profiles linked</p>
+                    <p className={styles['no-data']}>No academic profiles linked</p>
                   )}
                 </div>
               )}
@@ -573,16 +794,16 @@ function FacultyProfile() {
 
         {/* Edit Mode Actions */}
         {isEditing && (
-          <div className="edit-actions">
+          <div className={styles['edit-actions']}>
             <button 
-              className="cancel-button"
+              className={styles['cancel-button']}
               onClick={handleCancel}
               disabled={saving}
             >
               Cancel
             </button>
             <button 
-              className="save-button"
+              className={styles['save-button']}
               onClick={handleSave}
               disabled={saving}
             >
@@ -595,5 +816,4 @@ function FacultyProfile() {
   );
 }
 
-export default FacultyProfile;
-
+export default Profile;

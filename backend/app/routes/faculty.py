@@ -1,4 +1,8 @@
 """
+Author(s): Clayton Durepos, Aidan Bell, Owen Leitzell
+"""
+
+"""
 Faculty-related API endpoints
 
 v11.25.2025
@@ -7,8 +11,11 @@ v11.25.2025
 from backend.app.services.faculty import (
     create_faculty as create_faculty_service, 
     update_faculty as update_faculty_service,
-    get_faculty as get_faculty_service
+    get_faculty as get_faculty_service,
+    get_faculty_keywords as get_faculty_keywords_service,
+    update_faculty_keywords as update_faculty_keywords_service,
 )
+from backend.app.services.auth import check_credentials_exist
 from backend.app.utils.jwt import require_auth
 
 from flask import Blueprint, request, jsonify, g
@@ -89,15 +96,12 @@ def get_faculty(faculty_id):
 
 # UPDATE by faculty_id
 @faculty_bp.route("/<string:faculty_id>", methods=["PUT"])
-@require_auth
+@require_auth(allow_signup=True)
 def update_faculty(faculty_id):
     """
     Update faculty profile with transaction management.
     
-    Developer: Owen Leitzell
-    
-    This endpoint updates faculty base info and all related tables
-    (emails, phones, departments, titles) in a single transaction.
+    Accepts access tokens (authenticated users) or signup tokens (during signup).
     
     Expected request body:
     {
@@ -113,28 +117,23 @@ def update_faculty(faculty_id):
         "research_gate_url": "..."
     }
     
-    Note: For multi-valued fields (emails, phones, departments, titles),
-    providing a list will replace all existing entries with the new list.
-    Omit these fields to leave them unchanged.
-    
     Returns:
         JSON response with message
     """
-    # Verify the user is updating their own profile
-    current_faculty_id = g.faculty_id
-    if current_faculty_id != faculty_id:
-        return jsonify({"error": "Unauthorized: You can only update your own profile"}), 403
-    
     try:
         data = request.get_json()
-        
         if not data:
             return jsonify({"error": "Request body is required"}), 400
         
-        if not faculty_id:
-            return jsonify({"error": "faculty_id is required"}), 400
+        # Verify user can update this profile
+        if g.faculty_id != faculty_id:
+            return jsonify({"error": "Unauthorized: You can only update your own profile"}), 403
         
-        # Use service layer function which handles transaction management
+        # For signup tokens, verify no credentials exist yet
+        if g.token_type == "signup":
+            if check_credentials_exist(faculty_id).get("has_credentials"):
+                return jsonify({"error": "Account already exists. Please log in."}), 403
+        
         result = update_faculty_service(faculty_id, data)
         return jsonify(result), 200
         
@@ -157,3 +156,57 @@ def delete_faculty(faculty_id):
 @faculty_bp.route("/<string:faculty_id>/rec", methods=["GET"])
 def faculty_rec(faculty_id):
     return None
+
+
+# Keyword endpoints
+@faculty_bp.route("/<string:faculty_id>/keyword", methods=["GET"])
+def get_faculty_keywords(faculty_id):
+    """
+    Get all keywords (research interests) for a faculty member.
+    
+    Path Parameters:
+        faculty_id (str): UUID of the faculty member
+    
+    Returns:
+        JSON array of keyword names
+    """
+    try:
+        keywords = get_faculty_keywords_service(faculty_id)
+        return jsonify(keywords)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@faculty_bp.route("/<string:faculty_id>/keyword", methods=["PUT"])
+@require_auth
+def update_faculty_keywords(faculty_id):
+    """
+    Replace all keywords for a faculty member with a new list.
+    
+    Requires authentication and can only be done by the faculty member themselves.
+    
+    Path Parameters:
+        faculty_id (str): UUID of the faculty member
+    
+    Request Body:
+        { "keywords": ["machine learning", "AI", "data science"] }
+    
+    Returns:
+        { "message": "Keywords updated successfully" }
+    """
+    if g.faculty_id != faculty_id:
+        return jsonify({"error": "Unauthorized: You can only update your own profile"}), 403
+    
+    data = request.get_json()
+    if not data or "keywords" not in data:
+        return jsonify({"error": "keywords array is required"}), 400
+    
+    keywords = data.get("keywords", [])
+    if not isinstance(keywords, list):
+        return jsonify({"error": "keywords must be an array"}), 400
+    
+    try:
+        result = update_faculty_keywords_service(faculty_id, keywords)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

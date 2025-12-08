@@ -3,7 +3,6 @@
 __pycache__/
 
 scrape_storage/
-scraping/out/
 
-optimization_tests/
+backend/optimization_tests/output/
 .idea/

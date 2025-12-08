@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos
+
 -- USER CREDENTIALS SCHEMA
 CREATE TABLE IF NOT EXISTS credentials (
     -- ASSOCIATED USER ID

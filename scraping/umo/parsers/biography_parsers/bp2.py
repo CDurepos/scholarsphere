@@ -1,3 +1,7 @@
+"""
+Author: Aidan Bell
+"""
+
 from scraping.schemas import Faculty
 from scraping.utils import get_headers
 from scraping.umo.utils.parse_name import split_name

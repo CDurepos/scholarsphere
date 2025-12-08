@@ -1,3 +1,7 @@
+"""
+Author: Aidan Bell
+"""
+
 from scraping.umo.utils.normalize_whitespace import norm_ws
 
 import re
