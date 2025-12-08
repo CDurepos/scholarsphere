@@ -8,6 +8,7 @@ from backend.app.db.transaction_context import start_transaction
 from backend.app.db.procedures import (
     sql_create_faculty,
     sql_read_faculty,
+    sql_read_faculty_complete_optimized,
     sql_update_faculty,
     sql_create_faculty_email,
     sql_read_faculty_email_by_faculty,
@@ -205,6 +206,68 @@ def get_faculty(faculty_id: str):
         raise e
 
 
+def get_faculty_optimized(faculty_id: str):
+    """
+    Optimized service layer for fetching complete faculty data by faculty_id.
+    
+    Uses a single optimized query with JOINs and GROUP_CONCAT instead of
+    multiple separate queries. This significantly improves performance by
+    reducing database round trips from 6-7 queries to just 1 query.
+    
+    Args:
+        faculty_id: UUID of the faculty member to fetch
+    
+    Returns:
+        dict: Complete faculty data including:
+            - Basic info (faculty_id, first_name, last_name, biography, etc.)
+            - emails (list)
+            - phones (list)
+            - departments (list)
+            - titles (list)
+            - institution_name (string, if available)
+    
+    Raises:
+        Exception: If faculty_id doesn't exist
+    
+    Developer: Owen Leitzell
+    Created for query optimization assignment
+    """
+    try:
+        with start_transaction() as transaction_context:
+            # Single optimized query gets everything
+            faculty_result = sql_read_faculty_complete_optimized(transaction_context, faculty_id)
+            if not faculty_result:
+                raise Exception("Faculty not found")
+            
+            # Parse comma-separated strings into lists
+            # Handle None values and empty strings
+            def parse_list(value):
+                if not value or value == '':
+                    return []
+                return [item.strip() for item in value.split(',') if item.strip()]
+            
+            # Combine all faculty data with parsed lists
+            complete_faculty = {
+                "faculty_id": faculty_result.get("faculty_id"),
+                "first_name": faculty_result.get("first_name"),
+                "last_name": faculty_result.get("last_name"),
+                "biography": faculty_result.get("biography"),
+                "orcid": faculty_result.get("orcid"),
+                "google_scholar_url": faculty_result.get("google_scholar_url"),
+                "research_gate_url": faculty_result.get("research_gate_url"),
+                "scraped_from": faculty_result.get("scraped_from"),
+                "emails": parse_list(faculty_result.get("emails")),
+                "phones": parse_list(faculty_result.get("phones")),
+                "departments": parse_list(faculty_result.get("departments")),
+                "titles": parse_list(faculty_result.get("titles")),
+                "institution_name": faculty_result.get("institution_name"),
+            }
+            
+            return complete_faculty
+    except Exception as e:
+        raise e
+
+
 def update_faculty(faculty_id: str, data: dict):
     """
     Service layer for updating an existing faculty member.
@@ -320,16 +383,6 @@ def update_faculty(faculty_id: str, data: dict):
                     # If relationship exists, it is not updated
             
             # Transaction commits automatically on success
-        
-        # Generate recommendations after profile update
-        # This ensures new connections appear immediately when keywords, departments, etc. are added
-        try:
-            with start_transaction() as rec_transaction_context:
-                from backend.app.db.procedures import sql_generate_recommendations_for_faculty
-                sql_generate_recommendations_for_faculty(rec_transaction_context, faculty_id)
-        except Exception as rec_err:
-            # Log but don't fail the update if recommendation generation fails
-            print(f"Warning: Failed to generate recommendations after profile update: {rec_err}")
         
         return {
             "faculty_id": faculty_id,
