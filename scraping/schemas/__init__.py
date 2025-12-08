@@ -1,3 +1,7 @@
+"""
+Author: Aidan Bell
+"""
+
 from .faculty import Faculty
 from .publication import Publication
 from .faculty_title import FacultyTitle

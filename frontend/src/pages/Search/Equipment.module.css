@@ -1,13 +1,16 @@
-/* Equipment Search Page - Modern Light Theme */
-/* Abby Pitcairn */
-/* 2025-12-07 */
+/**
+ * @author Abby Pitcairn
+*/
+
+/* Equipment Search Page - Modern Theme with Dark Mode Support */
 
 .search-container {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--color-light);
   position: relative;
   display: flex;
   flex-direction: column;
+  transition: background-color 0.3s ease;
 }
 
 .search-main {

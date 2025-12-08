@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 CREATE TABLE grants_for_keyword (
     grant_id        CHAR(36)    NOT NULL,
     name            VARCHAR(64) NOT NULL,

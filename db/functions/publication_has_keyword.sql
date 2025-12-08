@@ -1,3 +1,5 @@
+-- Written by Owen Leitzell
+
 DELIMITER $$
 
 DROP FUNCTION IF EXISTS publication_has_keyword$$

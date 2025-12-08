@@ -1,9 +1,17 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout as logoutApi } from '../services/api';
 import defaultSilhouette from '../assets/default_silhouette.png';
 import logo from '../assets/logo.png';
+import logoLight from '../assets/logo_light.png';
 import styles from './Header.module.css';
+
+// Dark mode localStorage key
+const DARK_MODE_KEY = 'scholarsphere_dark_mode';
 
 /**
  * Reusable header component with profile dropdown
@@ -14,10 +22,34 @@ function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [faculty, setFaculty] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
   const searchDropdownRef = useRef(null);
   const searchButtonRef = useRef(null);
+
+  // Initialize dark mode from localStorage
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem(DARK_MODE_KEY);
+    if (savedDarkMode === 'true') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem(DARK_MODE_KEY, String(newDarkMode));
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   useEffect(() => {
     const facultyData = localStorage.getItem('faculty');
@@ -101,7 +133,7 @@ function Header() {
     <header className={styles.header}>
       <div className={styles['header-left']}>
         <Link to="/dashboard" className={styles['header-logo']}>
-          <img src={logo} alt="ScholarSphere" className={styles['header-logo-img']} />
+          <img src={isDarkMode ? logoLight : logo} alt="ScholarSphere" className={styles['header-logo-img']} />
         </Link>
         {faculty && (
           <nav className={styles['header-nav']}>
@@ -255,6 +287,19 @@ function Header() {
                 >
                   Settings & Privacy
                 </Link>
+                 {/* Dark Mode Toggle */}
+                 <div className={styles['header-dropdown-theme']}>
+                  <span className={styles['header-dropdown-theme-label']}>
+                    Dark Mode
+                  </span>
+                  <button 
+                    className={`${styles['theme-toggle']} ${isDarkMode ? styles['theme-toggle-active'] : ''}`}
+                    onClick={toggleDarkMode}
+                    aria-label="Toggle dark mode"
+                  >
+                    <span className={styles['theme-toggle-slider']}></span>
+                  </button>
+                </div>
                 <button 
                   className={styles['header-dropdown-logout']}
                   onClick={handleLogout}

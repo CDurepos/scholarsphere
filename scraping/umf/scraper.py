@@ -1,3 +1,7 @@
+"""
+Author:Clayton Durepos
+"""
+
 #!/usr/bin/env python3
 """
 UMF Faculty Scraper (enhanced with ORCID lookup)

@@ -1,3 +1,5 @@
+-- Written by Clayton Durepos, Aidan Bell
+
 DELIMITER $$
 
 /**

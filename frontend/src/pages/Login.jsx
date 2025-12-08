@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import ConnectionParticles from '../components/ConnectionParticles';

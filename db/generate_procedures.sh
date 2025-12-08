@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Clayton Durepos
+
 # Script to generate 002_init_procedures.sql from all files in the procedures subdirectories
 # Processes subdirectories in order: util, create, read, update, delete, workflow
 # util must come first as it contains functions used by other procedures

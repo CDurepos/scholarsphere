@@ -1,3 +1,7 @@
+"""
+Author(s): Aidan Bell, Clayton Durepos, Abby Pitcairn
+"""
+
 #!/usr/bin/env python3
 """
 Data insertion script for scraped JSON data.
@@ -26,6 +30,7 @@ from backend.models.qwen import (
 
 import json
 import uuid
+import csv
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import date
 
@@ -606,6 +611,157 @@ def insert_publication_explores_keyword(
             conn.close()
 
     return True
+
+
+def insert_equipment_from_csv(db: DatabaseConnection) -> bool:
+    """
+    Insert equipment records from scraping/equipment/equipment_demo.csv into the database.
+    
+    Reads the CSV file and for each equipment record:
+    - If the CSV has institution_name, looks up the institution_id from the institution table
+    - If the CSV has institution_id, uses it directly
+    - Creates equipment records using the create_equipment stored procedure
+    
+    Args:
+        db: DatabaseConnection instance
+    
+    Returns:
+        True if insertion is successful, else False
+    """
+    # Get the path to the CSV file
+    project_root = Path(__file__).parent.parent
+    csv_path = project_root / "scraping" / "equipment" / "equipment_demo.csv"
+    
+    if not csv_path.exists():
+        print(f"[ERROR] Equipment CSV file not found at {csv_path}")
+        return False
+    
+    conn = None
+    cursor = None
+    
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        conn.start_transaction()
+        
+        successful = 0
+        failed = 0
+        
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            # Read CSV, skipping comment lines
+            reader = csv.DictReader(
+                (line for line in f if not line.strip().startswith('#') and line.strip())
+            )
+            
+            for row in reader:
+                try:
+                    # Get equipment fields
+                    equipment_id = row.get('eq_id') or row.get('equipment_id')
+                    name = row.get('name')
+                    description = row.get('description', '')
+                    availability = row.get('availability', '')
+                    
+                    # Handle institution lookup
+                    institution_id = None
+                    institution_name = row.get('institution_name')
+                    
+                    if institution_name:
+                        # Look up institution_id by name
+                        cursor.execute(
+                            "SELECT institution_id FROM institution WHERE name = %s",
+                            (institution_name.strip(),)
+                        )
+                        result = cursor.fetchone()
+                        if result:
+                            institution_id = result['institution_id']
+                        else:
+                            print(f"[WARN] Institution '{institution_name}' not found in database. Skipping equipment '{name}'")
+                            failed += 1
+                            continue
+                    elif row.get('institution_id'):
+                        # Use institution_id directly if provided
+                        institution_id = row.get('institution_id').strip()
+                        # Verify it exists
+                        cursor.execute(
+                            "SELECT institution_id FROM institution WHERE institution_id = %s",
+                            (institution_id,)
+                        )
+                        if not cursor.fetchone():
+                            print(f"[WARN] Institution ID '{institution_id}' not found in database. Skipping equipment '{name}'")
+                            failed += 1
+                            continue
+                    else:
+                        print(f"[WARN] No institution_name or institution_id provided for equipment '{name}'. Skipping.")
+                        failed += 1
+                        continue
+                    
+                    # Generate equipment_id if not provided
+                    if not equipment_id or not equipment_id.strip():
+                        equipment_id = str(uuid.uuid4())
+                    else:
+                        equipment_id = equipment_id.strip()
+                    
+                    # Validate required fields
+                    if not name or not name.strip():
+                        print(f"[WARN] Equipment name is required. Skipping row.")
+                        failed += 1
+                        continue
+                    
+                    if not availability or not availability.strip():
+                        print(f"[WARN] Equipment availability is required. Skipping equipment '{name}'.")
+                        failed += 1
+                        continue
+                    
+                    # Truncate fields to match database constraints
+                    name = name.strip()[:64] if len(name.strip()) > 64 else name.strip()
+                    description = description.strip()[:2048] if len(description.strip()) > 2048 else description.strip()
+                    availability = availability.strip()[:2048] if len(availability.strip()) > 2048 else availability.strip()
+                    
+                    # Call create_equipment stored procedure
+                    db.call_procedure(
+                        cursor,
+                        "create_equipment",
+                        (
+                            equipment_id,
+                            name,
+                            description if description else None,
+                            availability,
+                            institution_id
+                        )
+                    )
+                    
+                    # Consume result set
+                    try:
+                        stored_results = list(cursor.stored_results())
+                        if stored_results:
+                            stored_results[0].fetchall()
+                    except:
+                        pass
+                    
+                    successful += 1
+                    
+                except Exception as e:
+                    print(f"[ERROR] Failed to insert equipment '{row.get('name', 'unknown')}': {str(e)}")
+                    failed += 1
+                    continue
+        
+        conn.commit()
+        print(f"[OK] Equipment insertion complete: {successful} successful, {failed} failed")
+        return True
+        
+    except Exception as e:
+        if conn and conn.in_transaction:
+            conn.rollback()
+        print(f"[ERROR] Failed to insert equipment from CSV: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 def main():

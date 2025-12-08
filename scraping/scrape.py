@@ -1,3 +1,7 @@
+"""
+Author(s): Clayton Durepos, Aidan Bell
+"""
+
 #!/usr/bin/env python3
 """
 Scraper orchestration script.

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Clayton Durepos
+
 # Script to generate 003_add_functions.sql from all files in the functions directory
 # Ignores *.md files
 

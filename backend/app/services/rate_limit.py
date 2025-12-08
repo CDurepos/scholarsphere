@@ -1,4 +1,6 @@
-# Aidan - generated_keywords_service
+"""
+Author: Aidan Bell
+"""
 
 
 from backend.app.services.faculty import get_faculty

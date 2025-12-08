@@ -1,4 +1,8 @@
 """
+Author: Clayton Durepos
+"""
+
+"""
 Session service for managing refresh tokens and sessions.
 """
 import hashlib

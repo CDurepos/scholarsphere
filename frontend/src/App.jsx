@@ -1,3 +1,7 @@
+/**
+ * @author Clayton Durepos, Aidan Bell, Owen Leitzell
+ */
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Landing from './pages/Landing';
