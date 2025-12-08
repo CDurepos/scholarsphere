@@ -20,6 +20,7 @@ DB_NAME=scholarsphere
 
 Where `DB_USER` and `DB_PASS` are the appropriate admin credentials for your local MySQL server.
 
+
 ## Keyword Generation
 
 If you would like any API routes involving calls to an LLM to work (just keyword generation at the time of writing this), or the insert.py script to automatically generate keywords, you must have a gpu with cuda and will have to install cuda compatible versions of
@@ -65,6 +66,48 @@ The backend development server is run like so:
 cd backend
 python run.py
 ```
+
+## Database Backup
+
+ScholarSphere includes a MySQL database backup feature to help protect your data.
+
+#### Creating a Backup
+
+To create a backup of your database, run:
+
+```
+./bin/backup.sh
+```
+
+#### Backup Options
+
+The backup script supports several options:
+
+```
+./bin/backup.sh [OPTIONS]
+
+Options:
+  -d, --database NAME    Database name (default: scholarsphere)
+  -o, --output DIR       Backup output directory (default: ./backups)
+  -h, --help             Show help message
+```
+
+#### Restoring a Backup
+
+To restore a backup, use MySQL:
+
+```bash
+mysql -u <user> -p <database> < backups/scholarsphere_backup_YYYYMMDD_HHMMSS.sql
+```
+
+#### Demonstration Script
+
+To see the backup feature in action, run the demonstration script:
+
+```bash
+python bin/demo_backup.py
+```
+
 
 # Team Member Contributions
 
