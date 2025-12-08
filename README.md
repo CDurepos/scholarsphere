@@ -69,6 +69,82 @@ To do this, add your user-set database password to the `scraping/insert.py` file
 
 Once this operation finishes... Congrats! You've got the ScholarSphere Database set up.
 
+## Database Backup
+
+ScholarSphere includes a rudimentary MySQL database backup feature to help protect your data.
+
+### Creating a Backup
+
+To create a backup of your database, run:
+
+```
+./bin/backup.sh
+```
+
+This will:
+- Read database credentials from your `.env` file
+- Create a backup in the `backups/` directory
+- Generate a timestamped backup file (e.g., `scholarsphere_backup_20241201_143022.sql`)
+
+### Backup Options
+
+The backup script supports several options:
+
+```
+./bin/backup.sh [OPTIONS]
+
+Options:
+  -d, --database NAME    Database name (default: scholarsphere)
+  -o, --output DIR       Backup output directory (default: ./backups)
+  -h, --help             Show help message
+```
+
+Examples:
+```bash
+# Basic backup with defaults
+./bin/backup.sh
+
+# Custom database name
+./bin/backup.sh -d my_database
+
+# Custom output directory
+./bin/backup.sh -o /path/to/backups
+```
+
+### Restoring a Backup
+
+To restore a backup, use MySQL:
+
+```bash
+mysql -u <user> -p <database> < backups/scholarsphere_backup_YYYYMMDD_HHMMSS.sql
+```
+
+### Demonstration Script
+
+To see the backup feature in action, run the demonstration script:
+
+```bash
+python bin/demo_backup.py
+```
+
+This script will:
+- Check prerequisites
+- Create a test backup
+- Verify the backup file
+- Display backup information and usage examples
+
+### Automated Backups
+
+To schedule automatic backups, add a cron job:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line to backup daily at 2 AM
+0 2 * * * /path/to/scholarsphere/bin/backup.sh
+```
+
 ## Keyword Generation
 
 If you would like any API routes involving calls to an LLM to work (just keyword generation at the time of writing this), or the insert.py script to automatically generate keywords, you must have a gpu with cuda and will have to install cuda compatible versions of
