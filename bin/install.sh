@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Clayton Durepos
+
 # ScholarSphere Installation Script
 # This script installs all required dependencies and sets up the development environment
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Written by Clayton Durepos
+
 # ScholarSphere Run Script
 # This script starts the backend and frontend development servers
 
