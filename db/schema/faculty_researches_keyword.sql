@@ -12,5 +12,8 @@ CREATE TABLE faculty_researches_keyword (
     FOREIGN KEY (faculty_id)
         REFERENCES faculty(faculty_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on faculty_id for lookups by faculty (batch keyword retrieval)
+    INDEX idx_frk_faculty_id (faculty_id)
 );

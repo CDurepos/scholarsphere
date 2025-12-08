@@ -19,5 +19,8 @@ CREATE TABLE faculty_works_at_institution (
     FOREIGN KEY (institution_id)
         REFERENCES institution(institution_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on institution_id for joins from institution side
+    INDEX idx_fwai_institution_id (institution_id)
 );
