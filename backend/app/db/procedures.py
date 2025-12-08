@@ -690,6 +690,40 @@ def sql_read_faculty_works_at_institution_by_faculty(
     return []
 
 
+def sql_read_faculty_complete_optimized(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> dict | None:
+    """
+    Optimized function to read complete faculty profile with all related data in a single query.
+    
+    Uses the read_faculty_complete_optimized stored procedure which performs all JOINs
+    and aggregations in one database query instead of multiple separate queries.
+    
+    Args:
+        transaction_context (TransactionContext): A transaction context object to use for the database connection.
+        faculty_id (str): UUID of the faculty member.
+    
+    Returns:
+        dict | None: Complete faculty record with aggregated fields:
+            - All base faculty fields
+            - emails: Comma-separated string (or None) - needs to be split into list
+            - phones: Comma-separated string (or None) - needs to be split into list
+            - departments: Comma-separated string (or None) - needs to be split into list
+            - titles: Comma-separated string (or None) - needs to be split into list
+            - institution_name: String (or None)
+    
+    Developer: Owen Leitzell
+    Created for query optimization assignment
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_faculty_complete_optimized", (faculty_id,))
+    stored_results = list(cursor.stored_results())
+    if stored_results:
+        return stored_results[0].fetchone()
+    return None
+
+
 def sql_read_institution(
     transaction_context: TransactionContext,
     institution_id: str,
