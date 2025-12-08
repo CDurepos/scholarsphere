@@ -24,7 +24,7 @@ from backend.app.db.procedures import (
     sql_read_faculty_works_at_institution_by_faculty,
     sql_read_institution,
     sql_create_faculty_works_at_institution,
-    sql_check_faculty_works_at_institution_exists,
+    sql_delete_faculty_works_at_institution_by_faculty,
     sql_read_faculty_researches_keyword_by_faculty,
     sql_add_keyword_for_faculty,
     sql_delete_all_faculty_keywords,
@@ -297,23 +297,16 @@ def update_faculty(faculty_id: str, data: dict):
                     if title and title.strip():
                         sql_create_faculty_title(transaction_context, faculty_id, title.strip())
             
-            # Handle institution relationship if institution_name is provided
-            institution_name = data.get("institution_name")
-            if institution_name and institution_name.strip():
-                # Get or create institution in DB (will create from JSON if needed)
-                # Pass the cursor from transaction context so it uses the same transaction
-                institution_id = get_institution_id_by_name(institution_name.strip(), transaction_context.cursor)
+            # Handle institution relationship: replace existing with new
+            if "institution_name" in data:
+                institution_name = data.get("institution_name")
+                # Delete all existing institution relationships
+                sql_delete_faculty_works_at_institution_by_faculty(transaction_context, faculty_id)
                 
-                if institution_id:
-                    # Check if relationship already exists
-                    rel_exists = sql_check_faculty_works_at_institution_exists(
-                        transaction_context,
-                        faculty_id,
-                        institution_id
-                    )
-                    
-                    if not rel_exists:
-                        # Create new relationship with current date as start_date
+                # Add new institution if provided
+                if institution_name and institution_name.strip():
+                    institution_id = get_institution_id_by_name(institution_name.strip(), transaction_context.cursor)
+                    if institution_id:
                         sql_create_faculty_works_at_institution(
                             transaction_context,
                             faculty_id,
@@ -321,7 +314,6 @@ def update_faculty(faculty_id: str, data: dict):
                             date.today(),
                             None
                         )
-                    # If relationship exists, it is not updated
             
             # Transaction commits automatically on success
         

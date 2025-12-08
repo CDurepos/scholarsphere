@@ -100,7 +100,7 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
 }
 
 // Step 2: Confirmation wrapper (shows confirmation or profile form)
-export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmation, onConfirm, onDeny, doPrefill, isExisting, matchType }) {
+export function ConfirmationStep({ initialData, onSubmit, loading, institutions, showConfirmation, onConfirm, onDeny, doPrefill, isExisting, matchType }) {
   // If we need to show confirmation first, show that
   if (showConfirmation) {
     // Get the institution name to display (use the one from DB if available, otherwise from search)
@@ -156,6 +156,7 @@ export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmat
     initialData={initialData}
     onSubmit={onSubmit}
     loading={loading}
+    institutions={institutions}
     doPrefill={doPrefill}
     stepNumber={2}
     isExisting={isExisting}
@@ -163,7 +164,7 @@ export function ConfirmationStep({ initialData, onSubmit, loading, showConfirmat
 }
 
 // Profile Information Form (used in Step 2 - can be prefilled or empty)
-export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = false, stepNumber = 2, isExisting = false }) {
+export function ProfileInfoForm({ initialData, onSubmit, loading, institutions = [], doPrefill = false, stepNumber = 2, isExisting = false }) {
   // Initialize form data based on whether it should be prefilled
   const getInitialFormData = () => {
     if (doPrefill) {
@@ -322,15 +323,32 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, doPrefill = fa
 
         <div className={styles['form-group']}>
           <label htmlFor="institution_name">Institution *</label>
-          <input
-            type="text"
-            id="institution_name"
-            name="institution_name"
-            value={formData.institution_name}
-            onChange={handleChange}
-            required
-            placeholder=""
-          />
+          {institutions.length > 0 ? (
+            <select
+              id="institution_name"
+              name="institution_name"
+              value={formData.institution_name}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select an institution</option>
+              {institutions.map((inst) => (
+                <option key={inst.institution_id} value={inst.name}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              id="institution_name"
+              name="institution_name"
+              value={formData.institution_name}
+              onChange={handleChange}
+              required
+              placeholder="Enter institution name"
+            />
+          )}
         </div>
 
         <div className={styles['form-group']}>

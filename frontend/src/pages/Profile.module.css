@@ -207,6 +207,27 @@
   margin: 0;
 }
 
+.institution-edit {
+  margin-top: 0.5rem;
+}
+
+.institution-select {
+  padding: 0.5rem 0.75rem;
+  font-size: 1.1rem;
+  border: 2px solid rgba(11, 38, 79, 0.15);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  min-width: 300px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.institution-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
 /* Content Layout */
 .profile-content {
   display: grid;

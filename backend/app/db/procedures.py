@@ -1058,6 +1058,31 @@ def sql_check_faculty_works_at_institution_exists(
     return result["count"] > 0 if result else False
 
 
+def sql_delete_faculty_works_at_institution_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Delete all institution relationships for a faculty member.
+
+    Args:
+        transaction_context (TransactionContext): A transaction context object to use for the database connection.
+        faculty_id (str): UUID of the faculty member.
+
+    Returns:
+        None: No result set.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("delete_faculty_works_at_institution_by_faculty", (faculty_id,))
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        if stored_results:
+            stored_results[0].fetchall()
+    except:
+        pass
+
+
 # ============================================================================
 # SESSION DB LAYER FUNCTIONS
 # ============================================================================
