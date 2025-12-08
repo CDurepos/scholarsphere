@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS faculty (
     ),
 
     -- Index on last name and first name for faster search functionality
-    INDEX idx_faculty_last_first_name (last_name, first_name)
+    INDEX idx_faculty_last_name (last_name),
+    INDEX idx_faculty_first_name (first_name)
 );
 
 -- Source: institution.sql
@@ -197,8 +198,8 @@ CREATE TABLE IF NOT EXISTS equipment (
     -- Index on equipment name
     INDEX idx_equipment_name (name),
 
-    -- Quickly check availability
-    INDEX idx_equipment_availability (availability)
+    -- Quickly check availability (using prefix index due to VARCHAR(2048) length)
+    INDEX idx_equipment_availability (availability(255))
 );
 
 
@@ -322,49 +323,38 @@ CREATE TABLE IF NOT EXISTS faculty_follows_faculty(
 
 -- Source: faculty_recommended_to_faculty.sql
 
--- Recommendation relationship between faculty members
--- Only stores recommendations where at least one faculty has an account
-
+/**
+ * Faculty-to-faculty recommendations.
+ * ENUM order defines priority (first = highest).
+ */
 CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
-    -- Directional: source is who we're recommending TO, target is who we're recommending
-    source_faculty_id   CHAR(36)        NOT NULL,
-    target_faculty_id   CHAR(36)        NOT NULL,
-    
-    -- Match score for ranking (0.0 to 1.0)
-    match_score         DECIMAL(5,4)    NOT NULL DEFAULT 0.0,
-    
-    -- Recommendation type (constrained to valid values)
+    source_faculty_id   CHAR(36) NOT NULL,
+    target_faculty_id   CHAR(36) NOT NULL,
     recommendation_type ENUM(
-        'shared_keyword',           -- Both research the same keyword
-        'keyword_to_publication',   -- Source researches keyword, target published on it
-        'publication_to_keyword',   -- Source published on keyword, target researches it
-        'keyword_to_grant',         -- Source researches keyword, target has grant for it
-        'grant_to_keyword',         -- Source has grant for keyword, target researches it
-        'grant_to_publication',     -- Source has grant for keyword, target published on it
-        'publication_to_grant',     -- Source published on keyword, target has grant for it
-        'shared_grant',             -- Both have the same grant
-        'shared_department',        -- Both in the same department
-        'shared_institution'        -- Both at the same institution
+        'shared_keyword',
+        'keyword_to_publication',
+        'publication_to_keyword',
+        'keyword_to_grant',
+        'grant_to_keyword',
+        'grant_to_publication',
+        'publication_to_grant',
+        'shared_grant',
+        'shared_department'
     ) NOT NULL,
-    
-    -- Timestamps
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (source_faculty_id, target_faculty_id),
 
     FOREIGN KEY (source_faculty_id) 
         REFERENCES faculty(faculty_id) 
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+        ON DELETE CASCADE ON UPDATE CASCADE,
 
     FOREIGN KEY (target_faculty_id)
         REFERENCES faculty(faculty_id) 
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-        
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
     INDEX idx_recommendations_source (source_faculty_id),
-    INDEX idx_recommendations_score (source_faculty_id, match_score DESC),
     INDEX idx_recommendations_type (recommendation_type)
 );
 
@@ -385,7 +375,10 @@ CREATE TABLE faculty_researches_keyword (
     FOREIGN KEY (faculty_id)
         REFERENCES faculty(faculty_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on faculty_id for lookups by faculty (batch keyword retrieval)
+    INDEX idx_frk_faculty_id (faculty_id)
 );
 
 
@@ -412,7 +405,10 @@ CREATE TABLE faculty_works_at_institution (
     FOREIGN KEY (institution_id)
         REFERENCES institution(institution_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Index on institution_id for joins from institution side
+    INDEX idx_fwai_institution_id (institution_id)
 );
 
 -- Source: grants_for_keyword.sql
@@ -470,8 +466,10 @@ CREATE TABLE IF NOT EXISTS publication_authored_by_faculty (
     FOREIGN KEY (publication_id)
         REFERENCES publication(publication_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
 
+    -- Index on publication_id for joins from publication side (keyword searches)
+    INDEX idx_pabf_publication_id (publication_id)
 );
 
 

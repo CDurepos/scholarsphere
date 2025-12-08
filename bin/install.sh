@@ -33,33 +33,6 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Install MySQL
-install_mysql() {
-    echo -e "\n${YELLOW}Checking MySQL installation...${NC}"
-    if command_exists mysql; then
-        MYSQL_VERSION=$(mysql --version)
-        echo -e "${GREEN}MySQL is already installed: $MYSQL_VERSION${NC}"
-    else
-        echo -e "${YELLOW}MySQL not found. Installing...${NC}"
-        if [[ "$OS" == "macos" ]]; then
-            if command_exists brew; then
-                brew install mysql
-                brew services start mysql
-            else
-                echo -e "${RED}Homebrew not found. Please install Homebrew first:${NC}"
-                echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-                exit 1
-            fi
-        elif [[ "$OS" == "linux" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y mysql-server
-            sudo systemctl start mysql
-            sudo systemctl enable mysql
-        fi
-        echo -e "${GREEN}MySQL installed successfully${NC}"
-    fi
-}
-
 # Install Node.js
 install_nodejs() {
     echo -e "\n${YELLOW}Checking Node.js installation...${NC}"
@@ -209,8 +182,8 @@ run_sql_scripts() {
         set +a
     fi
     
-    DB_USER="${DB_USER:-root}"
-    DB_PASS="${DB_PASS:-scholarsphere123}"
+    DB_USER="${DB_USER:-admin}"
+    DB_PASS="${DB_PASS:-admin}"
     DB_NAME="${DB_NAME:-scholarsphere}"
     
     # Check if MySQL is accessible
@@ -252,16 +225,62 @@ run_sql_scripts() {
     echo -e "${GREEN}All database scripts executed successfully${NC}"
 }
 
+# Insert scraped data
+insert_scraped_data() {
+    echo -e "\n${YELLOW}Inserting scraped data...${NC}"
+    
+    # Source .env to get database credentials
+    if [[ -f "$PROJECT_ROOT/.env" ]]; then
+        set -a
+        source "$PROJECT_ROOT/.env"
+        set +a
+    fi
+    
+    # Check if scraping/out directory exists and has files
+    OUT_DIR="$PROJECT_ROOT/scraping/out"
+    if [[ ! -d "$OUT_DIR" ]]; then
+        echo -e "${YELLOW}scraping/out directory not found. Skipping data insertion.${NC}"
+        return
+    fi
+    
+    # Check if there are any .jsonl files
+    if ! ls "$OUT_DIR"/*.jsonl 1> /dev/null 2>&1; then
+        echo -e "${YELLOW}No .jsonl files found in scraping/out. Skipping data insertion.${NC}"
+        return
+    fi
+    
+    # Get the conda environment's Python path
+    ENV_NAME="scholarsphere"
+    CONDA_ENV_PATH=$(conda env list | grep "^$ENV_NAME " | awk '{print $2}' 2>/dev/null)
+    if [[ -z "$CONDA_ENV_PATH" ]]; then
+        echo -e "${RED}Conda environment path not found${NC}"
+        return
+    fi
+    
+    CONDA_PYTHON="$CONDA_ENV_PATH/bin/python"
+    
+    echo -e "${YELLOW}Running scraping/insert.py...${NC}"
+    cd "$PROJECT_ROOT"
+    "$CONDA_PYTHON" scraping/insert.py
+    
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}Scraped data inserted successfully${NC}"
+    else
+        echo -e "${RED}Failed to insert scraped data${NC}"
+        echo -e "${YELLOW}You can run this manually later with: python scraping/insert.py${NC}"
+    fi
+}
+
 # Main installation flow
 main() {
     detect_os
-    install_mysql
     install_nodejs
     install_conda
     setup_conda_env
     check_env_file
     install_dependencies
     run_sql_scripts
+    insert_scraped_data
     
     echo -e "\n${GREEN}Installation complete!${NC}"
 }

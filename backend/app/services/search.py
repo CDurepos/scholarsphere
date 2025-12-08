@@ -7,9 +7,12 @@ from backend.app.db.procedures import (
     sql_read_publication_authored_by_faculty_by_faculty,
     sql_read_publication_explores_keyword_by_publication,
     sql_search_keywords,
+    sql_batch_get_faculty_keywords,
+    sql_search_existing_faculty,
 )
 from backend.app.db.transaction_context import start_transaction
 from backend.app.utils.search_filters import get_valid_search_filters
+from flask import jsonify
 
 
 def search_faculty_service(result_limit: int = 50, conn=None, **filters: dict[str, str]):
@@ -131,14 +134,16 @@ def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):
         return results
 
     # Single batch query to get all keywords for all faculty members
+    # Note: batch_get_faculty_keywords returns keywords in lowercase for normalization
     all_keywords = sql_batch_get_faculty_keywords(transaction_context, faculty_ids)
-    # Build a mapping: faculty_id -> set of keywords
+    # Build a mapping: faculty_id -> set of keywords (normalized to lowercase)
     faculty_keyword_map = defaultdict(set)
     for row in all_keywords:
         faculty_id = row.get("faculty_id")
         keyword = row.get("keyword")
         if faculty_id and keyword:
-            faculty_keyword_map[faculty_id].add(keyword)
+            # Normalize keyword to lowercase for case-insensitive comparison
+            faculty_keyword_map[faculty_id].add(keyword.lower())
 
     # Score each faculty by keyword overlap
     for result in results:
@@ -156,6 +161,7 @@ def rerank_by_keywords(results: list[dict], keywords: str, transaction_context):
 def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
     """
     Gather the keywords for a faculty member.
+    Returns keywords normalized to lowercase for case-insensitive comparison.
     """
     faculty_keywords = set()
     # Get keywords from faculty's direct research keywords
@@ -164,6 +170,7 @@ def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
     )
     for kw in research_keywords:
         if kw.get("name"):
+            # Normalize to lowercase for case-insensitive comparison
             faculty_keywords.add(kw["name"].lower())
 
     # Get keywords from faculty's publications
@@ -176,6 +183,7 @@ def gather_keywords(faculty_id: str, transaction_context) -> set[str]:
         )
         for kw in pub_keywords:
             if kw.get("name"):
+                # Normalize to lowercase for case-insensitive comparison
                 faculty_keywords.add(kw["name"].lower())
 
     return faculty_keywords
@@ -211,3 +219,100 @@ def search_keywords_service(search_term: str, limit: int = 10):
             jsonify({"error": f"Error searching keywords: {error_message}"}),
             500,
         )
+
+
+def search_existing_faculty_service(
+    first_name: str = None,
+    last_name: str = None,
+    institution: str = None,
+) -> tuple[list[dict] | dict, int]:
+    """
+    Service layer for searching existing faculty during signup lookup.
+    
+    This function is specifically designed for the signup flow to find existing
+    faculty records. It uses AND logic - all provided parameters must match.
+    
+    Args:
+        first_name: Optional first name to search for (partial match).
+        last_name: Optional last name to search for (partial match).
+        institution: Optional institution name to search for (partial match).
+    
+    Returns:
+        tuple: A tuple containing (results, status_code) where results is a list or error dict.
+    """
+    try:
+        with start_transaction() as transaction_context:
+            # Normalize empty strings to None
+            first_name = first_name.strip() if first_name and first_name.strip() else None
+            last_name = last_name.strip() if last_name and last_name.strip() else None
+            institution = institution.strip() if institution and institution.strip() else None
+            
+            results = sql_search_existing_faculty(
+                transaction_context,
+                first_name=first_name,
+                last_name=last_name,
+                institution=institution,
+            )
+            return results, 200
+    except Exception as e:
+        error_message = str(e)
+        return {"error": f"Error searching for existing faculty: {error_message}"}, 500
+
+
+def search_equipment_service(
+    keywords: str = None,
+    locations: list[str] = None,
+    available_only: bool = False,
+) -> tuple[list[dict] | dict, int]:
+    """
+    Service layer for searching equipment by keywords, location, and availability.
+    
+    Args:
+        keywords: Optional search string (searches name and description).
+        locations: Optional list of locations (city or zip codes).
+        available_only: If True, filter to only available equipment.
+    
+    Returns:
+        tuple: A tuple containing (results, status_code) where results is a list or error dict.
+    """
+    from backend.app.db.connection import get_connection
+    
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        try:
+            sql = """
+                SELECT e.equipment_id, e.name, e.description, e.availability,
+                       i.name AS institution_name, i.city
+                FROM equipment e
+                JOIN institution i ON e.institution_id = i.institution_id
+                WHERE 1=1
+            """
+            params = []
+            
+            if keywords:
+                sql += " AND (e.name LIKE %s OR e.description LIKE %s)"
+                kw = f"%{keywords}%"
+                params.extend([kw, kw])
+            
+            if locations:
+                sql += " AND ("
+                clauses = []
+                for loc in locations:
+                    clauses.append("(i.city = %s OR i.zip = %s)")
+                    params.extend([loc, loc])
+                sql += " OR ".join(clauses) + ")"
+            
+            if available_only:
+                sql += " AND e.availability = 'available'"
+            
+            cursor.execute(sql, tuple(params))
+            results = cursor.fetchall()
+            return results, 200
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        error_message = str(e)
+        return {"error": f"Error searching equipment: {error_message}"}, 500

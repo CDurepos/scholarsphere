@@ -25,6 +25,10 @@ from backend.app.db.procedures import (
     sql_read_institution,
     sql_create_faculty_works_at_institution,
     sql_check_faculty_works_at_institution_exists,
+    sql_read_faculty_researches_keyword_by_faculty,
+    sql_add_keyword_for_faculty,
+    sql_delete_all_faculty_keywords,
+    sql_generate_recommendations_for_faculty,
 )
 from backend.app.services.institution import get_institution_id_by_name
 
@@ -338,3 +342,60 @@ def update_faculty(faculty_id: str, data: dict):
     except Exception as e:
         # Transaction already rolled back by context manager
         raise e
+
+
+def get_faculty_keywords(faculty_id: str) -> list[str]:
+    """
+    Service layer for getting all keywords (research interests) for a faculty member.
+    
+    Args:
+        faculty_id: UUID of the faculty member
+    
+    Returns:
+        list: List of keyword names
+    """
+    with start_transaction() as ctx:
+        results = sql_read_faculty_researches_keyword_by_faculty(ctx, faculty_id)
+        return [row.get("name") for row in results if row.get("name")]
+
+
+def update_faculty_keywords(faculty_id: str, keywords: list[str]) -> dict:
+    """
+    Service layer for replacing all keywords for a faculty member.
+    
+    Validates keywords, removes duplicates (case-insensitive), and generates
+    recommendations after update.
+    
+    Args:
+        faculty_id: UUID of the faculty member
+        keywords: List of keyword strings to set
+    
+    Returns:
+        dict: Success message
+    """
+    # Validate and deduplicate keywords (preserve original casing, case-insensitive dedup)
+    validated_keywords = []
+    seen = set()
+    for kw in keywords:
+        if isinstance(kw, str):
+            kw = kw.strip()
+            if 2 <= len(kw) <= 64:
+                normalized = kw.lower()
+                if normalized not in seen:
+                    validated_keywords.append(kw)
+                    seen.add(normalized)
+    
+    # Update keywords in transaction
+    with start_transaction() as ctx:
+        sql_delete_all_faculty_keywords(ctx, faculty_id)
+        for keyword in validated_keywords:
+            sql_add_keyword_for_faculty(ctx, faculty_id, keyword)
+    
+    # Generate recommendations after update (separate transaction, non-blocking)
+    try:
+        with start_transaction() as ctx:
+            sql_generate_recommendations_for_faculty(ctx, faculty_id)
+    except Exception as e:
+        print(f"Warning: Failed to generate recommendations after keyword update: {e}")
+    
+    return {"message": "Keywords updated successfully"}

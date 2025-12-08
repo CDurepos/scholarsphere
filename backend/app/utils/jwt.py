@@ -79,35 +79,52 @@ def get_token_from_request() -> str:
         raise ValueError("Malformed authorization header")
 
 
-def require_auth(f):
+def require_auth(f=None, *, allow_signup=False):
     """
     Decorator to require authentication for a route.
     
     Extracts and verifies JWT token from Authorization header.
-    Sets g.faculty_id with the authenticated faculty_id.
+    Sets g.faculty_id and g.token_type for use in route.
+    
+    Usage:
+        @require_auth                    # Only access tokens
+        @require_auth(allow_signup=True) # Access or signup tokens
+    
+    Args:
+        allow_signup: If True, accepts both "access" and "signup" tokens.
+                     Default is False (only "access" tokens).
     
     Returns 401 if token is missing or invalid.
     """
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        try:
-            token = get_token_from_request()
-            payload = verify_token(token)
-            
-            # Verify token type
-            if payload.get("type") != "access":
-                return jsonify({"error": "Invalid token type"}), 401
-            
-            # Set faculty_id in Flask's g object for use in route
-            g.faculty_id = payload.get("faculty_id")
-            
-            return f(*args, **kwargs)
-        except ValueError as e:
-            return jsonify({"error": str(e)}), 401
-        except Exception as e:
-            return jsonify({"error": "Authentication failed"}), 401
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            try:
+                token = get_token_from_request()
+                payload = verify_token(token)
+                token_type = payload.get("type")
+                
+                # Verify token type
+                valid_types = ["access", "signup"] if allow_signup else ["access"]
+                if token_type not in valid_types:
+                    return jsonify({"error": "Invalid token type"}), 401
+                
+                # Set faculty_id and token_type in Flask's g object
+                g.faculty_id = payload.get("faculty_id")
+                g.token_type = token_type
+                
+                return func(*args, **kwargs)
+            except ValueError as e:
+                return jsonify({"error": str(e)}), 401
+            except Exception as e:
+                return jsonify({"error": "Authentication failed"}), 401
+        
+        return decorated_function
     
-    return decorated_function
+    # Allow @require_auth (no parentheses) or @require_auth(allow_signup=True)
+    if f is not None:
+        return decorator(f)
+    return decorator
 
 
 def optional_auth(f):
@@ -134,4 +151,61 @@ def optional_auth(f):
         return f(*args, **kwargs)
     
     return decorated_function
+
+
+def generate_signup_token(faculty_id: str) -> str:
+    """
+    Generate a JWT signup token for updating faculty profile during signup.
+    
+    This token is issued after a user successfully looks up their existing
+    faculty record. It allows them to update their profile before creating
+    credentials, but only if no credentials exist yet.
+    
+    Args:
+        faculty_id: UUID of the faculty member
+    
+    Returns:
+        str: JWT signup token (expires in 15 minutes)
+    """
+    payload = {
+        "faculty_id": faculty_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
+        "iat": datetime.datetime.utcnow(),
+        "type": "signup"
+    }
+    
+    return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
+
+
+def verify_signup_token(token: str, expected_faculty_id: str) -> dict:
+    """
+    Verify and decode a signup token.
+    
+    Args:
+        token: JWT signup token string
+        expected_faculty_id: The faculty_id that should be in the token
+    
+    Returns:
+        dict: Decoded token payload
+    
+    Raises:
+        ValueError: If token is invalid, expired, wrong type, or faculty_id mismatch
+    """
+    try:
+        payload = verify_token(token)
+        
+        # Verify token type
+        if payload.get("type") != "signup":
+            raise ValueError("Invalid token type: expected signup token")
+        
+        # Verify faculty_id matches
+        token_faculty_id = payload.get("faculty_id")
+        if token_faculty_id != expected_faculty_id:
+            raise ValueError("Token faculty_id does not match expected faculty_id")
+        
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Signup token has expired")
+    except jwt.InvalidTokenError:
+        raise ValueError("Invalid signup token")
 

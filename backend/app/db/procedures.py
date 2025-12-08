@@ -27,6 +27,36 @@ def sql_search_faculty(
     results = [r.fetchall() for r in cursor.stored_results()]
     return results[0] if results else []
 
+
+def sql_search_existing_faculty(
+    transaction_context: TransactionContext,
+    first_name: str = None,
+    last_name: str = None,
+    institution: str = None,
+) -> list[dict]:
+    """
+    Search for existing faculty members during signup lookup.
+    
+    This procedure is specifically designed for the signup flow to find existing
+    faculty records. It uses AND logic - all provided parameters must match.
+    
+    Args:
+        transaction_context: Database transaction context.
+        first_name: Optional first name to search for (partial match).
+        last_name: Optional last name to search for (partial match).
+        institution: Optional institution name to search for (partial match).
+    
+    Returns:
+        list[dict]: A list of dictionaries containing faculty information.
+    """
+    cursor = transaction_context.cursor
+    # Pass parameters in order: first_name, last_name, institution
+    params = (first_name, last_name, institution)
+    cursor.callproc("search_existing_faculty", params)
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
 # ============================================================================
 # SEARCH BY KEYWORD DB LAYER FUNCTIONS
 # ============================================================================

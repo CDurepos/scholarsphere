@@ -222,7 +222,6 @@ export const lookupFacultyPublic = async (params = {}) => {
   if (params.query) queryParams.append('query', params.query.trim());
   if (params.first_name) queryParams.append('first_name', params.first_name);
   if (params.last_name) queryParams.append('last_name', params.last_name);
-  if (params.department) queryParams.append('department', params.department);
   if (params.institution) queryParams.append('institution', params.institution);
   
   const response = await fetch(`${API_BASE_URL}/auth/lookup-faculty?${queryParams.toString()}`, {
@@ -333,6 +332,10 @@ export const checkFacultyExists = async (data) => {
   const fetchCompleteFacultyData = async (match, matchType) => {
     try {
       const completeFacultyData = await getFacultyById(match.faculty_id);
+      // Preserve signup_token from the lookup result
+      if (match.signup_token) {
+        completeFacultyData.signup_token = match.signup_token;
+      }
       return {
         exists: true,
         faculty: completeFacultyData,
@@ -340,22 +343,27 @@ export const checkFacultyExists = async (data) => {
       };
     } catch (err) {
       // Fallback to basic data if fetch fails
+      const fallbackFaculty = {
+        faculty_id: match.faculty_id,
+        first_name: match.first_name,
+        last_name: match.last_name,
+        institution_name: match.institution_name || data.institution_name,
+        emails: [],
+        phones: [],
+        departments: match.department_name ? [match.department_name] : [],
+        titles: [],
+        biography: '',
+        orcid: '',
+        google_scholar_url: '',
+        research_gate_url: '',
+      };
+      // Preserve signup_token from the lookup result
+      if (match.signup_token) {
+        fallbackFaculty.signup_token = match.signup_token;
+      }
       return {
         exists: true,
-        faculty: {
-          faculty_id: match.faculty_id,
-          first_name: match.first_name,
-          last_name: match.last_name,
-          institution_name: match.institution_name || data.institution_name,
-          emails: [],
-          phones: [],
-          departments: match.department_name ? [match.department_name] : [],
-          titles: [],
-          biography: '',
-          orcid: '',
-          google_scholar_url: '',
-          research_gate_url: '',
-        },
+        faculty: fallbackFaculty,
         matchType: matchType,
       };
     }
@@ -443,47 +451,29 @@ export const createFaculty = async (data) => {
 };
 
 /**
- * Update an existing faculty member
+ * Update an existing faculty member.
+ * Accepts either an access token (authenticated) or a signup token (during signup).
  * 
  * @param {string} faculty_id - UUID of the faculty member
  * @param {Object} data - Request body with fields to update
- * @param {string} [data.first_name] - First name
- * @param {string} [data.last_name] - Last name
- * @param {string[]} [data.emails] - Array of email addresses
- * @param {string[]} [data.phones] - Array of phone numbers
- * @param {string[]} [data.departments] - Array of department names
- * @param {string[]} [data.titles] - Array of titles
- * @param {string} [data.biography] - Biography text
- * @param {string} [data.orcid] - ORCID ID
- * @param {string} [data.google_scholar_url] - Google Scholar URL
- * @param {string} [data.research_gate_url] - ResearchGate URL
- * 
+ * @param {string} [tokenOverride] - Optional signup token to use instead of access token
  * @returns {Promise<Object>} Response object
- * 
- * Example response:
- * {
- *   "message": "Faculty member updated successfully"
- * }
  */
-export const updateFaculty = async (faculty_id, data) => {
+export const updateFaculty = async (faculty_id, data, tokenOverride = null) => {
   const headers = {
     'Content-Type': 'application/json',
+    'Authorization': `Bearer ${tokenOverride || accessToken}`,
   };
-  
-  // Add Authorization header if we have an access token
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
   
   let response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
     method: 'PUT',
-    credentials: 'include', // Include cookies
+    credentials: 'include',
     headers,
     body: JSON.stringify(data),
   });
   
-  // If unauthorized, try to refresh token and retry
-  if (response.status === 401) {
+  // Only try refresh if using access token (not signup token)
+  if (response.status === 401 && !tokenOverride && accessToken) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;
@@ -496,10 +486,9 @@ export const updateFaculty = async (faculty_id, data) => {
     }
   }
   
-  // Check if response was successful
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(errorData.error || `Failed to update faculty: ${response.status} ${response.statusText}`);
+    throw new Error(errorData.error || `Failed to update faculty: ${response.status}`);
   }
   
   return response.json();
@@ -536,21 +525,18 @@ export const updateFaculty = async (faculty_id, data) => {
  *   "message": "Faculty member updated successfully"
  * }
  */
-export const saveFaculty = async (faculty_id, data) => {
+export const saveFaculty = async (faculty_id, data, signup_token = null) => {
   if (!faculty_id) {
-    // Create new faculty
     const response = await createFaculty(data);
-    return {
-      faculty_id: response.faculty_id,
-      ...response
-    };
-  } else {
-    // Update existing faculty
-    await updateFaculty(faculty_id, data);
-    return {
-      faculty_id: faculty_id
-    };
+    return { faculty_id: response.faculty_id, ...response };
   }
+  
+  // Update existing - use signup_token if provided (during signup), otherwise access token
+  if (!accessToken && !signup_token) {
+    throw new Error('Authentication required to update faculty');
+  }
+  await updateFaculty(faculty_id, data, signup_token);
+  return { faculty_id };
 };
 
 /**
