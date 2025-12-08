@@ -3,7 +3,7 @@ Utility functions for outputting scraped data as JSON.
 """
 
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from pathlib import Path
 
 
@@ -19,7 +19,7 @@ def write_faculty_jsonl(faculty_records: List[Dict[str, Any]], output_path: str)
             - phones: List[str] (multi-valued)
             - departments: List[str] (multi-valued)
             - titles: List[str] (multi-valued)
-            - institution_id: Optional[str]
+            - institution_name: str (must match name in data/institutions.json)
             - start_date: Optional[str] (YYYY-MM-DD format)
             - end_date: Optional[str] (YYYY-MM-DD format)
         output_path: Path to output JSONL file
@@ -38,19 +38,4 @@ def write_faculty_jsonl(faculty_records: List[Dict[str, Any]], output_path: str)
             # Convert to JSON and write
             json_line = json.dumps(record, ensure_ascii=False)
             f.write(json_line + '\n')
-
-
-def write_institution_json(institution: Dict[str, Any], output_path: str):
-    """
-    Write institution record to a JSON file.
-    
-    Args:
-        institution: Dictionary containing institution data
-        output_path: Path to output JSON file
-    """
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(institution, f, indent=2, ensure_ascii=False)
 

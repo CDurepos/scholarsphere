@@ -15,10 +15,36 @@ from backend.app.services.session import (
     revoke_session,
     revoke_all_sessions,
 )
+from backend.app.services.search import search_faculty_service
 from backend.app.utils.jwt import generate_access_token
 from flask import Blueprint, request, jsonify, make_response
 
 auth_bp = Blueprint("auth", __name__)
+
+
+# =============================================================================
+# PUBLIC ENDPOINTS (no auth required)
+# =============================================================================
+
+@auth_bp.route("/lookup-faculty", methods=["GET"])
+def lookup_faculty():
+    """
+    Public endpoint for looking up faculty during signup.
+    
+    This endpoint does NOT require authentication, allowing new users
+    to search for their existing faculty record before creating an account.
+    
+    Query parameters:
+    - query: General search query (searches across all fields)
+    - first_name: Filter by first name
+    - last_name: Filter by last name
+    - department: Filter by department
+    - institution: Filter by institution
+    
+    Returns:
+        JSON array of matching faculty members
+    """
+    return search_faculty_service(**request.args)
 
 # Register credentials to faculty_id
 @auth_bp.route("/register", methods=["POST"])

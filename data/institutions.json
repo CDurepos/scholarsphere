@@ -150,6 +150,16 @@
     "type": "Public University"
   },
   {
+    "name": "University of New England",
+    "street_addr": "11 Hills Beach Rd",
+    "city": "Biddeford",
+    "state": "Maine",
+    "country": "USA",
+    "zip": "04005",
+    "website_url": "https://www.une.edu/",
+    "type": "Private University"
+  },
+  {
     "name": "University of Southern Maine",
     "street_addr": "96 Falmouth St",
     "city": "Portland",

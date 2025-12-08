@@ -17,8 +17,10 @@ import os
 import re
 import time
 import unicodedata
-import csv
 from typing import Optional, Iterable, List, Dict, Tuple
+
+# Institution name must match exactly what's in data/institutions.json
+INSTITUTION_NAME = "University of Maine at Farmington"
 from datetime import date
 
 import certifi
@@ -27,10 +29,9 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from scraping.schemas import Faculty, Institution
+from scraping.schemas import Faculty
 from scraping.utils import get_headers
-from scraping.utils.conversion import dataclass_instances_to_csv
-from scraping.utils.json_output import write_faculty_jsonl, write_institution_json
+from scraping.utils.json_output import write_faculty_jsonl
 
 UMF_DIR_URL = "https://farmington.edu/about/directory/?user_type=faculty"
 UMF_DIR_BASE = "https://farmington.edu"
@@ -653,25 +654,14 @@ def scrape_profile_page(url: str) -> Faculty:
     )
     return fac
 
-def scrape_umf() -> Tuple[Institution, List[Dict]]:
+def scrape_umf() -> List[Dict]:
     """
-    Scrape UMF faculty data and return institution and faculty records.
+    Scrape UMF faculty data and return faculty records.
     
     Returns:
-        Tuple of (Institution, list) where list contains faculty dictionaries
-        with all attributes including MV attributes as arrays.
+        List of faculty dictionaries with all attributes including MV attributes as arrays.
+        Each record includes institution_name which references data/institutions.json.
     """
-    inst = Institution(
-        institution_id="umf",
-        name=UMF_NAME,
-        website_url="https://farmington.edu",
-        institution_type="Public University",
-        street_addr="111 South Street",
-        city="Farmington",
-        state="ME",
-        country="USA",
-        zip_code="04938",
-    )
 
     print("[INFO] Fetching faculty directory index…")
     profile_links = scrape_directory_index(UMF_DIR_URL)
@@ -733,7 +723,7 @@ def scrape_umf() -> Tuple[Institution, List[Dict]]:
                 'phones': phones,
                 'departments': departments,
                 'titles': titles,
-                'institution_id': inst.institution_id,
+                'institution_name': INSTITUTION_NAME,
                 'start_date': date.today().isoformat(),
                 'end_date': None,
             }
@@ -755,74 +745,7 @@ def scrape_umf() -> Tuple[Institution, List[Dict]]:
     except Exception as e:
         print(f"[WARN] Catalog backfill failed: {e}")
     
-    return inst, faculty_records
-
-
-def write_faculty_csv(records: List[Dict], output_path: str):
-    """Write faculty main table CSV."""
-    if not records:
-        return
-    headers = ['faculty_id', 'first_name', 'last_name', 'biography', 'orcid', 
-               'google_scholar_url', 'research_gate_url', 'scraped_from']
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=headers, extrasaction='ignore')
-        writer.writeheader()
-        writer.writerows(records)
-
-
-def write_faculty_email_csv(records: List[Tuple[str, str]], output_path: str):
-    """Write faculty_email table CSV."""
-    if not records:
-        return
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['faculty_id', 'email'])
-        writer.writerows(records)
-
-
-def write_faculty_phone_csv(records: List[Tuple[str, str]], output_path: str):
-    """Write faculty_phone table CSV."""
-    if not records:
-        return
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['faculty_id', 'phone_num'])
-        writer.writerows(records)
-
-
-def write_faculty_department_csv(records: List[Tuple[str, str]], output_path: str):
-    """Write faculty_department table CSV."""
-    if not records:
-        return
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['faculty_id', 'department_name'])
-        writer.writerows(records)
-
-
-def write_faculty_title_csv(records: List[Tuple[str, str]], output_path: str):
-    """Write faculty_title table CSV."""
-    if not records:
-        return
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['faculty_id', 'title'])
-        writer.writerows(records)
-
-
-def write_institution_csv(inst: Institution, output_path: str):
-    """Write institution table CSV."""
-    dataclass_instances_to_csv([inst], output_path, overwrite=True)
-
-
-def write_faculty_works_at_institution_csv(records: List[Tuple[str, str, str, Optional[str]]], output_path: str):
-    """Write faculty_works_at_institution table CSV."""
-    if not records:
-        return
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['faculty_id', 'institution_id', 'start_date', 'end_date'])
-        writer.writerows(records)
+    return faculty_records
 
 
 def main(output_dir: str = "scraping/out"):
@@ -835,7 +758,7 @@ def main(output_dir: str = "scraping/out"):
     import os
     os.makedirs(output_dir, exist_ok=True)
     
-    inst, faculty_records = scrape_umf()
+    faculty_records = scrape_umf()
     print(f"[INFO] Scraped {len(faculty_records)} faculty records")
     
     # Write faculty JSONL file
@@ -843,23 +766,7 @@ def main(output_dir: str = "scraping/out"):
     write_faculty_jsonl(faculty_records, faculty_output)
     print(f"[INFO] Wrote: {faculty_output}")
     
-    # Write institution JSON file
-    institution_output = os.path.join(output_dir, "umf_institution.json")
-    institution_dict = {
-        'institution_id': inst.institution_id,
-        'name': inst.name,
-        'website_url': inst.website_url,
-        'type': inst.institution_type,
-        'street_addr': inst.street_addr,
-        'city': inst.city,
-        'state': inst.state,
-        'country': inst.country,
-        'zip': inst.zip_code,
-    }
-    write_institution_json(institution_dict, institution_output)
-    print(f"[INFO] Wrote: {institution_output}")
-    
-    return faculty_output, institution_output
+    return faculty_output
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from backend.app.db.procedures import (
     sql_read_faculty_department_by_faculty,
     sql_read_faculty_title_by_faculty,
 )
+from backend.app.services.recommend import generate_recommendations_for_user
 
 
 def register_credentials(data: dict):
@@ -22,6 +23,9 @@ def register_credentials(data: dict):
     
     Creates a credentials record with hashed password. The password hashing
     is handled by the database procedure using SHA-256.
+    
+    After successful registration, generates personalized recommendations
+    for the new user so they have recommendations immediately available.
     
     Args:
         data: Dictionary containing:
@@ -36,15 +40,21 @@ def register_credentials(data: dict):
         Exception: If username already exists, credentials already exist for faculty,
                   or faculty_id doesn't exist
     """
+    faculty_id = data.get("faculty_id")
+    
     try:
         with start_transaction() as transaction_context:
             sql_register_credentials(
                 transaction_context,
-                data.get("faculty_id"),
+                faculty_id,
                 data.get("username"),
                 data.get("password"),
             )
             # Transaction commits automatically on success
+        
+        # Generate recommendations for the new user (non-blocking)
+        # This runs after the transaction commits so we have valid credentials
+        generate_recommendations_for_user(faculty_id)
         
         return {
             "message": "Credentials registered successfully"

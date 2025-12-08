@@ -60,7 +60,7 @@ function Equipment() {
       // Append multiple selected locations
       locations.forEach(loc => params.append("location", loc));
 
-      const res = await fetch(`/api/equipment/search?${params.toString()}`);
+      const res = await fetch(`/api/search/equipment?${params.toString()}`);
       const data = await res.json();
 
       setResults(data);

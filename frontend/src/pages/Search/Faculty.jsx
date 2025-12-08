@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import { searchFaculty } from '../../services/api';
 import styles from './Faculty.module.css';
@@ -7,6 +8,7 @@ import styles from './Faculty.module.css';
  * Faculty search page component - allows users to search for faculty members
  */
 function Faculty() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [keywordQuery, setKeywordQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -29,7 +31,7 @@ function Faculty() {
   const handleSearch = async (e) => {
     e.preventDefault();
     
-    if (!searchQuery.trim()) {
+    if (!searchQuery.trim() && !keywordQuery.trim()) {
       setResults([]);
       return;
     }
@@ -40,7 +42,7 @@ function Faculty() {
 
     try {
       // TODO: Include keywordQuery in search when backend supports it
-      const response = await searchFaculty({ query: searchQuery.trim() });
+      const response = await searchFaculty({ query: searchQuery.trim(), keywords: keywordQuery.trim() });
       
       const limitedResults = Array.isArray(response) 
         ? response.slice(0, MAX_RESULTS)
@@ -69,7 +71,7 @@ function Faculty() {
   };
 
   const handleResultClick = (facultyId) => {
-    // TODO: Navigate to profile page when implemented
+    navigate(`/faculty/${facultyId}`);
   };
 
   const truncateText = (text, maxLength) => {
@@ -120,7 +122,7 @@ function Faculty() {
 
               <h2 className={styles['search-title']}>Search Faculty</h2>
               <p className={styles['search-subtitle']}>
-                Find researchers by name, department, or institution
+                Find researchers by first name, last name, department, or institution (separate terms with commas)
               </p>
               
               <form onSubmit={handleSearch} className={styles['search-form']}>
@@ -128,7 +130,7 @@ function Faculty() {
                   <input
                     type="text"
                     className={styles['search-input']}
-                    placeholder="Search by name, department, or institution..."
+                    placeholder="e.g., University of Maine, John, Smith, Biology"
                     value={searchQuery}
                     onChange={handleInputChange}
                     disabled={loading}
@@ -136,7 +138,7 @@ function Faculty() {
                   <button 
                     type="submit" 
                     className={styles['search-button']}
-                    disabled={loading || !searchQuery.trim()}
+                    disabled={loading || (!searchQuery.trim() && !keywordQuery.trim())}
                   >
                     {loading ? 'Searching...' : 'Search'}
                   </button>
@@ -146,11 +148,11 @@ function Faculty() {
                 <div className={`${styles['search-advanced']} ${showAdvanced ? styles['search-advanced-visible'] : ''}`}>
                   <div className={styles['search-advanced-content']}>
                     <div className={styles['search-advanced-field']}>
-                      <label className={styles['search-advanced-label']}>Keywords / Phrases</label>
+                      <label className={styles['search-advanced-label']}>Keywords / Phrases, separated by commas</label>
                       <input
                         type="text"
                         className={styles['search-advanced-input']}
-                        placeholder="e.g., machine learning, climate research..."
+                        placeholder="e.g., machine learning, climate research, etc."
                         value={keywordQuery}
                         onChange={handleKeywordChange}
                         disabled={loading}
@@ -187,7 +189,7 @@ function Faculty() {
                   </svg>
                 </div>
                 <h3>Start Your Search</h3>
-                <p>Enter a name, department, or institution to find faculty members</p>
+                <p>Enter search terms separated by commas to find faculty members</p>
               </div>
             ) : results?.length > 0 ? (
               <>
@@ -268,7 +270,7 @@ function Faculty() {
                     <line x1="15" y1="9" x2="15.01" y2="9"/>
                   </svg>
                 </div>
-                <p>No results found. Try a different search term.</p>
+                <p>No results found. Try different search terms or fewer filters.</p>
               </div>
             ) : null}
           </div>

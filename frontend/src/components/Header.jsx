@@ -76,7 +76,7 @@ function Header() {
 
   const handleViewProfile = () => {
     setIsDropdownOpen(false);
-    // TODO: Navigate to profile page when implemented
+    navigate(`/faculty/${faculty.faculty_id}`);
   };
 
   // Helper function to truncate text with ellipsis

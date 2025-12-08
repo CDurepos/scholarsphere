@@ -11,13 +11,12 @@ import os
 from datetime import date
 from typing import List, Dict, Tuple
 
-from scraping.schemas import Institution
-from scraping.utils.json_output import write_faculty_jsonl, write_institution_json
+from scraping.utils.json_output import write_faculty_jsonl
 
 base_url = 'https://www.uma.edu/directory/'
 
-UMA_NAME = "University of Maine at Augusta"
-UMA_INSTITUTION_ID = "uma"
+# Institution name must match exactly what's in data/institutions.json
+INSTITUTION_NAME = "University of Maine at Augusta"
 
 
 def scrape_faculty_url(url: str, first_name: str, middle: str, last_name: str) -> Dict:
@@ -102,26 +101,14 @@ def build_url(first_name: str, middle: str, last_name: str) -> str:
         return f"https://www.uma.edu/directory/staff/{first}-{last}/"
 
 
-def scrape_uma() -> Tuple[Institution, List[Dict]]:
+def scrape_uma() -> List[Dict]:
     """
-    Scrape UMA faculty data and return institution and faculty records.
+    Scrape UMA faculty data and return faculty records.
     
     Returns:
-        Tuple of (Institution, list) where list contains faculty dictionaries
-        with all attributes including MV attributes as arrays.
+        List of faculty dictionaries with all attributes including MV attributes as arrays.
+        Each record includes institution_name which references data/institutions.json.
     """
-    inst = Institution(
-        institution_id=UMA_INSTITUTION_ID,
-        name=UMA_NAME,
-        website_url="https://www.uma.edu",
-        institution_type="Public University",
-        street_addr=None,
-        city="Augusta",
-        state="ME",
-        country="USA",
-        zip_code=None,
-    )
-    
     first_names = []
     middle_names = []
     last_names = []
@@ -191,7 +178,7 @@ def scrape_uma() -> Tuple[Institution, List[Dict]]:
                     'phones': phones,
                     'departments': departments,
                     'titles': titles,
-                    'institution_id': inst.institution_id,
+                    'institution_name': INSTITUTION_NAME,
                     'start_date': date.today().isoformat(),
                     'end_date': None,
                 }
@@ -199,7 +186,7 @@ def scrape_uma() -> Tuple[Institution, List[Dict]]:
                 faculty_records.append(faculty_record)
                 print(f"[OK] {info.get('first_name')} {info.get('last_name')} | {info.get('title')}")
     
-    return inst, faculty_records
+    return faculty_records
 
 
 def main(output_dir: str = "scraping/out"):
@@ -211,7 +198,7 @@ def main(output_dir: str = "scraping/out"):
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    inst, faculty_records = scrape_uma()
+    faculty_records = scrape_uma()
     print(f"[INFO] Scraped {len(faculty_records)} faculty records")
     
     # Write faculty JSONL file
@@ -219,23 +206,7 @@ def main(output_dir: str = "scraping/out"):
     write_faculty_jsonl(faculty_records, faculty_output)
     print(f"[INFO] Wrote: {faculty_output}")
     
-    # Write institution JSON file
-    institution_output = os.path.join(output_dir, "uma_institution.json")
-    institution_dict = {
-        'institution_id': inst.institution_id,
-        'name': inst.name,
-        'website_url': inst.website_url,
-        'type': inst.institution_type,
-        'street_addr': inst.street_addr,
-        'city': inst.city,
-        'state': inst.state,
-        'country': inst.country,
-        'zip': inst.zip_code,
-    }
-    write_institution_json(institution_dict, institution_output)
-    print(f"[INFO] Wrote: {institution_output}")
-    
-    return faculty_output, institution_output
+    return faculty_output
 
 
 if __name__ == "__main__":

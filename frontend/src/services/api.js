@@ -128,13 +128,13 @@ export const logout = async () => {
  * @returns {Promise<Array>} Array of institution objects
  */
 export const getInstitutions = async () => {
-  const response = await fetch(`${API_BASE_URL}/institution`, {
+  const response = await fetch(`${API_BASE_URL}/institution/list`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
   });
-  return response.json().then(data => data.sort((a, b) => a.name.localeCompare(b.name)));
+  return response.json();
 };
 
 /**
@@ -146,6 +146,7 @@ export const getInstitutions = async () => {
  * @param {string} [params.last_name] - Faculty member's last name (partial match)
  * @param {string} [params.department] - Department name (partial match)
  * @param {string} [params.institution] - Institution name (partial match)
+ * @param {string} [params.keywords] - Keywords / Phrases separated by commas (partial match)
  * 
  * @returns {Promise<Array>} Array of faculty members matching the search criteria
  * 
@@ -162,25 +163,80 @@ export const getInstitutions = async () => {
  * ]
  */
 export const searchFaculty = async (params = {}) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add Authorization header if we have an access token
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
   const queryParams = new URLSearchParams();
   
   // If a general query is provided, pass it directly to the backend
   // The backend should handle parsing it appropriately
-  if (params.query) {
-    queryParams.append('query', params.query.trim());
+  const query = params.query?.trim();
+  const first_name = params.first_name?.trim();
+  const last_name = params.last_name?.trim();
+  const department = params.department?.trim();
+  const institution = params.institution?.trim();
+  const keywords = params.keywords?.trim();
+  
+  if (query) queryParams.append('query', query);
+  if (first_name) queryParams.append('first_name', first_name);
+  if (last_name) queryParams.append('last_name', last_name);
+  if (department) queryParams.append('department', department);
+  if (institution) queryParams.append('institution', institution);
+  if (keywords) queryParams.append('keywords', keywords);
+  
+  // Don't make API call if no search parameters provided
+  if (queryParams.toString() === '') {
+    return [];
   }
   
+  const response = await fetch(`${API_BASE_URL}/search/faculty?${queryParams.toString()}`, {
+    method: 'GET',
+    headers,
+  });
+  return response.json();
+};
+
+/**
+ * Public faculty lookup for signup flow (no authentication required)
+ * 
+ * This endpoint does NOT require authentication, allowing new users
+ * to search for their existing faculty record before creating an account.
+ * 
+ * @param {Object} params - Search parameters
+ * @param {string} [params.query] - General search query
+ * @param {string} [params.first_name] - Filter by first name
+ * @param {string} [params.last_name] - Filter by last name
+ * @param {string} [params.department] - Filter by department
+ * @param {string} [params.institution] - Filter by institution
+ * 
+ * @returns {Promise<Array>} Array of matching faculty members
+ */
+export const lookupFacultyPublic = async (params = {}) => {
+  const queryParams = new URLSearchParams();
+  
+  if (params.query) queryParams.append('query', params.query.trim());
   if (params.first_name) queryParams.append('first_name', params.first_name);
   if (params.last_name) queryParams.append('last_name', params.last_name);
   if (params.department) queryParams.append('department', params.department);
   if (params.institution) queryParams.append('institution', params.institution);
   
-  const response = await fetch(`${API_BASE_URL}/search/faculty?${queryParams.toString()}`, {
+  const response = await fetch(`${API_BASE_URL}/auth/lookup-faculty?${queryParams.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
   });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to search for faculty');
+  }
+  
   return response.json();
 };
 
@@ -306,7 +362,8 @@ export const checkFacultyExists = async (data) => {
   };
   
   // PRIORITY 1: Perfect match (first_name + last_name + institution_name)
-  const searchResultsWithInstitution = await searchFaculty({
+  // Uses public lookup endpoint (no auth required for signup flow)
+  const searchResultsWithInstitution = await lookupFacultyPublic({
     first_name: data.first_name,
     last_name: data.last_name,
     institution: data.institution_name,
@@ -324,7 +381,8 @@ export const checkFacultyExists = async (data) => {
   }
   
   // PRIORITY 2: Name match (first_name + last_name, wrong institution)
-  const searchResultsByNameOnly = await searchFaculty({
+  // Uses public lookup endpoint (no auth required for signup flow)
+  const searchResultsByNameOnly = await lookupFacultyPublic({
     first_name: data.first_name,
     last_name: data.last_name,
   });
@@ -417,7 +475,7 @@ export const updateFaculty = async (faculty_id, data) => {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
   
-  const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+  let response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
     method: 'PUT',
     credentials: 'include', // Include cookies
     headers,
@@ -429,14 +487,19 @@ export const updateFaculty = async (faculty_id, data) => {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;
-      const retryResponse = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
+      response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}`, {
         method: 'PUT',
         credentials: 'include',
         headers,
         body: JSON.stringify(data),
       });
-      return retryResponse.json();
     }
+  }
+  
+  // Check if response was successful
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(errorData.error || `Failed to update faculty: ${response.status} ${response.statusText}`);
   }
   
   return response.json();
@@ -661,6 +724,155 @@ export const checkCredentialsExist = async (faculty_id) => {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to check credentials');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Get personalized faculty recommendations for a user
+ * 
+ * @param {string} faculty_id - UUID of the faculty member to get recommendations for
+ * 
+ * @returns {Promise<Array>} Array of recommended faculty objects sorted by match_score
+ * 
+ * Example response:
+ * [
+ *   {
+ *     "faculty_id": "uuid",
+ *     "first_name": "Jane",
+ *     "last_name": "Smith",
+ *     "institution_name": "University of Maine",
+ *     "department_name": "Computer Science",
+ *     "match_score": 0.85,
+ *     "recommendation_type": "shared_keyword",
+ *     "recommendation_text": "Similar research interests"
+ *   },
+ *   ...
+ * ]
+ */
+export const getRecommendations = async (faculty_id) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add Authorization header if we have an access token
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/recommend/${faculty_id}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers,
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get recommendations');
+  }
+  
+  return response.json();
+};
+
+// ============================================================================
+// KEYWORD API FUNCTIONS
+// ============================================================================
+
+/**
+ * Search keywords by prefix for autocomplete
+ * 
+ * @param {string} searchTerm - Search prefix (min 2 characters)
+ * @param {number} [limit=10] - Max results to return
+ * 
+ * @returns {Promise<string[]>} Array of keyword names
+ * 
+ * Example response:
+ * ["machine learning", "macroeconomics", "macrobiology"]
+ */
+export const searchKeywords = async (searchTerm, limit = 10) => {
+  if (!searchTerm || searchTerm.trim().length < 2) {
+    return [];
+  }
+  
+  const response = await fetch(
+    `${API_BASE_URL}/search/keyword?q=${encodeURIComponent(searchTerm.trim())}&limit=${limit}`,
+    {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  
+  if (!response.ok) {
+    return [];
+  }
+  
+  return response.json();
+};
+
+/**
+ * Get all keywords (research interests) for a faculty member
+ * 
+ * @param {string} faculty_id - UUID of the faculty member
+ * 
+ * @returns {Promise<string[]>} Array of keyword names
+ */
+export const getFacultyKeywords = async (faculty_id) => {
+  const response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}/keyword`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get keywords');
+  }
+  
+  return response.json();
+};
+
+
+/**
+ * Replace all keywords for a faculty member with a new list
+ * 
+ * @param {string} faculty_id - UUID of the faculty member
+ * @param {string[]} keywords - Array of keyword names
+ * 
+ * @returns {Promise<Object>} Success response
+ */
+export const updateFacultyKeywords = async (faculty_id, keywords) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  let response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}/keyword`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers,
+    body: JSON.stringify({ keywords }),
+  });
+  
+  // Retry with refreshed token if unauthorized
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      response = await fetch(`${API_BASE_URL}/faculty/${faculty_id}/keyword`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({ keywords }),
+      });
+    }
+  }
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update keywords');
   }
   
   return response.json();

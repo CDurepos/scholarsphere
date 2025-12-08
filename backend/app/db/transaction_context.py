@@ -57,6 +57,7 @@ class TransactionContext:
         return False
 
 
-def start_transaction():
-    conn = get_connection()
+def start_transaction(conn=None):
+    if conn is None:
+        conn = get_connection()
     return TransactionContext(conn)
