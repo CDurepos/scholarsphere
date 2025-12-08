@@ -103,8 +103,8 @@ export function BasicInfoForm({ onSubmit, institutions, loading }) {
 export function ConfirmationStep({ initialData, onSubmit, loading, institutions, showConfirmation, onConfirm, onDeny, doPrefill, isExisting, matchType }) {
   // If we need to show confirmation first, show that
   if (showConfirmation) {
-    // Get the institution name to display (use the one from DB if available, otherwise from search)
-    const displayInstitution = initialData.institution_name || 'Not specified';
+    // Use the institution from DB for display, not the user-entered one
+    const displayInstitution = initialData.db_institution_name || initialData.institution_name || 'Not specified';
     
     return (
       <div className={styles['signup-step']}>
@@ -169,10 +169,11 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, institutions =
   const getInitialFormData = () => {
     if (doPrefill) {
       // Prefill with existing data (only first item from arrays)
+      // Use DB institution when prefilling so they see their actual institution
       return {
         first_name: initialData.first_name || '',
         last_name: initialData.last_name || '',
-        institution_name: initialData.institution_name || '',
+        institution_name: initialData.db_institution_name || initialData.institution_name || '',
         emails: initialData.emails && initialData.emails.length > 0 ? [initialData.emails[0]] : [''],
         phones: initialData.phones && initialData.phones.length > 0 ? [initialData.phones[0]] : [''],
         departments: initialData.departments && initialData.departments.length > 0 ? [initialData.departments[0]] : [''],
@@ -221,10 +222,11 @@ export function ProfileInfoForm({ initialData, onSubmit, loading, institutions =
       });
     } else {
       // User clicked "Yes" - prefill with existing data (only first item from arrays)
+      // Use DB institution when prefilling so they see their actual institution
       setFormData({
         first_name: initialData.first_name || '',
         last_name: initialData.last_name || '',
-        institution_name: initialData.institution_name || '',
+        institution_name: initialData.db_institution_name || initialData.institution_name || '',
         emails: initialData.emails && initialData.emails.length > 0 ? [initialData.emails[0]] : [''],
         phones: initialData.phones && initialData.phones.length > 0 ? [initialData.phones[0]] : [''],
         departments: initialData.departments && initialData.departments.length > 0 ? [initialData.departments[0]] : [''],

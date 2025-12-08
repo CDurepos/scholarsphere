@@ -79,6 +79,7 @@ function Signup() {
     first_name: '',
     last_name: '',
     institution_name: '',
+    db_institution_name: '', // Institution from DB for display in "Is this you?"
     faculty_id: null,
     signup_token: null, // Signup token for updating existing faculty
     exists: false,
@@ -154,6 +155,8 @@ function Signup() {
           first_name: data.first_name,
           last_name: data.last_name,
           institution_name: data.institution_name,
+          // Store DB institution separately for display in "Is this you?"
+          db_institution_name: response.faculty.institution_name || data.institution_name,
           faculty_id: facultyId,
           signup_token: signupToken, // Store signup token for later use
           exists: true,
