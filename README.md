@@ -6,6 +6,8 @@ Built by students, for the COS457 Database Systems course at the University of S
 
 # How to Run
 
+Written by Clayton Durepos
+
 ## Requirements
 
 To run the ScholarSphere application, you must first have a running MySQL server on your machine, `sudo` access on your machine, and a `.env` file at the root of the project repository. This should hold the following variables:

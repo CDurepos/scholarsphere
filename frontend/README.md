@@ -1,106 +1,132 @@
 # ScholarSphere Frontend
 
-React + Vite frontend application for ScholarSphere, a platform to connect Maine Faculty for research collaboration.
+Written by Clayton Durepos
 
-## Features
-
-- **Landing Page**: Forces users to choose between Login or Signup
-- **Login Flow**: Simple username/password authentication
-- **Multi-Step Signup Flow**:
-  1. **Step 1**: Name and institution check
-  2. **Step 2a** (if exists): "Does this look right?" - review and edit existing faculty data
-  2. **Step 2b** (if new): Collect additional information (email, title, department, etc.)
-  3. **Step 3**: Create credentials (username & password)
-- **Dashboard**: Main application page after successful login
+React + Vite frontend application for ScholarSphere, a platform to connect Maine faculty for research collaboration.
 
 ## Project Structure
 
 ```
 frontend/
 ├── src/
-│   ├── components/          # React components
-│   │   ├── Landing.jsx      # Landing page (Login/Signup choice)
-│   │   ├── Login.jsx        # Login form
-│   │   ├── Signup.jsx       # Multi-step signup orchestrator
-│   │   ├── SignupStep1.jsx  # Name and institution
-│   │   ├── SignupStep2Exists.jsx  # Review/edit existing data
-│   │   ├── SignupStep2New.jsx      # Collect new user data
-│   │   ├── SignupStep3.jsx  # Credentials setup
-│   │   └── Dashboard.jsx    # Main dashboard
-│   ├── services/
-│   │   └── api.js           # API service with placeholder endpoints
-│   ├── App.jsx             # Main app with routing
-│   └── main.jsx            # Entry point
+│   ├── components/          # App-wide reusable components
+│   ├── features/            # Page-specific components
+│   ├── pages/               # Page components (routes)
+│   ├── services/            # API service layer
+│   ├── assets/              # Static assets (images, etc.)
+│   ├── App.jsx              # Main app component with routing
+│   ├── App.css              # Global app styles
+│   ├── main.jsx             # Application entry point
+│   └── index.css            # Global CSS variables and base styles
 └── package.json
 ```
 
-## API Endpoints (Placeholder)
+## Directory Purposes
 
-All API endpoints are documented in `src/services/api.js` with inline comments describing:
-- Request method and path
-- Request body structure
-- Response structure
-- Example responses
+### `components/` - App-Wide Components
 
-### Key Endpoints:
+Reusable components used across multiple pages throughout the application.
 
-1. **POST /api/faculty/check** - Check if faculty exists
-2. **POST /api/faculty/create** - Create new faculty member
-3. **PUT /api/faculty/:faculty_id** - Update existing faculty
-4. **POST /api/auth/register** - Register credentials
-5. **POST /api/auth/login** - Login
-6. **GET /api/institutions** - Get list of institutions
+**Examples:**
+- `Header.jsx` - Navigation header with profile dropdown, used on all authenticated pages
+- `ConnectionParticles.jsx` - Animated particle background component, used on landing and auth pages
 
-## Getting Started
+**Characteristics:**
+- Shared across multiple pages
+- Self-contained with their own styles (CSS modules)
+- No page-specific logic
 
-### Install Dependencies
+### `features/` - Page-Specific Components
 
-```bash
-npm install
+Components that are specific to a particular page or feature, but are complex enough to be extracted into separate files.
+
+**Examples:**
+- `signup/SignupSteps.jsx` - Multi-step signup form components (BasicInfoForm, ConfirmationStep, ProfileInfoForm, CredentialsForm)
+
+**Characteristics:**
+- Used by a single page or closely related pages
+- Contains page-specific business logic
+- Organized by feature name (e.g., `signup/`, `recommendations/`)
+
+### `pages/` - Page Components
+
+Top-level page components that correspond to routes in the application.
+
+**Examples:**
+- `Dashboard.jsx` - Main dashboard page showing recommendations
+- `Landing.jsx` - Landing page with hero section
+- `Login.jsx` - Login page
+- `Signup.jsx` - Signup page orchestrator
+- `Profile.jsx` - Faculty profile page
+- `Search/` - Search pages (Faculty, Equipment, Grants, Institutions)
+
+**Characteristics:**
+- One component per route
+- Each page has its own CSS module (e.g., `Dashboard.module.css`)
+- May use components from `components/` and `features/`
+- Handle page-level state and routing
+
+### `services/` - API Service Layer
+
+API communication layer that handles all HTTP requests to the backend.
+
+**Files:**
+- `api.js` - Contains all API service functions for:
+  - Authentication (login, register, refresh, logout)
+  - Faculty operations (get, create, update, search)
+  - Keywords (search, get, update)
+  - Recommendations (generate, get)
+  - Search (faculty, keywords, equipment)
+  - Institutions (list)
+
+**Characteristics:**
+- Centralized API communication
+- Handles token management and refresh
+- Provides consistent error handling
+- Returns promises for async operations
+
+## Styling
+
+The application uses **CSS Modules** for component-scoped styling:
+
+- Each component has a corresponding `.module.css` file
+- Styles are imported and used via `styles.className`
+- Global styles are in `index.css` (CSS variables, base styles)
+- App-wide styles are in `App.css`
+
+**Example:**
+```jsx
+import styles from './Dashboard.module.css';
+
+function Dashboard() {
+  return <div className={styles['dashboard-container']}>...</div>;
+}
 ```
-
-### Development Server
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:5173` (or the next available port).
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-### Preview Production Build
-
-```bash
-npm run preview
-```
-
-## Authentication Flow
-
-1. User lands on `/` (Landing page)
-2. User chooses Login or Signup
-3. **Login**: Username/password → Dashboard
-4. **Signup**: 
-   - Step 1: Name/Institution → Check if exists
-   - Step 2a (exists): Review/edit → Step 3
-   - Step 2b (new): Collect info → Step 3
-   - Step 3: Credentials → Redirect to Login
 
 ## State Management
 
-Currently using:
-- React `useState` for component-level state
-- `localStorage` for authentication tokens and faculty data
-- React Router for navigation
+- **React `useState`** - Component-level state
+- **React `useEffect`** - Side effects and data fetching
+- **localStorage** - Persistence for:
+  - Authentication tokens (access token)
+  - Faculty data
+  - User preferences (e.g., dark mode)
+- **React Router** - Navigation and route management
 
-## Next Steps
+## Authentication
 
-1. Replace placeholder API endpoints with actual backend URLs
-2. Implement proper authentication context/state management
-3. Add error handling and loading states
-4. Implement protected routes with token validation
-5. Add form validation and better UX feedback
+Authentication is handled via JWT tokens:
+
+- **Access tokens** - Stored in memory/localStorage, short-lived
+- **Refresh tokens** - Stored in HttpOnly cookies, long-lived
+- Token refresh happens automatically via `api.js` interceptors
+- Protected routes use the `require_auth` pattern (handled by backend)
+
+## Dark Mode
+
+The application supports dark mode:
+
+- Toggle available in the Header dropdown (authenticated users only)
+- Preference stored in `localStorage`
+- CSS variables in `index.css` switch between light and dark themes
+- Uses `:root.dark` selector for dark mode styles
