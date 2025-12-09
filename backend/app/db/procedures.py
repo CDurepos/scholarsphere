@@ -6,9 +6,14 @@ from backend.app.db.transaction_context import TransactionContext
 
 from datetime import datetime, date
 
+#TODO: Do not use a single file for all procedures. Split into multiple files.
 
+# ============================================================================
+# SEARCH DB LAYER FUNCTIONS
+# ============================================================================
 def sql_search_faculty(
-    transaction_context: TransactionContext, **filters: dict[str, str]
+    transaction_context: TransactionContext,
+    **filters: dict[str, str],
 ) -> list[dict]:
     """
     Search for faculty in the database based on search filters.
@@ -79,6 +84,174 @@ def sql_search_faculty_by_keyword(
     return results[0] if results else []
 
 
+def sql_batch_get_faculty_keywords(
+    transaction_context: TransactionContext,
+    faculty_ids: list[str],
+) -> list[dict]:
+    """
+    Retrieve all keywords for a batch of faculty members in a single query.
+    
+    Keywords are combined from two sources:
+    1. Direct research keywords (faculty_researches_keyword)
+    2. Publication keywords (via publication_authored_by_faculty and 
+      publication_explores_keyword)
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_ids: List of faculty UUIDs to fetch keywords for.
+    
+    Returns:
+        list[dict]: List of dicts with 'faculty_id' and 'keyword' keys.
+    """
+    if not faculty_ids:
+        return []
+    
+    # Convert list to comma-separated string for the stored procedure
+    faculty_ids_str = ",".join(faculty_ids)
+    
+    cursor = transaction_context.cursor
+    cursor.callproc("batch_get_faculty_keywords", (faculty_ids_str,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+def sql_read_publication_authored_by_faculty_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> list[dict]:
+    """
+    Read the publications that a faculty member has authored.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_publication_authored_by_faculty_by_faculty", (faculty_id,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+def sql_read_faculty_researches_keyword_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> list[dict]:
+    """
+    Read the keywords that a faculty member researches.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_faculty_researches_keyword_by_faculty", (faculty_id,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+def sql_search_keywords(
+    transaction_context: TransactionContext,
+    search_term: str,
+    limit: int = 10,
+) -> list[dict]:
+    """
+    Search keywords by prefix for autocomplete.
+    
+    Args:
+        transaction_context: Database transaction context.
+        search_term: Search prefix string.
+        limit: Maximum number of results (default 10).
+    
+    Returns:
+        list[dict]: List of keyword records with 'name' field.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("search_keywords", (search_term, limit))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+def sql_add_keyword_for_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+    keyword_name: str,
+) -> None:
+    """
+    Add a keyword for a faculty member (creates keyword if needed).
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_id: UUID of the faculty member.
+        keyword_name: Keyword name to add.
+    
+    Returns:
+        None
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("add_keyword_for_faculty", (faculty_id, keyword_name))
+    # Consume result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_delete_faculty_researches_keyword(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+    keyword_name: str,
+) -> None:
+    """
+    Remove a keyword from a faculty member's research interests.
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_id: UUID of the faculty member.
+        keyword_name: Keyword name to remove.
+    
+    Returns:
+        None
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("delete_faculty_researches_keyword", (faculty_id, keyword_name))
+    # Consume result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_delete_all_faculty_keywords(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Delete all keywords for a faculty member.
+    
+    Args:
+        transaction_context: Database transaction context.
+        faculty_id: UUID of the faculty member.
+    
+    Returns:
+        None
+    """
+    cursor = transaction_context.cursor
+    cursor.execute(
+        "DELETE FROM faculty_researches_keyword WHERE faculty_id = %s",
+        (faculty_id,)
+    )
+
+def sql_read_publication_explores_keyword_by_publication(
+    transaction_context: TransactionContext,
+    publication_id: str,
+) -> list[dict]:
+    """
+    Read the keywords that a publication explores.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_publication_explores_keyword_by_publication", (publication_id,))
+    results = [r.fetchall() for r in cursor.stored_results()]
+    return results[0] if results else []
+
+
+# ============================================================================
+# GENERATE KEYWORD DB LAYER FUNCTIONS
+# ============================================================================
 def sql_count_faculty_keyword_generations(
     transaction_context: TransactionContext,
     faculty_id: str,
@@ -143,42 +316,104 @@ def sql_create_faculty_generates_keyword(
     return results[0] if results else []
 
 
-# The following procedures starting with "sql_recommend_" increment the match scores between faculty members in the faculty_recommended_to_faculty table.
-def sql_recommend_faculty_by_department():
-    return []
+# ============================================================================
+# RECOMMENDATION DB LAYER FUNCTIONS
+# ============================================================================
 
-
-def sql_recommend_faculty_by_grant_keyword():
-    return []
-
-
-def sql_recommend_faculty_by_grants():
-    return []
-
-
-def sql_recommend_faculty_by_institution():
-    return []
-
-
-def sql_recommend_faculty_by_publication_keyword():
-    return []
-
-
-def sql_recommend_faculty_by_shared_keyword():
-    return []
-
-
-def sql_get_recommendations(**filters: dict[str, str]):
+def sql_generate_all_recommendations(
+    transaction_context: TransactionContext,
+) -> None:
     """
-    Get recommendations for a user based on the faculty_recommended_to_faculty table.
-
+    Generate all faculty recommendations for registered users.
+    
+    Calls individual recommendation procedures in priority order (low to high)
+    so higher-priority matches overwrite lower-priority ones.
+    
+    Recommendation Types (ENUM values, priority order):
+    ===================================================
+    0.10 - shared_institution      : Both at the same institution
+    0.20 - shared_department       : Both in the same department
+    0.30 - shared_grant            : Both have the same grant
+    0.33 - publication_to_grant    : A published on X, B has grant for X
+    0.34 - grant_to_publication    : A has grant for X, B published on X
+    0.41 - grant_to_keyword        : A has grant for X, B researches X
+    0.42 - keyword_to_grant        : A researches X, B has grant for X
+    0.43 - publication_to_keyword  : A published on X, B researches X
+    0.44 - keyword_to_publication  : A researches X, B published on X
+    0.50 - shared_keyword          : Both research the same keyword
+    
     Args:
-        filters (dict): A dictionary of filters to use for getting recommendations. Must contain all the keys
-            in get_valid_recommend_filters(), which should be validated by the service layer.
-
+        transaction_context (TransactionContext): A transaction context object.
+    
     Returns:
-        list: A list of dictionaries, each containing the recommended faculty information.
+        None: Recommendations are stored in faculty_recommended_to_faculty table.
     """
+    cursor = transaction_context.cursor
+    cursor.callproc("generate_all_recommendations")
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_generate_recommendations_for_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Generate recommendations for a single faculty member.
+    
+    Called immediately after signup to provide instant recommendations
+    without waiting for the 12-hour event.
+    
+    Args:
+        transaction_context (TransactionContext): A transaction context object.
+        faculty_id (str): UUID of the faculty member to generate recommendations for.
+    
+    Returns:
+        None: Recommendations are stored in faculty_recommended_to_faculty table.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("generate_recommendations_for_faculty", (faculty_id,))
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        for result in stored_results:
+            result.fetchall()
+    except:
+        pass
+
+
+def sql_read_recommendations_for_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> list[dict]:
+    """
+    Get personalized recommendations for a specific faculty member.
+    
+    Args:
+        transaction_context (TransactionContext): A transaction context object.
+        faculty_id (str): UUID of the faculty member to get recommendations for.
+    
+    Returns:
+        list[dict]: List of recommended faculty with match details.
+            Each dict contains:
+            - faculty_id: UUID of recommended faculty
+            - first_name, last_name, biography: Faculty info
+            - institution_name: Primary institution
+            - department_name: Primary department
+            - match_score: Score for ranking (0.0 to 1.0)
+            - recommendation_type: ENUM value (e.g., 'shared_keyword')
+            - recommendation_text: Human-readable text (e.g., "Similar research interests")
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_recommendations_for_faculty", (faculty_id,))
+    stored_results = list(cursor.stored_results())
+    if stored_results:
+        return stored_results[0].fetchall()
     return []
 
 
@@ -746,40 +981,6 @@ def sql_read_faculty_works_at_institution_by_faculty(
     return []
 
 
-def sql_read_faculty_complete_optimized(
-    transaction_context: TransactionContext,
-    faculty_id: str,
-) -> dict | None:
-    """
-    Optimized function to read complete faculty profile with all related data in a single query.
-    
-    Uses the read_faculty_complete_optimized stored procedure which performs all JOINs
-    and aggregations in one database query instead of multiple separate queries.
-    
-    Args:
-        transaction_context (TransactionContext): A transaction context object to use for the database connection.
-        faculty_id (str): UUID of the faculty member.
-    
-    Returns:
-        dict | None: Complete faculty record with aggregated fields:
-            - All base faculty fields
-            - emails: Comma-separated string (or None) - needs to be split into list
-            - phones: Comma-separated string (or None) - needs to be split into list
-            - departments: Comma-separated string (or None) - needs to be split into list
-            - titles: Comma-separated string (or None) - needs to be split into list
-            - institution_name: String (or None)
-    
-    Developer: Owen Leitzell
-    Created for query optimization assignment
-    """
-    cursor = transaction_context.cursor
-    cursor.callproc("read_faculty_complete_optimized", (faculty_id,))
-    stored_results = list(cursor.stored_results())
-    if stored_results:
-        return stored_results[0].fetchone()
-    return None
-
-
 def sql_read_institution(
     transaction_context: TransactionContext,
     institution_id: str,
@@ -1006,3 +1207,60 @@ def sql_update_session(
     except:
         pass
     return cursor.rowcount
+
+def sql_delete_faculty_works_at_institution_by_faculty(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> None:
+    """
+    Delete all institution relationships for a faculty member.
+
+    Args:
+        transaction_context (TransactionContext): A transaction context object to use for the database connection.
+        faculty_id (str): UUID of the faculty member.
+
+    Returns:
+        None: No result set.
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("delete_faculty_works_at_institution_by_faculty", (faculty_id,))
+    # Consume any result set
+    try:
+        stored_results = list(cursor.stored_results())
+        if stored_results:
+            stored_results[0].fetchall()
+    except:
+        pass
+
+def sql_read_faculty_complete_optimized(
+    transaction_context: TransactionContext,
+    faculty_id: str,
+) -> dict | None:
+    """
+    Optimized function to read complete faculty profile with all related data in a single query.
+    
+    Uses the read_faculty_complete_optimized stored procedure which performs all JOINs
+    and aggregations in one database query instead of multiple separate queries.
+    
+    Args:
+        transaction_context (TransactionContext): A transaction context object to use for the database connection.
+        faculty_id (str): UUID of the faculty member.
+    
+    Returns:
+        dict | None: Complete faculty record with aggregated fields:
+            - All base faculty fields
+            - emails: Comma-separated string (or None) - needs to be split into list
+            - phones: Comma-separated string (or None) - needs to be split into list
+            - departments: Comma-separated string (or None) - needs to be split into list
+            - titles: Comma-separated string (or None) - needs to be split into list
+            - institution_name: String (or None)
+    
+    Developer: Owen Leitzell
+    Created for query optimization assignment
+    """
+    cursor = transaction_context.cursor
+    cursor.callproc("read_faculty_complete_optimized", (faculty_id,))
+    stored_results = list(cursor.stored_results())
+    if stored_results:
+        return stored_results[0].fetchone()
+    return None
