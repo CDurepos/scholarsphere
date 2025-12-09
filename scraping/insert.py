@@ -160,16 +160,6 @@ def generate_faculty_id() -> str:
     return str(uuid.uuid4())
 
 
-def generate_equipment_id() -> str:
-    """
-    Generate random UUID for an equipment item.
-
-    Returns:
-        UUID string
-    """
-    return str(uuid.uuid4())
-
-
 def get_institutions_from_json() -> List[Dict[str, Any]]:
     """
     Load institutions from the data/institutions.json file.
@@ -666,26 +656,26 @@ def insert_equipment_from_csv(db: DatabaseConnection) -> bool:
             for row in reader:
                 try:
                     # Get equipment fields
+                    equipment_id = row.get('eq_id') or row.get('equipment_id')
                     name = row.get('name')
                     description = row.get('description', '')
                     availability = row.get('availability', '')
-                    
-                    # Generate equipment_id (always generate, like institution_id)
-                    equipment_id = generate_equipment_id()
                     
                     # Handle institution lookup
                     institution_id = None
                     institution_name = row.get('institution_name')
                     
                     if institution_name:
-                        # Get or create institution by name (looks up in data/institutions.json)
-                        institution_id = get_or_create_institution_by_name(
-                            institution_name.strip(), db, cursor
+                        # Look up institution_id by name
+                        cursor.execute(
+                            "SELECT institution_id FROM institution WHERE name = %s",
+                            (institution_name.strip(),)
                         )
-                        if not institution_id:
-                            print(f"[WARN] Institution '{institution_name}' not found in database or JSON. Skipping equipment '{name}'")
-                            failed += 1
-                            continue
+                        result = cursor.fetchone()
+                        if result:
+                            institution_id = result['institution_id']
+                        else:
+                            print(f"[WARN] Institution '{institution_name}' not found in database. Skipping equipment '{name}'")
                     elif row.get('institution_id'):
                         # Use institution_id directly if provided
                         institution_id = row.get('institution_id').strip()
@@ -702,6 +692,12 @@ def insert_equipment_from_csv(db: DatabaseConnection) -> bool:
                         print(f"[WARN] No institution_name or institution_id provided for equipment '{name}'. Skipping.")
                         failed += 1
                         continue
+                    
+                    # Generate equipment_id if not provided
+                    if not equipment_id or not equipment_id.strip():
+                        equipment_id = str(uuid.uuid4())
+                    else:
+                        equipment_id = equipment_id.strip()
                     
                     # Validate required fields
                     if not name or not name.strip():
@@ -787,7 +783,63 @@ def main():
     print("[INFO] Institutions will be loaded from data/institutions.json")
 
     print("\n" + "=" * 60)
-    print("Step 1: Inserting Faculty Records")
+    print("Step 1: Inserting Institutions from data/institutions.json")
+    print("=" * 60)
+    
+    # Insert all institutions from JSON file
+    institutions = get_institutions_from_json()
+    if institutions:
+        print(f"[INFO] Loading {len(institutions)} institutions from data/institutions.json...")
+        conn = None
+        cursor = None
+        try:
+            conn = db.get_connection()
+            cursor = conn.cursor(dictionary=True)
+            conn.start_transaction()
+            
+            successful_institutions = 0
+            failed_institutions = 0
+            
+            for inst in tqdm(institutions, desc="Inserting institutions"):
+                institution_name = inst.get('name')
+                if institution_name:
+                    institution_id = get_or_create_institution_by_name(
+                        institution_name, db, cursor
+                    )
+                    if institution_id:
+                        successful_institutions += 1
+                    else:
+                        failed_institutions += 1
+                        print(f"[WARN] Failed to insert institution: {institution_name}")
+                else:
+                    failed_institutions += 1
+                    print(f"[WARN] Institution missing name field: {inst}")
+            
+            conn.commit()
+            print(f"[OK] Institution insertion complete: {successful_institutions} successful, {failed_institutions} failed")
+        except Exception as e:
+            if conn and conn.in_transaction:
+                conn.rollback()
+            print(f"[ERROR] Failed to insert institutions: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    else:
+        print("[WARN] No institutions found in data/institutions.json")
+
+    print("\n" + "=" * 60)
+    print("Step 2: Inserting Equipment Records from CSV")
+    print("=" * 60)
+    
+    # Insert all equipment records from CSV
+    insert_equipment_from_csv(db)
+
+    print("\n" + "=" * 60)
+    print("Step 3: Inserting Faculty Records")
     print("=" * 60)
 
     total_stats = {
@@ -847,7 +899,7 @@ def main():
         )
 
     print("\n" + "=" * 60)
-    print("Step 2: Inserting Publication Records")
+    print("Step 4: Inserting Publication Records")
     print("=" * 60)
 
     publications_inserted = 0
@@ -887,23 +939,6 @@ def main():
         print(f"[WARN] Failed to unload model: {str(e)}")
 
     print(f"\n[INFO] Inserted {publications_inserted} publications")
-
-    print("\n" + "=" * 60)
-    print("Step 3: Inserting Equipment Records")
-    print("=" * 60)
-
-    # Insert equipment from CSV
-    equipment_csv_path = Path(__file__).parent.parent / "scraping" / "equipment" / "equipment_demo.csv"
-    if equipment_csv_path.exists():
-        print(f"\n[INFO] Processing equipment from {equipment_csv_path}...")
-        equipment_success = insert_equipment_from_csv(db)
-        if equipment_success:
-            print("[OK] Equipment insertion completed")
-        else:
-            print("[WARN] Equipment insertion encountered errors (see above)")
-    else:
-        print(f"[WARN] Equipment CSV file not found at {equipment_csv_path}. Skipping equipment insertion.")
-
     print("\n[INFO] Data insertion complete!")
 
 
