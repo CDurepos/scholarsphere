@@ -915,7 +915,7 @@ def main():
         )
 
     print("\n" + "=" * 60)
-    print("Step 2: Inserting Publication Records")
+    print("Step 4: Inserting Publication Records")
     print("=" * 60)
 
     publications_inserted = 0
