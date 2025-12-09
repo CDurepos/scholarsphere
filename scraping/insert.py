@@ -180,6 +180,68 @@ def get_institutions_from_json() -> List[Dict[str, Any]]:
         return []
 
 
+def insert_all_institutions_from_json(db: DatabaseConnection):
+    """
+    Insert all institutions from data/institutions.json into the database.
+    
+    Args:
+        db: DatabaseConnection instance
+    """
+    institutions = get_institutions_from_json()
+    
+    if not institutions:
+        return
+    
+    conn = db.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    for institution_data in tqdm(institutions, desc="Inserting institutions"):
+        institution_name = institution_data.get('name')
+        
+        # Check if institution already exists
+        cursor.execute(
+            "SELECT institution_id FROM institution WHERE name = %s",
+            (institution_name.strip(),)
+        )
+        result = cursor.fetchone()
+        
+        if result:
+            # Institution already exists, skip
+            continue
+        
+        # Generate unique institution_id
+        institution_id = str(uuid.uuid4())
+        
+        cursor.callproc(
+            "create_institution",
+            (
+                institution_id,
+                institution_data.get('name'),
+                institution_data.get('street_addr'),
+                institution_data.get('city'),
+                institution_data.get('state'),
+                institution_data.get('country', 'USA'),
+                institution_data.get('zip'),
+                institution_data.get('website_url'),
+                institution_data.get('type'),
+            )
+        )
+        
+        # Consume any result set
+        try:
+            stored_results = list(cursor.stored_results())
+            if stored_results:
+                stored_results[0].fetchall()
+        except:
+            pass
+        
+        print(f"[OK] Inserted institution: {institution_name} ({institution_id})")
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
 def get_or_create_institution_by_name(
     institution_name: str, db: DatabaseConnection, cursor=None
 ) -> Optional[str]:
@@ -613,20 +675,120 @@ def insert_publication_explores_keyword(
     return True
 
 
+def insert_equipment_record(
+    record: Dict[str, Any], db: DatabaseConnection
+) -> bool:
+    """
+    Insert a single equipment record into the database.
+
+    Args:
+        record: Equipment dictionary with name, description, availability, institution_name
+        db: DatabaseConnection instance
+
+    Returns:
+        True if insertion is successful, else False
+    """
+    conn = None
+    cursor = None
+
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        conn.start_transaction()
+
+        name = record.get("name")
+        description = record.get("description", "")
+        availability = record.get("availability", "")
+        institution_name = record.get("institution_name")
+
+        # Validate required fields
+        if not name or not name.strip():
+            print(f"[WARN] Equipment name is required. Skipping equipment record.")
+            return False
+
+        if not availability or not availability.strip():
+            print(f"[WARN] Equipment availability is required. Skipping equipment '{name}'.")
+            return False
+
+        # Look up institution_id from institution_name
+        institution_id = None
+        if institution_name:
+            cursor.execute(
+                "SELECT institution_id FROM institution WHERE name = %s",
+                (institution_name.strip(),)
+            )
+            result = cursor.fetchone()
+            if result:
+                institution_id = result['institution_id']
+            else:
+                print(f"[WARN] Institution '{institution_name}' not found in database. Skipping equipment '{name}'")
+                return False
+        else:
+            print(f"[WARN] No institution_name provided for equipment '{name}'. Skipping.")
+            return False
+
+        # Generate unique equipment_id
+        equipment_id = str(uuid.uuid4())
+
+        # Truncate fields to match database constraints
+        name = name.strip()[:64] if len(name.strip()) > 64 else name.strip()
+        description = description.strip()[:2048] if len(description.strip()) > 2048 else description.strip()
+        availability = availability.strip()[:2048] if len(availability.strip()) > 2048 else availability.strip()
+
+        # Call create_equipment stored procedure
+        db.call_procedure(
+            cursor,
+            "create_equipment",
+            (
+                equipment_id,
+                name,
+                description if description else None,
+                availability,
+                institution_id
+            )
+        )
+        
+        # Consume result set
+        try:
+            stored_results = list(cursor.stored_results())
+            if stored_results:
+                stored_results[0].fetchall()
+        except:
+            pass
+
+        conn.commit()
+        print(f"[OK] Inserted equipment: {name} ({equipment_id})")
+        return True
+
+    except Exception as e:
+        if conn and conn.in_transaction:
+            conn.rollback()
+        print(
+            f"[ERROR] Failed to insert equipment {record.get('name', 'unknown')}: {str(e)}"
+        )
+        return False
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 def insert_equipment_from_csv(db: DatabaseConnection) -> bool:
     """
     Insert equipment records from scraping/equipment/equipment_demo.csv into the database.
     
     Reads the CSV file and for each equipment record:
-    - If the CSV has institution_name, looks up the institution_id from the institution table
-    - If the CSV has institution_id, uses it directly
+    - Generates a unique equipment_id
+    - Looks up the institution_id from the institution table using institution_name
     - Creates equipment records using the create_equipment stored procedure
     
     Args:
         db: DatabaseConnection instance
     
     Returns:
-        True if insertion is successful, else False
+        True if at least one insertion is successful, else False
     """
     # Get the path to the CSV file
     project_root = Path(__file__).parent.parent
@@ -636,132 +798,34 @@ def insert_equipment_from_csv(db: DatabaseConnection) -> bool:
         print(f"[ERROR] Equipment CSV file not found at {csv_path}")
         return False
     
-    conn = None
-    cursor = None
+    successful = 0
+    failed = 0
     
     try:
-        conn = db.get_connection()
-        cursor = conn.cursor(dictionary=True)
-        conn.start_transaction()
-        
-        successful = 0
-        failed = 0
-        
         with open(csv_path, 'r', encoding='utf-8') as f:
             # Read CSV, skipping comment lines
             reader = csv.DictReader(
                 (line for line in f if not line.strip().startswith('#') and line.strip())
             )
             
-            for row in reader:
-                try:
-                    # Get equipment fields
-                    equipment_id = row.get('eq_id') or row.get('equipment_id')
-                    name = row.get('name')
-                    description = row.get('description', '')
-                    availability = row.get('availability', '')
-                    
-                    # Handle institution lookup
-                    institution_id = None
-                    institution_name = row.get('institution_name')
-                    
-                    if institution_name:
-                        # Look up institution_id by name
-                        cursor.execute(
-                            "SELECT institution_id FROM institution WHERE name = %s",
-                            (institution_name.strip(),)
-                        )
-                        result = cursor.fetchone()
-                        if result:
-                            institution_id = result['institution_id']
-                        else:
-                            print(f"[WARN] Institution '{institution_name}' not found in database. Skipping equipment '{name}'")
-                            failed += 1
-                            continue
-                    elif row.get('institution_id'):
-                        # Use institution_id directly if provided
-                        institution_id = row.get('institution_id').strip()
-                        # Verify it exists
-                        cursor.execute(
-                            "SELECT institution_id FROM institution WHERE institution_id = %s",
-                            (institution_id,)
-                        )
-                        if not cursor.fetchone():
-                            print(f"[WARN] Institution ID '{institution_id}' not found in database. Skipping equipment '{name}'")
-                            failed += 1
-                            continue
-                    else:
-                        print(f"[WARN] No institution_name or institution_id provided for equipment '{name}'. Skipping.")
-                        failed += 1
-                        continue
-                    
-                    # Generate equipment_id if not provided
-                    if not equipment_id or not equipment_id.strip():
-                        equipment_id = str(uuid.uuid4())
-                    else:
-                        equipment_id = equipment_id.strip()
-                    
-                    # Validate required fields
-                    if not name or not name.strip():
-                        print(f"[WARN] Equipment name is required. Skipping row.")
-                        failed += 1
-                        continue
-                    
-                    if not availability or not availability.strip():
-                        print(f"[WARN] Equipment availability is required. Skipping equipment '{name}'.")
-                        failed += 1
-                        continue
-                    
-                    # Truncate fields to match database constraints
-                    name = name.strip()[:64] if len(name.strip()) > 64 else name.strip()
-                    description = description.strip()[:2048] if len(description.strip()) > 2048 else description.strip()
-                    availability = availability.strip()[:2048] if len(availability.strip()) > 2048 else availability.strip()
-                    
-                    # Call create_equipment stored procedure
-                    db.call_procedure(
-                        cursor,
-                        "create_equipment",
-                        (
-                            equipment_id,
-                            name,
-                            description if description else None,
-                            availability,
-                            institution_id
-                        )
-                    )
-                    
-                    # Consume result set
-                    try:
-                        stored_results = list(cursor.stored_results())
-                        if stored_results:
-                            stored_results[0].fetchall()
-                    except:
-                        pass
-                    
+            records = list(reader)
+            total_records = len(records)
+            
+            for record in tqdm(records, total=total_records, desc="Inserting equipment records"):
+                success = insert_equipment_record(record, db)
+                if success:
                     successful += 1
-                    
-                except Exception as e:
-                    print(f"[ERROR] Failed to insert equipment '{row.get('name', 'unknown')}': {str(e)}")
+                else:
                     failed += 1
-                    continue
         
-        conn.commit()
-        print(f"[OK] Equipment insertion complete: {successful} successful, {failed} failed")
-        return True
+        print(f"\n[INFO] Equipment insertion complete: {successful} successful, {failed} failed")
+        return successful > 0
         
     except Exception as e:
-        if conn and conn.in_transaction:
-            conn.rollback()
-        print(f"[ERROR] Failed to insert equipment from CSV: {str(e)}")
+        print(f"[ERROR] Failed to process equipment CSV: {str(e)}")
         import traceback
         traceback.print_exc()
         return False
-        
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 
 def main():
@@ -783,6 +847,12 @@ def main():
     print(f"\n[INFO] Found {len(faculty_files)} faculty file(s)")
     print(f"[INFO] Found {len(publication_files)} publication file(s)")
     print("[INFO] Institutions will be loaded from data/institutions.json")
+
+    print("\n" + "=" * 60)
+    print("Step 0: Inserting Institutions from JSON")
+    print("=" * 60)
+
+    insert_all_institutions_from_json(db)
 
     print("\n" + "=" * 60)
     print("Step 1: Inserting Faculty Records")
@@ -885,6 +955,18 @@ def main():
         print(f"[WARN] Failed to unload model: {str(e)}")
 
     print(f"\n[INFO] Inserted {publications_inserted} publications")
+
+    print("\n" + "=" * 60)
+    print("Step 3: Inserting Equipment Records")
+    print("=" * 60)
+
+    try:
+        insert_equipment_from_csv(db)
+    except Exception as e:
+        print(f"[ERROR] Failed to insert equipment: {e}")
+        import traceback
+        traceback.print_exc()
+
     print("\n[INFO] Data insertion complete!")
 
 
