@@ -11,11 +11,6 @@ CREATE TABLE IF NOT EXISTS faculty_recommended_to_faculty (
         'shared_keyword',
         'keyword_to_publication',
         'publication_to_keyword',
-        'keyword_to_grant',
-        'grant_to_keyword',
-        'grant_to_publication',
-        'publication_to_grant',
-        'shared_grant',
         'shared_department'
     ) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

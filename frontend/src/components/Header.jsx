@@ -176,20 +176,6 @@ function Header() {
                     Faculty
                   </Link>
                   <Link 
-                    to="/search/equipment" 
-                    className={`${styles['header-search-dropdown-link']} ${location.pathname === '/search/equipment' ? styles.active : ''}`}
-                    onClick={() => setIsSearchDropdownOpen(false)}
-                  >
-                    Equipment
-                  </Link>
-                  <Link 
-                    to="/search/grants" 
-                    className={`${styles['header-search-dropdown-link']} ${location.pathname === '/search/grants' ? styles.active : ''}`}
-                    onClick={() => setIsSearchDropdownOpen(false)}
-                  >
-                    Grants
-                  </Link>
-                  <Link 
                     to="/search/institutions" 
                     className={`${styles['header-search-dropdown-link']} ${location.pathname === '/search/institutions' ? styles.active : ''}`}
                     onClick={() => setIsSearchDropdownOpen(false)}

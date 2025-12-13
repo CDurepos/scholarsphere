@@ -10,8 +10,6 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Faculty from './pages/Search/Faculty';
 import Profile from './pages/Profile';
-import Equipment from './pages/Search/Equipment';
-import Grants from './pages/Search/Grants';
 import Institutions from './pages/Search/Institutions';
 import { isAuthenticated as checkAuth } from './services/api';
 import './App.css';
@@ -71,22 +69,6 @@ function App() {
           element={
             <ProtectedRoute>
               <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/search/equipment"
-          element={
-            <ProtectedRoute>
-              <Equipment />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/search/grants"
-          element={
-            <ProtectedRoute>
-              <Grants />
             </ProtectedRoute>
           }
         />

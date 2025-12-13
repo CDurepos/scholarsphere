@@ -6,7 +6,6 @@ from backend.app.utils.jwt import require_auth
 from backend.app.services.search import (
     search_faculty_service,
     search_keywords_service,
-    search_equipment_service,
 )
 from backend.app.utils.search_filters import get_valid_search_filters
 from flask import Blueprint, request, jsonify
@@ -63,24 +62,3 @@ def search_keywords():
         limit = 10
     
     return search_keywords_service(search_term, limit)
-
-
-@search_bp.route("/equipment", methods=["GET"])
-def search_equipment():
-    """
-    Search equipment by keywords, location, and availability.
-    
-    Query Parameters:
-        keywords (str): Optional search keywords (searches name and description)
-        location (list): Optional list of locations (city or zip codes)
-        available (str): Optional "true" to filter by availability
-    
-    Returns:
-        JSON array of equipment records with institution information
-    """
-    keywords = request.args.get("keywords", "").strip() or None
-    locations = request.args.getlist("location") or None
-    available_only = request.args.get("available", "false").lower() == "true"
-    
-    results, status_code = search_equipment_service(keywords, locations, available_only)
-    return jsonify(results), status_code

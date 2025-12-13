@@ -149,8 +149,7 @@ function Dashboard() {
                   </div>
                   <div className={styles['recommendation-card-body']}>
                     <div className={styles['recommendation-match-badge']} data-strength={
-                      ['shared_keyword', 'keyword_to_publication', 'publication_to_keyword'].includes(rec.recommendation_type) ? 'high' :
-                      ['keyword_to_grant', 'grant_to_keyword', 'grant_to_publication', 'publication_to_grant', 'shared_grant'].includes(rec.recommendation_type) ? 'medium' : 'base'
+                      ['shared_keyword', 'keyword_to_publication', 'publication_to_keyword'].includes(rec.recommendation_type) ? 'high' : 'base'
                     }>
                       <span className={styles['match-pulse']} />
                       <span className={styles['match-badge-text']}>{rec.recommendation_text}</span>

@@ -28,7 +28,6 @@ This document provides a comprehensive overview of all API endpoints available i
 - [Search](#search)
   - [GET /search/faculty](#get-searchfaculty)
   - [GET /search/keyword](#get-searchkeyword)
-  - [GET /search/equipment](#get-searchequipment)
 - [Recommendations](#recommendations)
   - [GET /recommend/:faculty_id](#get-recommendfaculty_id)
   - [POST /recommend/generate](#post-recommendgenerate)
@@ -517,7 +516,7 @@ Replace all keywords for a faculty member.
 
 ## Search
 
-Search endpoints provide faculty, keyword, and equipment search functionality.
+Search endpoints provide faculty and keyword search functionality.
 
 ### GET /search/faculty
 
@@ -590,43 +589,6 @@ Search keywords by prefix for autocomplete.
 
 ---
 
-### GET /search/equipment
-
-Search equipment by keywords, location, and availability.
-
-**Authentication:** None required
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `keywords` | string | No | Search term (matches name and description) |
-| `location` | string | No | City or zip code (can be specified multiple times) |
-| `available` | string | No | If "true", filter by availability = 'available' |
-
-**Response:**
-
-```json
-[
-  {
-    "equipment_id": "uuid-string",
-    "name": "Electron Microscope",
-    "description": "High-resolution imaging equipment",
-    "availability": "available",
-    "institution_name": "University of Maine",
-    "city": "Orono"
-  }
-]
-```
-
-**Status Codes:**
-- `200` - Success
-- `500` - Server error
-
-**Service Behavior:** Queries the equipment table joined with institutions, filtering by keyword match (LIKE search on name/description), location (city or zip), and optionally availability status.
-
----
-
 ## Recommendations
 
 Recommendation endpoints provide personalized faculty collaboration suggestions.
@@ -667,9 +629,7 @@ Get personalized recommendations for a faculty member.
 **Service Behavior:** Fetches pre-computed recommendations from the `faculty_recommended_to_faculty` table. Recommendations are generated based on:
 - Similar research interests (shared keywords)
 - Published in your research area
-- Holds a relevant grant
 - Same department
-- Shared grant funding
 - Works at the same institution
 
 ---

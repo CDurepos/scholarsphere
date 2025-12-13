@@ -21,11 +21,6 @@ BEGIN
             WHEN 'shared_keyword'           THEN 'Similar research interests'
             WHEN 'keyword_to_publication'   THEN 'Published in your research area'
             WHEN 'publication_to_keyword'   THEN 'Researches your publication topics'
-            WHEN 'keyword_to_grant'         THEN 'Has funding in your research area'
-            WHEN 'grant_to_keyword'         THEN 'Researches your grant topics'
-            WHEN 'grant_to_publication'     THEN 'Published on your grant topics'
-            WHEN 'publication_to_grant'     THEN 'Has funding for your publication topics'
-            WHEN 'shared_grant'             THEN 'Co-funded by same grant'
             WHEN 'shared_department'        THEN 'Same department'
             ELSE 'Potential collaborator'
         END AS recommendation_text
